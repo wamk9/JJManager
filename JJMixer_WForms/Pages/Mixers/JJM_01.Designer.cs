@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJM_01));
             this.BtnInput01JJM01 = new System.Windows.Forms.PictureBox();
             this.ImgJJM01 = new System.Windows.Forms.PictureBox();
@@ -36,6 +37,7 @@
             this.BtnInput05JJM01 = new System.Windows.Forms.PictureBox();
             this.BtnInput04JJM01 = new System.Windows.Forms.PictureBox();
             this.BtnDisconnectJJM01 = new MaterialSkin.Controls.MaterialButton();
+            this.timerSendHIDMessage = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput01JJM01)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJM01)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput02JJM01)).BeginInit();
@@ -143,6 +145,12 @@
             this.BtnDisconnectJJM01.UseVisualStyleBackColor = true;
             this.BtnDisconnectJJM01.Click += new System.EventHandler(this.BtnDisconnectJJM01_Click);
             // 
+            // timerSendHIDMessage
+            // 
+            this.timerSendHIDMessage.Enabled = true;
+            this.timerSendHIDMessage.Interval = 2000;
+            this.timerSendHIDMessage.Tick += new System.EventHandler(this.timerSendHIDMessage_Tick);
+            // 
             // JJM_01
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -183,5 +191,6 @@
         private System.Windows.Forms.PictureBox BtnInput05JJM01;
         private System.Windows.Forms.PictureBox BtnInput04JJM01;
         private MaterialSkin.Controls.MaterialButton BtnDisconnectJJM01;
+        private System.Windows.Forms.Timer timerSendHIDMessage;
     }
 }
