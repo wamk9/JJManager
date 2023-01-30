@@ -36,7 +36,6 @@
             this.RdBtnInputDevices = new MaterialSkin.Controls.MaterialRadioButton();
             this.TxtMultiLineApplications = new MaterialSkin.Controls.MaterialMultiLineTextBox();
             this.ChkBoxInputDevices = new MaterialSkin.Controls.MaterialCheckedListBox();
-            this.ChkBoxInvertAxis = new MaterialSkin.Controls.MaterialCheckbox();
             this.SuspendLayout();
             // 
             // BtnSaveInputConf
@@ -170,28 +169,11 @@
             this.ChkBoxInputDevices.StripeDarkColor = System.Drawing.Color.Empty;
             this.ChkBoxInputDevices.TabIndex = 9;
             // 
-            // ChkBoxInvertAxis
-            // 
-            this.ChkBoxInvertAxis.AutoSize = true;
-            this.ChkBoxInvertAxis.Depth = 0;
-            this.ChkBoxInvertAxis.Location = new System.Drawing.Point(13, 427);
-            this.ChkBoxInvertAxis.Margin = new System.Windows.Forms.Padding(0);
-            this.ChkBoxInvertAxis.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.ChkBoxInvertAxis.MouseState = MaterialSkin.MouseState.HOVER;
-            this.ChkBoxInvertAxis.Name = "ChkBoxInvertAxis";
-            this.ChkBoxInvertAxis.ReadOnly = false;
-            this.ChkBoxInvertAxis.Ripple = true;
-            this.ChkBoxInvertAxis.Size = new System.Drawing.Size(121, 37);
-            this.ChkBoxInvertAxis.TabIndex = 10;
-            this.ChkBoxInvertAxis.Text = "Inverter Eixo";
-            this.ChkBoxInvertAxis.UseVisualStyleBackColor = true;
-            // 
             // ChangeInputInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(400, 480);
-            this.Controls.Add(this.ChkBoxInvertAxis);
             this.Controls.Add(this.ChkBoxInputDevices);
             this.Controls.Add(this.TxtMultiLineApplications);
             this.Controls.Add(this.RdBtnInputDevices);
@@ -220,6 +202,5 @@
         private MaterialSkin.Controls.MaterialRadioButton RdBtnInputDevices;
         private MaterialSkin.Controls.MaterialMultiLineTextBox TxtMultiLineApplications;
         private MaterialSkin.Controls.MaterialCheckedListBox ChkBoxInputDevices;
-        private MaterialSkin.Controls.MaterialCheckbox ChkBoxInvertAxis;
     }
 }

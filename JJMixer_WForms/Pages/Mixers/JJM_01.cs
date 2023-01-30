@@ -1,5 +1,4 @@
-﻿using HidSharp;
-using JJMixer.Class;
+﻿using JJMixer.Class;
 using JJMixer_WForms.Class;
 using MaterialSkin;
 using MaterialSkin.Controls;
@@ -21,26 +20,14 @@ namespace JJMixer_WForms.Pages
 {
     public partial class JJM_01 : MaterialForm
     {
-        private static JJMixerCommunication _JJMixerCommunication;
+        private static JJMixerCommunication _JJMixerCommunication = new JJMixerCommunication();
         private static JJMixerAudioManager _JJMixerAudioManager = new JJMixerAudioManager();
         private static JJMixerDbConnection _JJMixerDbConnection = new JJMixerDbConnection();
-        public JJM_01(HidDevice device)
+        public JJM_01(String MixerSerialPort)
         {
             InitializeComponent();
 
-            if (device == null)
-                this.Close();
-
-            _JJMixerCommunication = new JJMixerCommunication(device);
-
-            timerSendHIDMessage.Start();
-
-            Thread thr = new Thread(() => ThreadHIDCommunication()); ;
-            thr.Start();
-
-
-            
-            /*if (MixerSerialPort.Contains("COM"))
+            if (MixerSerialPort.Contains("COM"))
             {
                 _JJMixerCommunication.connectTo(MixerSerialPort);
                 Thread thr = new Thread(() => ThreadSerialCom()); ;
@@ -49,41 +36,138 @@ namespace JJMixer_WForms.Pages
             else
             {
                 Close();
-            }*/
+            }
 
-
+         
             var materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
             materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
             materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
         }
 
-        static void ThreadHIDCommunication()
+        static void ThreadSerialCom()
         {
+            int BytesReceived = 0;
             String DataReceived = "";
+            String ReturnDictionary = "";
             String[] DataTreated = null;
+            SortedDictionary<String, String> InputNames = new SortedDictionary<String, String>();
 
-            while (true)
+            while (_JJMixerCommunication.IsConnectionOpen())
             {
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
-                DataReceived = _JJMixerCommunication.ReceiveHIDMessage();
-
-                if (DataReceived != String.Empty)
+                try
                 {
-                    DataTreated = DataReceived.Split('|').ToArray();
-                    //InputNames = _JJMixerDbConnection.GetAllInputName("JJM-01");
+                    BytesReceived = _JJMixerCommunication.IsConnectionOpen() ? _JJMixerCommunication.serialObject.ReadByte() : -1;
 
-                    for (int i = 0; i < DataTreated.Length; i++)
-                        _JJMixerAudioManager.ChangeInputVolume((i + 1).ToString(), "JJM-01", (Int16.Parse(DataTreated[i])));
+                    if (BytesReceived != -1)
+                    {
+                        DataReceived = _JJMixerCommunication.serialObject.ReadLine().TrimEnd('\r');
+                        DataTreated = DataReceived.Split('|').Skip(1).ToArray();
+                        InputNames = _JJMixerDbConnection.GetAllInputName("JJM-01");
+
+                        for (int i = 0; i < DataTreated.Length; i++)
+                        {
+                            if (!InputNames.TryGetValue((i+1).ToString(), out ReturnDictionary))
+                            {
+                                InputNames[(i + 1).ToString()] = "Input " + (i + 1).ToString();
+                            }
+                             _JJMixerAudioManager.ChangeInputVolume((i+1).ToString(), "JJM-01", (Int16.Parse(DataTreated[i].ToString())) * 100 / 1023);
+                        }
+
+                        _JJMixerCommunication.SendToDevice(String.Join("|", InputNames.Values));
+                    }
                 }
-                //  break;
-
+                catch (IOException ex)
+                { 
                 
-                //_JJMixerCommunication.SendToDevice(String.Join("|", InputNames.Values));
+                }
             }
+
+
+            /*while (serialPortCommunication.IsConnectionOpen())
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                try
+                {
+                    int b = serialPortCommunication.IsConnectionOpen() ? serialPortCommunication.serialObject.ReadByte() : -1;
+
+                    if (b != -1)
+                    {
+                        String teste = serialPortCommunication.serialObject.ReadLine().TrimEnd('\r');
+                        String[] dataReceived = teste.Split('|');
+
+                        int[] inputValuesInt = new int[dataReceived.Count()];
+
+                        for (int i = 0; i < dataReceived.Count(); i++)
+                        {
+                            inputValuesInt[i] = (Int32.Parse(dataReceived[i]) * 100) / 1023;
+                        }
+
+                            serialPortCommunication.SendToDevice(inputNames);
+                            //MessageBox.Show(inputNames);
+
+
+                            for (int i = 0; i < dataReceived.Count(); i++)
+                            {
+                                var executableNameByInput = inputExec.ElementAt(i).Split('|');
+                                int executableNameByInputCount = executableNameByInput.Count();
+
+                                if (executableNameByInputCount == 0)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    foreach (var executableNameIndividual in executableNameByInput)
+                                    {
+                                        if (executableNameIndividual == "{MASTER}")
+                                        {
+                                            defaultPlaybackDevice.SetVolumeAsync(inputValuesInt[i]);
+                                        }
+                                        else if (executableNameIndividual == "{MASTER-COMMUNICATION}")
+                                        {
+                                            DefaultPlaybackCommunicationsDevice.SetVolumeAsync(inputValuesInt[i]);
+                                        }
+                                        else if (executableNameIndividual == "{MIC}")
+                                        {
+                                            DefaultCaptureDevice.SetVolumeAsync(inputValuesInt[i]);
+                                        }
+                                        else if (executableNameIndividual == "{MIC-COMMUNICATION}")
+                                        {
+                                            DefaultCaptureCommunicationsDevice.SetVolumeAsync(inputValuesInt[i]);
+                                        }
+                                        else if (executableNameIndividual != "")
+                                        {
+                                            foreach (var audioSession in defaultPlaybackDevice.GetCapability<IAudioSessionController>())
+                                            {
+                                                if (audioSession.ExecutablePath != null && audioSession.ExecutablePath.Contains(executableNameIndividual))
+                                                {
+                                                    audioSession.SetVolumeAsync(inputValuesInt[i]);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (IOException ex)
+                    {
+                        //FIX-ME: Verificar pq quando fecha conexão forçadamente cai aqui.
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.ToString());
+                    }
+
+                }*/
         }
+
 
         #region Botoes
         private void BtnInput01JJM01_Click(object sender, EventArgs e)
@@ -174,12 +258,10 @@ namespace JJMixer_WForms.Pages
 
         private void JJM_01_FormClosing(object sender, FormClosingEventArgs e)
         {
-
-        }
-
-        private void timerSendHIDMessage_Tick(object sender, EventArgs e)
-        {
-            _JJMixerCommunication.SendHIDInputs("JJM-01", 5);
+            if (_JJMixerCommunication.IsConnectionOpen())
+            {
+                _JJMixerCommunication.Disconnect();
+            }
         }
     }
 }

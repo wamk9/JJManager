@@ -1,9 +1,7 @@
 ﻿using JJMixer_WForms.Pages;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,27 +17,25 @@ namespace JJMixer_WForms.Class
 
         public JJMixerDbConnection()
         {
-            _dbPath = Path.Combine(Directory.GetCurrentDirectory(), "JJMixerDB.mdf");
+            _dbPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "JJMixerDB.mdf");
             _stringConnection = string.Format(@"Server=(localdb)\mssqllocaldb; Integrated Security=true; AttachDbFileName={0};", _dbPath);
         }
 
-      
-
-        public void SaveInputData(int input_id, String input_name, String input_type, String input_info, string invert_axis, string model)
+        public void SaveInputData(int input_id, String input_name, String input_type, String input_info, string model)
         {
             using (_connection = new SqlConnection(_stringConnection))
             {
                 _connection.Open();
-                if (_connection.State == ConnectionState.Open)
+                if (_connection.State == System.Data.ConnectionState.Open)
                 {
                     using (var cmd = new SqlCommand())
                     {
                         cmd.Connection = _connection;
-                        cmd.CommandText = "MERGE inputs WITH (SERIALIZABLE) AS T USING (VALUES (" + input_id.ToString() + ",'" + input_name + "', '" + input_type + "', '" + input_info + "', '" + invert_axis + "', '" + model + "')) AS U (id, name, type, info, axis_orientation, model) " +
+                        cmd.CommandText = "MERGE inputs WITH (SERIALIZABLE) AS T USING (VALUES (" + input_id.ToString() + ",'" + input_name + "', '" + input_type + "', '" + input_info + "', '" + model + "')) AS U (id, name, type, info, model) " +
                             "ON U.id = T.id AND U.model = T.model WHEN MATCHED THEN " +
-                                "UPDATE SET name='" + input_name + "', type='" + input_type + "', info='" + input_info + "', axis_orientation='" + invert_axis + "' " +
+                                "UPDATE SET name='" + input_name + "', type='" + input_type + "', info='" + input_info + "' " +
                             "WHEN NOT MATCHED THEN " +
-                            "INSERT (id, name, type, info, axis_orientation, model) VALUES (" + input_id.ToString() + ", '" + input_name + "', '" + input_type + "', '" + input_info + "', '" + invert_axis + "' , '" + model + "');";
+                            "INSERT (id, name, type, info, model) VALUES (" + input_id.ToString() + ", '" + input_name + "', '" + input_type + "', '" + input_info + "', '" + model + "');";
                         using (var reader = cmd.ExecuteReader())
                         {
                             /* while (reader.Read())
@@ -51,35 +47,6 @@ namespace JJMixer_WForms.Class
                 }
                 _connection.Close();
             }
-        }
-
-        public String GetInputAxisOrientation(int input_id, string model)
-        {
-            String data = "";
-
-            using (_connection = new SqlConnection(_stringConnection))
-            {
-                _connection.Open();
-                if (_connection.State == System.Data.ConnectionState.Open)
-                {
-                    using (var cmd = new SqlCommand())
-                    {
-                        cmd.Connection = _connection;
-                        cmd.CommandText = "SELECT axis_orientation FROM inputs WHERE id=" + input_id.ToString() + " AND model = '" + model + "';";
-
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                data = reader["axis_orientation"].ToString();
-                            }
-                        }
-                    }
-                }
-                _connection.Close();
-            }
-
-            return data;
         }
 
         public Dictionary<string, string> GetInputData(int input_id, string model)
@@ -94,7 +61,7 @@ namespace JJMixer_WForms.Class
                     using (var cmd = new SqlCommand())
                     {
                         cmd.Connection = _connection;
-                        cmd.CommandText = "SELECT name, type, info, axis_orientation FROM inputs WHERE id=" + input_id.ToString() + " AND model = '" + model + "';";
+                        cmd.CommandText = "SELECT name, type, info FROM inputs WHERE id=" + input_id.ToString() + " AND model = '" + model + "';";
 
                         using (var reader = cmd.ExecuteReader())
                         {
@@ -103,7 +70,6 @@ namespace JJMixer_WForms.Class
                                 data["input_name"] = reader["name"].ToString();
                                 data["input_type"] = reader["type"].ToString();
                                 data["input_info"] = reader["info"].ToString();
-                                data["axis_orientation"] = reader["axis_orientation"].ToString();
                             }
                         }
                     }

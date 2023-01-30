@@ -22,7 +22,7 @@ namespace JJMixer_WForms.Pages
         List<CoreAudioDevice> devices = new CoreAudioController().GetDevices().ToList();
         Dictionary<string, string> inputParams = new Dictionary<string, string>();
         JJMixerDbConnection dbConn = new JJMixerDbConnection();
-
+        
         private String _Id = "";
         private String _Model = "";
 
@@ -30,7 +30,7 @@ namespace JJMixer_WForms.Pages
         {
             InitializeComponent();
 
-            _Id = Id;
+            _Id= Id;
             _Model = Model;
 
             var materialSkinManager = MaterialSkinManager.Instance;
@@ -82,7 +82,7 @@ namespace JJMixer_WForms.Pages
             }
 
 
-            dbConn.SaveInputData(Int16.Parse(_Id), TxtInputName.Text, InputType, InputInfo, (ChkBoxInvertAxis.Checked ? "inverted" : "normal"), _Model);
+            dbConn.SaveInputData(Int16.Parse(_Id), TxtInputName.Text, InputType, InputInfo, _Model);
             this.Close();
         }
 
@@ -176,22 +176,6 @@ namespace JJMixer_WForms.Pages
             else
             {
                 TxtMultiLineApplications.Text = "";
-            }
-
-            if (inputParams.TryGetValue("axis_orientation", out returnDictionary))
-            {
-                if (returnDictionary == "inverted")
-                {
-                    ChkBoxInvertAxis.Checked = true;
-                }
-                else
-                {
-                    ChkBoxInvertAxis.Checked = false;
-                }
-            }
-            else
-            {
-                ChkBoxInvertAxis.Checked = false;
             }
         }
     }
