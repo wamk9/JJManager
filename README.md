@@ -1,2 +1,2 @@
-# JJMixer
-Program responsable to set inputs data to JJM series from JohnJohn3D.
+# JJManager
+Program responsable to set inputs data to JJM and JJB series from JohnJohn3D.
