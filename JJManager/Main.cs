@@ -34,7 +34,6 @@ namespace JJManager
     public partial class Main : MaterialForm
     {
         private static List<String> SerialPortList = new List<String>();
-        private static String ConnectionType;
 
         private static Class.Devices _JJManagerComunication = null;
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();

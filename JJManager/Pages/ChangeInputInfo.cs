@@ -23,20 +23,34 @@ namespace JJManager.Pages
         Dictionary<string, string> inputParams = new Dictionary<string, string>();
         DatabaseConnection dbConn = new DatabaseConnection();
 
-        private String _Id = "";
-        private String _IdProduct = "";
+        private String _IdInput = "";
+        private String _IdProfile = "";
 
-        public ChangeInputInfo(String IdProduct, String Id)
+        #region WinForms
+        private MaterialSkinManager materialSkinManager = null;
+        #endregion
+
+
+        public ChangeInputInfo(String idProfile, String IdInput)
         {
             InitializeComponent();
 
-            _Id = Id;
-            _IdProduct = IdProduct;
+            _IdInput = IdInput;
+            _IdProfile = idProfile;
 
-            var materialSkinManager = MaterialSkinManager.Instance;
+            // MaterialDesign
+            materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
             materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
             materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
+
+            // Events
+            FormClosed += new FormClosedEventHandler(ChangeInputInfo_FormClosed);
+        }
+
+        private void ChangeInputInfo_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Enabled = false;
         }
 
         private void BtnCancelInputConf_Click(object sender, EventArgs e)
@@ -82,7 +96,7 @@ namespace JJManager.Pages
             }
 
 
-            dbConn.SaveInputData(_IdProduct, Int16.Parse(_Id), TxtInputName.Text, InputType, InputInfo, (ChkBoxInvertAxis.Checked ? "inverted" : "normal"));
+            dbConn.SaveInputData(_IdProfile, Int16.Parse(_IdInput), TxtInputName.Text, InputType, InputInfo, (ChkBoxInvertAxis.Checked ? "inverted" : "normal"));
             this.Close();
         }
 
@@ -114,10 +128,10 @@ namespace JJManager.Pages
 
         private void ChangeInputInfo_Load(object sender, EventArgs e)
         {
-            this.Text = "Input " + _Id + " - Configurações";
+            this.Text = "Input " + _IdInput + " - Configurações";
             String returnDictionary = "";
 
-            inputParams = dbConn.GetInputData(_IdProduct, Int16.Parse(_Id));
+            inputParams = dbConn.GetInputData(_IdProfile, Int16.Parse(_IdInput));
 
             if (inputParams.TryGetValue("input_name", out returnDictionary))
             {

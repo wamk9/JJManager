@@ -16,21 +16,26 @@ namespace JJManager.Class
         private static List<CoreAudioDevice> _devices = _coreAudioController.GetDevices().ToList();
         private DatabaseConnection _DatabaseConnection = new DatabaseConnection();
 
+        public AudioManager ()
+        {
+            //_coreAudioController.AudioDeviceChanged
+        }
+
         private void RefreshAudioDevices()
         {
             _devices.Clear();
             _devices = new List<CoreAudioDevice>(_coreAudioController.GetDevices());
         }
 
-        public void ChangeInputVolume(String IdProduct, String InputId, int SettedVolume)
+        public void ChangeInputVolume(String idProfile, String InputId, int SettedVolume)
         {
             RefreshAudioDevices();
 
-            String InputType = _DatabaseConnection.GetInputType(IdProduct, Int16.Parse(InputId));
+            String InputType = _DatabaseConnection.GetInputType(idProfile, Int16.Parse(InputId));
 
             if (InputType == "app")
             {
-                foreach (String App in _DatabaseConnection.GetInputInfo(IdProduct, Int16.Parse(InputId))) 
+                foreach (String App in _DatabaseConnection.GetInputInfo(idProfile, Int16.Parse(InputId))) 
                 {
                     if (App != String.Empty)
                         this.ChangeAppVolume(App, SettedVolume);
@@ -38,7 +43,7 @@ namespace JJManager.Class
             }
             else if (InputType == "device")
             {
-                foreach (String DeviceId in _DatabaseConnection.GetInputInfo(IdProduct, Int16.Parse(InputId)))
+                foreach (String DeviceId in _DatabaseConnection.GetInputInfo(idProfile, Int16.Parse(InputId)))
                 {
                     if (DeviceId != String.Empty)
                         this.ChangeDeviceVolume(DeviceId, SettedVolume);
@@ -48,35 +53,18 @@ namespace JJManager.Class
 
         public void ChangeAppVolume(String AppExecutable, int SettedVolume)
         {
-            //bool AppVolumeChanged = false;
-
             foreach (CoreAudioDevice device in _devices)
             {
                 if (device.IsPlaybackDevice)
                 {
-                    
                     foreach (var audioSession in device.GetCapability<IAudioSessionController>().ActiveSessions())
                     {
                         if (audioSession.ExecutablePath != null && audioSession.ExecutablePath.Contains(AppExecutable))
                         {
                             audioSession.SetVolumeAsync(SettedVolume);
-                            //AppVolumeChanged = true;
                         }
-
-                        /*
-                        if (AppVolumeChanged)
-                        {
-                            break;
-                        }
-                        */
                     }
                 }
-                /*
-                if (AppVolumeChanged)
-                {
-                    break;
-                }
-                */
             }
         }
 

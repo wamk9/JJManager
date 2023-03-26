@@ -159,22 +159,22 @@ namespace JJManager.Class
         {
             Version lastVersion = Assembly.GetEntryAssembly().GetName().Version;
 
-            String sql = "INSERT INTO dbo.config (Id, theme, software_version) VALUES (1 ,'dark', '" + lastVersion.Major.ToString() + "." + lastVersion.Minor.ToString() + "." + lastVersion.Build.ToString() + "');";
+            String sql = "INSERT INTO dbo.configs (Id, theme, software_version) VALUES (1 ,'dark', '" + lastVersion.Major.ToString() + "." + lastVersion.Minor.ToString() + "." + lastVersion.Build.ToString() + "');";
             
             if (!RunSQL(sql))
             {
                 // TODO: Create LOGFILE
             }
         }
-        public String GetProductId(String productName, String serialNumber)
+        public String GetProductId(String productName)
         {
-            String sql = "SELECT id FROM dbo.products WHERE serial_number = '" + serialNumber + "';";
+            String sql = "SELECT id FROM dbo.products WHERE name = '" + productName + "';";
             String id = "";
 
             using (JsonDocument Json = RunSQLWithResults(sql))
             {
                 if (Json == null)
-                    id = SetProductId(productName, serialNumber);
+                    id = SetProductId(productName);
                 else
                     id = Json.RootElement[0].GetProperty("id").ToString();
             }
@@ -182,31 +182,32 @@ namespace JJManager.Class
             return id;
         }
 
-        private String SetProductId(String productName, String serialNumber)
+        private String SetProductId(String productName)
         {
-            String sql = "INSERT INTO dbo.products (name, serial_number) VALUES ('" + productName + "','" + serialNumber + "');";
+            String sql = "INSERT INTO dbo.products (name) VALUES ('" + productName + "');";
             String id = "";
 
             if (RunSQL(sql))
             {
-                sql = "SELECT id FROM dbo.products WHERE serial_number = '" + serialNumber + "';";
+                sql = "SELECT id FROM dbo.products WHERE name = '" + productName + "';";
 
                 using (JsonDocument Json = RunSQLWithResults(sql))
                 {
                     id = Json.RootElement[0].GetProperty("id").ToString();
+                    SaveProfile("Perfil Padrão", id);
                 }
             }
 
             return id;
         }
 
-        public void SaveInputData (String id_product, int input_id, String input_name, String input_type, String input_info, string invert_axis)
+        public void SaveInputData (String id_profile, int input_id, String input_name, String input_type, String input_info, string invert_axis)
         {
-            String sql = "MERGE analog_inputs WITH (SERIALIZABLE) AS T USING (VALUES (" + input_id.ToString() + ",'" + input_name + "', '" + input_type + "', '" + input_info + "', '" + invert_axis + "', '" + id_product + "')) AS U (id, name, type, info, axis_orientation, id_product) " +
-                            "ON U.id = T.id AND U.id_product = T.id_product WHEN MATCHED THEN " +
+            String sql = "MERGE analog_inputs WITH (SERIALIZABLE) AS T USING (VALUES (" + input_id.ToString() + ",'" + input_name + "', '" + input_type + "', '" + input_info + "', '" + invert_axis + "', '" + id_profile + "')) AS U (id, name, type, info, axis_orientation, id_profile) " +
+                            "ON U.id = T.id AND U.id_profile = T.id_profile WHEN MATCHED THEN " +
                                 "UPDATE SET name='" + input_name + "', type='" + input_type + "', info='" + input_info + "', axis_orientation='" + invert_axis + "' " +
                             "WHEN NOT MATCHED THEN " +
-                            "INSERT (id, name, type, info, axis_orientation, id_product) VALUES (" + input_id.ToString() + ", '" + input_name + "', '" + input_type + "', '" + input_info + "', '" + invert_axis + "' , '" + id_product + "');";
+                            "INSERT (id, name, type, info, axis_orientation, id_profile) VALUES (" + input_id.ToString() + ", '" + input_name + "', '" + input_type + "', '" + input_info + "', '" + invert_axis + "' , '" + id_profile + "');";
 
             if (!RunSQL(sql))
             {
@@ -214,11 +215,11 @@ namespace JJManager.Class
             }
         }
 
-        public Dictionary<string, string> GetInputData(String id_product, int input_id)
+        public Dictionary<string, string> GetInputData(String id_profile, int input_id)
         {
             Dictionary<string, string> data = new Dictionary<string, string>();
 
-            String sql = "SELECT name, type, info, axis_orientation FROM analog_inputs WHERE id=" + input_id.ToString() + " AND id_product = '" + id_product + "';";
+            String sql = "SELECT name, type, info, axis_orientation FROM analog_inputs WHERE id=" + input_id.ToString() + " AND id_profile = '" + id_profile + "';";
 
             using (JsonDocument Json = RunSQLWithResults(sql))
             {
@@ -235,11 +236,11 @@ namespace JJManager.Class
             return data;
         }
 
-        public SortedDictionary<string, string> GetAllInputName(String id_product)
+        public SortedDictionary<string, string> GetAllInputName(String id_profile)
         {
             SortedDictionary<string, string> data = new SortedDictionary<string, string>();
 
-            String sql = "SELECT id, name FROM analog_inputs WHERE id_product='" + id_product + "' ORDER BY id;";
+            String sql = "SELECT id, name FROM analog_inputs WHERE id_profile='" + id_profile + "' ORDER BY id;";
 
             using (JsonDocument Json = RunSQLWithResults(sql))
             {
@@ -253,11 +254,11 @@ namespace JJManager.Class
             return data;
         }
 
-        public String GetInputType(String id_product, int input_id)
+        public String GetInputType(String id_profile, int input_id)
         {
             String data = "";
 
-            String sql = "SELECT type FROM analog_inputs WHERE id=" + input_id.ToString() + " AND id_product = '" + id_product + "';";
+            String sql = "SELECT type FROM analog_inputs WHERE id=" + input_id.ToString() + " AND id_profile = '" + id_profile + "';";
 
             using (JsonDocument Json = RunSQLWithResults(sql))
             {
@@ -271,11 +272,11 @@ namespace JJManager.Class
             return data != null ? data : "";
         }
 
-        public String[] GetInputInfo(String id_product, int input_id)
+        public String[] GetInputInfo(String id_profile, int input_id)
         {
             String[] data = new String[0];
 
-            String sql = "SELECT info FROM analog_inputs WHERE id=" + input_id.ToString() + " AND id_product = '" + id_product + "';";
+            String sql = "SELECT info FROM analog_inputs WHERE id=" + input_id.ToString() + " AND id_profile = '" + id_profile + "';";
 
             using (JsonDocument Json = RunSQLWithResults(sql))
             {
@@ -292,8 +293,8 @@ namespace JJManager.Class
         {
             Version lastVersion = Assembly.GetEntryAssembly().GetName().Version;
 
-            String sql = "MERGE config WITH (SERIALIZABLE) AS T USING (VALUES (1, '" + theme + "')) AS U (Id, theme) " +
-                            "ON U.Id = T.Id WHEN MATCHED THEN " +
+            String sql = "MERGE configs WITH (SERIALIZABLE) AS T USING (VALUES (1, '" + theme + "')) AS U (id, theme) " +
+                            "ON U.id = T.id WHEN MATCHED THEN " +
                                 "UPDATE SET theme='" + theme + "' " +
                             "WHEN NOT MATCHED THEN " +
                             "INSERT (id, theme, software_version) VALUES (1, '" + theme + "', '" + lastVersion.Major.ToString() + "." + lastVersion.Minor.ToString() + "." + lastVersion.Build.ToString() + "');";
@@ -306,7 +307,7 @@ namespace JJManager.Class
 
         public MaterialSkinManager.Themes GetTheme (String id = "1")
         {
-            String sql = "SELECT theme FROM config WHERE Id=" + id + ";";
+            String sql = "SELECT theme FROM configs WHERE id=" + id + ";";
 
             using (JsonDocument Json = RunSQLWithResults(sql))
             {
@@ -321,6 +322,64 @@ namespace JJManager.Class
             }
         }
 
+        public void SaveProfile(String profileName, String productId)
+        {
+            String sql = "MERGE dbo.profiles WITH (SERIALIZABLE) AS T USING (VALUES ('" + profileName + "', " + productId + ")) AS U (name, id_product) " +
+                            "ON U.name = T.name AND U.id_product = T.id_product WHEN MATCHED THEN " +
+                                "UPDATE SET name='" + profileName + "' " +
+                            "WHEN NOT MATCHED THEN " +
+                            "INSERT (name, id_product) VALUES ('" + profileName + "', " + productId + ");";
+
+            if (!RunSQL(sql))
+            {
+                // TODO: Create LOGFILE
+            }
+        }
+
+        public void DeleteProfile(String profileName, String productId)
+        {
+            String sql = "DELETE FROM dbo.profiles WHERE name = '" + profileName + "' AND id_product = " + productId + ";";
+
+            if (!RunSQL(sql))
+            {
+                // TODO: Create LOGFILE
+            }
+        }
+
+        public String GetProfileId(String profileName, String productId)
+        {
+            String sql = "SELECT id FROM profiles WHERE name = '" + profileName + "' AND id_product = " + productId + ";";
+
+            using (JsonDocument Json = RunSQLWithResults(sql))
+            {
+                if (Json != null)
+                {
+                    return Json.RootElement[0].GetProperty("id").ToString();
+                }
+                else
+                {
+                    return String.Empty;
+                }
+            }
+
+        }
+
+        public List<String> GetProfiles(String productId)
+        {
+            List<String> list = new List<String>();
+            String sql = "SELECT name FROM profiles WHERE id_product = " + productId + " ORDER BY id ASC;";
+
+            using (JsonDocument Json = RunSQLWithResults(sql))
+            {
+                if (Json != null)
+                {
+                    for (int i = 0; i < Json.RootElement.GetArrayLength(); i++)
+                        list.Add(Json.RootElement[i].GetProperty("name").ToString()); 
+                }
+
+                return list;
+            }
+        }
 
 
 
@@ -330,7 +389,7 @@ namespace JJManager.Class
 
 
 
-        public String GetInputAxisOrientation(int input_id, string model)
+        public String GetInputAxisOrientation(String id_profile, String id_input)
         {
             String data = "";
 
@@ -344,7 +403,7 @@ namespace JJManager.Class
                         using (var cmd = new SqlCommand())
                         {
                             cmd.Connection = _connection;
-                            cmd.CommandText = "SELECT axis_orientation FROM analog_inputs WHERE id=" + input_id.ToString() + " AND model = '" + model + "';";
+                            cmd.CommandText = "SELECT axis_orientation FROM analog_inputs WHERE id=" + id_input + " AND id_profile = '" + id_profile + "';";
 
                             using (var reader = cmd.ExecuteReader())
                             {

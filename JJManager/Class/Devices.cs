@@ -191,18 +191,7 @@ namespace JJManager.Class
         {
             _HidDevice = HidDevice;
             _ProductName = _HidDevice.GetProductName();
-
-            byte[] hidResponse = HIDReceivedData();
-            
-            for (int i = 0; i < 8; i++)
-            {
-                if (i == 0)
-                    _SerialNumber = hidResponse[i].ToString();
-                else
-                    _SerialNumber += " " + hidResponse[i].ToString();
-            }
-
-            _Id = _DatabaseConnection.GetProductId(_ProductName, _SerialNumber);
+            _Id = _DatabaseConnection.GetProductId(_ProductName);
         }
 
         /// <summary>
@@ -212,19 +201,21 @@ namespace JJManager.Class
         public Devices(Joystick joystick)
         {
             _Joystick = joystick;
+            _ProductName = _Joystick.Properties.ProductName;
+            _Id = _DatabaseConnection.GetProductId(_ProductName);
         }
 
         /// <summary>
         /// Envia para a tela de dispositivos da série JJM o nome dos inputs que estão cadastrados no banco de dados do software.
         /// </summary>
         /// <param name="InputId">ID do input que será enviada via HID.</param>
-        public void SendInputNameToDeviceScreen (int InputId)
+        public void SendInputNameToDeviceScreen (int InputId, String profileId)
         {
             try
             {
                 String ReturnDictionary = "";
 
-                SortedDictionary<String, String> InputsName = _DatabaseConnection.GetAllInputName(_Id);
+                SortedDictionary<String, String> InputsName = _DatabaseConnection.GetAllInputName(profileId);
                 String InputNameString = (InputId).ToString() + "|";
 
                 if (InputsName.TryGetValue((InputId).ToString(), out ReturnDictionary))
@@ -410,12 +401,12 @@ namespace JJManager.Class
             return String.Empty;
         }
 
-        public String GetJoystickAxisPercentage(Joystick joystick, int input, String joystickAxis, String model)
+        public String GetJoystickAxisPercentage(Joystick joystick, String idInput, String joystickAxis, String idProfile)
         {
             DatabaseConnection _DatabaseConnection = new DatabaseConnection();
             String axisOrientation = "";
             
-            axisOrientation = _DatabaseConnection.GetInputAxisOrientation(input, model);
+            axisOrientation = _DatabaseConnection.GetInputAxisOrientation(idInput, idProfile);
             
             String Value = "";
             Dictionary<String, String> inverseDictionaryValue = new Dictionary<String, String>();

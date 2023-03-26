@@ -250,6 +250,7 @@
     <Compile Include="Class\DatabaseConnection.cs" />
     <Compile Include="Class\Devices.cs" />
     <Compile Include="Class\JJManagerDevice.cs" />
+    <Compile Include="Class\Profile.cs" />
     <Compile Include="Class\SoftwareUpdater.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
@@ -268,6 +269,12 @@
     </Compile>
     <Compile Include="Pages\ChangeInputInfo.Designer.cs">
       <DependentUpon>ChangeInputInfo.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\CreateProfile.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\CreateProfile.Designer.cs">
+      <DependentUpon>CreateProfile.cs</DependentUpon>
     </Compile>
     <Compile Include="Pages\Mixers\JJM_01.cs">
       <SubType>Form</SubType>
@@ -291,6 +298,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Pages\ChangeInputInfo.resx">
       <DependentUpon>ChangeInputInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\CreateProfile.resx">
+      <DependentUpon>CreateProfile.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pages\Mixers\JJM_01.resx">
       <DependentUpon>JJM_01.cs</DependentUpon>

@@ -204,7 +204,9 @@
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(400, 480);
             this.Name = "ChangeInputInfo";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Input 1 - Configurações";
+            this.TopMost = true;
             this.Load += new System.EventHandler(this.ChangeInputInfo_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
