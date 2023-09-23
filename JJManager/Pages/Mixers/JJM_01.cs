@@ -22,14 +22,16 @@ namespace JJManager.Pages
     public partial class JJM_01 : MaterialForm
     {
         private static Class.Devices _Device;
-        private static AudioManager _JJManagerAudioManager = new AudioManager();
+        private static AudioManager _audioManager = new AudioManager();
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
-        private static Profile _Profile = new Profile();
+        private static Profiles _profile = null;
         private Thread thr = null;
         private Thread thrTimers = null;
         private bool _DisconnectDevice = false;
         private bool _IsInputSelected = false;
         private bool _IsCreateProfileOpened = false;
+        private String DataReceived = "";
+        private String[] DataTreated = null;
 
         #region WinForms
         MaterialSkinManager materialSkinManager = null;
@@ -56,11 +58,19 @@ namespace JJManager.Pages
 
             _Device = new Devices(device);
 
+            // Fill Forms
+            foreach (String Profile in Profiles.GetList(_Device.Id))
+                CmbBoxSelectProfile.Items.Add(Profile);
+
+            CmbBoxSelectProfile.SelectedIndex = 0;
+            _profile = new Profiles(CmbBoxSelectProfile.Items[0].ToString(), _Device.Id);
+
             // Start NotifyIcon
             notifyIcon = new AppModulesNotifyIcon(components, _Device.ProductName, NotifyIcon_Click);
+            HidReceiver = new AppModulesTimer(components, 50, timerReceiveHIDMessage_Tick);
 
             //Start Timers
-            thrTimers = new Thread(() => {
+            /*thrTimers = new Thread(() => {
                 HidReceiver = new AppModulesTimer(components, 50, timerReceiveHIDMessage_Tick);
 
                 while (true)
@@ -68,7 +78,7 @@ namespace JJManager.Pages
                     Application.DoEvents();
                 }
             });
-            thrTimers.Start();
+            thrTimers.Start();*/
 
             // Events
             FormClosing += new FormClosingEventHandler(JJM_01_FormClosing);
@@ -76,13 +86,24 @@ namespace JJManager.Pages
             CmbBoxSelectProfile.DropDown += new EventHandler(CmbBoxSelectProfile_DropDown);
             CmbBoxSelectProfile.SelectedIndexChanged += new EventHandler(CmbBoxSelectProfile_SelectedIndexChanged);
 
-            // Fill Forms
-            foreach (String Profile in _DatabaseConnection.GetProfiles(_Device.Id))
-                CmbBoxSelectProfile.Items.Add(Profile);
-
-            CmbBoxSelectProfile.SelectedIndex = 0;
-
             thr = new Thread(() => ThreadSendInputNameToDeviceScreen()); ;
+            thr.Start();
+        }
+
+        private void OpenInputModal(int idInput)
+        {
+            Thread thr = new Thread(() => {
+                if (!_IsInputSelected)
+                {
+                    _IsInputSelected = true;
+                    ChangeInputInfo inputForm = new ChangeInputInfo(_profile, idInput);
+                    inputForm.ShowDialog();
+                    _profile.UpdateInputs();
+                    _IsInputSelected = false;
+                }
+
+                Thread.CurrentThread.Abort();
+            });
             thr.Start();
         }
 
@@ -104,7 +125,7 @@ namespace JJManager.Pages
         private void JJM_01_FormClosed(object sender, FormClosedEventArgs e)
         {
             Enabled = false;
-            thrTimers.Abort();
+            //thrTimers.Abort();
             thr.Abort();
             GC.Collect();
         }
@@ -115,20 +136,14 @@ namespace JJManager.Pages
             {
                 for (int i = 1; i <= 5; i++)
                 {
-                    _Device.SendInputNameToDeviceScreen(i, _Profile.Id);
-                    Thread.Sleep(500);
+                    _Device.SendInputNameToDeviceScreen(i, _profile.Id);
+                    Thread.Sleep(200);
                 }
             }
         }
 
         private void timerReceiveHIDMessage_Tick(object sender, EventArgs e)
         {
-            String DataReceived = "";
-            String[] DataTreated = null;
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
             DataReceived = _Device.ReceiveHIDMessage();
 
             if (DataReceived != String.Empty)
@@ -136,11 +151,13 @@ namespace JJManager.Pages
                 DataTreated = DataReceived.Split('|').ToArray();
 
                 for (int i = 0; i < DataTreated.Length; i++)
-                    _JJManagerAudioManager.ChangeInputVolume(_Profile.Id, (i + 1).ToString(), (Int16.Parse(DataTreated[i])));
+                    if (_profile.Id != "")
+                        _audioManager.ChangeInputVolume(_profile.GetInputById((i + 1)), Int16.Parse(DataTreated[i]));
             }
             else
             {
                 _DisconnectDevice = true;
+                //Thread.CurrentThread.Abort();
                 Close();
             }
         }
@@ -158,7 +175,7 @@ namespace JJManager.Pages
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in _DatabaseConnection.GetProfiles(_Device.Id))
+            foreach (String Profile in Profiles.GetList(_Device.Id))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -166,25 +183,23 @@ namespace JJManager.Pages
 
         private void CmbBoxSelectProfile_SelectedIndexChanged(object sender, EventArgs e)
         {
-            _Profile.Id = _DatabaseConnection.GetProfileId(CmbBoxSelectProfile.SelectedItem.ToString(), _Device.Id);
+            if (CmbBoxSelectProfile.SelectedItem.ToString() != "")
+            {
+                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _Device.Id);
+            }
+            else
+            {
+                CmbBoxSelectProfile.SelectedIndex = 0;
+                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _Device.Id);
+            }
+
         }
         #endregion
 
         #region Buttons
         private void BtnInput01JJM01_Click(object sender, EventArgs e)
         {
-            Thread thr = new Thread(() => {
-                if (!_IsInputSelected)
-                {
-                    _IsInputSelected = true;
-                    ChangeInputInfo inputForm = new ChangeInputInfo(_Profile.Id, "1");
-                    inputForm.ShowDialog();
-                    _IsInputSelected = false;
-                }
-                
-                Thread.CurrentThread.Abort();
-            });
-            thr.Start();
+            OpenInputModal(1);
         }
 
         private void BtnInput01JJM01_MouseEnter(object sender, EventArgs e)
@@ -200,19 +215,7 @@ namespace JJManager.Pages
 
         private void BtnInput02JJM01_Click(object sender, EventArgs e)
         {
-            Thread thr = new Thread(() => {
-                if (!_IsInputSelected)
-                {
-                    _IsInputSelected = true;
-                    ChangeInputInfo inputForm = new ChangeInputInfo(_Profile.Id, "2");
-                    inputForm.ShowDialog();
-                    _IsInputSelected = false;
-                }
-
-                Thread.CurrentThread.Abort();
-            });
-            thr.Start();
-
+            OpenInputModal(2);
         }
 
         private void BtnInput02JJM01_MouseEnter(object sender, EventArgs e)
@@ -228,19 +231,7 @@ namespace JJManager.Pages
 
         private void BtnInput03JJM01_Click(object sender, EventArgs e)
         {
-            Thread thr = new Thread(() => {
-                if (!_IsInputSelected)
-                {
-                    _IsInputSelected = true;
-                    ChangeInputInfo inputForm = new ChangeInputInfo(_Profile.Id, "3");
-                    inputForm.ShowDialog();
-                    _IsInputSelected = false;
-                }
-
-                Thread.CurrentThread.Abort();
-            });
-            thr.Start();
-
+            OpenInputModal(3);
         }
 
         private void BtnInput03JJM01_MouseEnter(object sender, EventArgs e)
@@ -256,19 +247,7 @@ namespace JJManager.Pages
 
         private void BtnInput04JJM01_Click(object sender, EventArgs e)
         {
-            Thread thr = new Thread(() => {
-                if (!_IsInputSelected)
-                {
-                    _IsInputSelected = true;
-                    ChangeInputInfo inputForm = new ChangeInputInfo(_Profile.Id, "4");
-                    inputForm.ShowDialog();
-                    _IsInputSelected = false;
-                }
-
-                Thread.CurrentThread.Abort();
-            });
-            thr.Start();
-
+            OpenInputModal(4);
         }
 
         private void BtnInput04JJM01_MouseEnter(object sender, EventArgs e)
@@ -284,19 +263,7 @@ namespace JJManager.Pages
 
         private void BtnInput05JJM01_Click(object sender, EventArgs e)
         {
-            Thread thr = new Thread(() => {
-                if (!_IsInputSelected)
-                {
-                    _IsInputSelected = true;
-                    ChangeInputInfo inputForm = new ChangeInputInfo(_Profile.Id, "5");
-                    inputForm.ShowDialog();
-                    _IsInputSelected = false;
-                }
-               
-                Thread.CurrentThread.Abort();
-            });
-            thr.Start();
-
+            OpenInputModal(5);
         }
 
         private void BtnInput05JJM01_MouseEnter(object sender, EventArgs e)

@@ -21,9 +21,9 @@ namespace JJManager.Pages.ButtonBox
     public partial class JJB_01 : MaterialForm
     {
         Joystick _Joystick = null;
-        private static Class.Devices _Device;
-        private static Profile _Profile = new Profile();
-        private static AudioManager _JJManagerAudioManager = new AudioManager();
+        private static Class.Devices _device;
+        private static Profiles _profile = null;
+        private static AudioManager _audioManager = new AudioManager();
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
         private Thread thrTimers = null;
         private bool _DisconnectDevice = false;
@@ -35,9 +35,6 @@ namespace JJManager.Pages.ButtonBox
         private AppModulesTimer JoystickReceiver = null;
         private AppModulesNotifyIcon notifyIcon = null;
         #endregion
-
-        private static String LastAxisXValue = "";
-        private static String LastAxisYValue = "";
 
         public JJB_01(Joystick joystick)
         {
@@ -55,21 +52,21 @@ namespace JJManager.Pages.ButtonBox
 
             _Joystick = joystick;
 
-            _Device = new Class.Devices(_Joystick);
+            _device = new Class.Devices(_Joystick);
+
+            // Fill Forms
+            foreach (String Profile in Profiles.GetList(_device.Id))
+                CmbBoxSelectProfile.Items.Add(Profile);
+
+            CmbBoxSelectProfile.SelectedIndex = 0;
+            _profile = new Profiles(CmbBoxSelectProfile.Items[0].ToString(), _device.Id);
+
 
             // Start NotifyIcon
             notifyIcon = new AppModulesNotifyIcon(components, _Joystick.Properties.ProductName, NotifyIcon_Click);
 
             //Start Timers
-            thrTimers = new Thread(() => {
-                JoystickReceiver = new AppModulesTimer(components, 50, TimerReceiveJoystickMessage_Tick);
-
-                while (true)
-                {
-                    Application.DoEvents();
-                }
-            });
-            thrTimers.Start();            
+            JoystickReceiver = new AppModulesTimer(components, 50, TimerReceiveJoystickMessage_Tick);
 
             // Events
             FormClosing += new FormClosingEventHandler(JJB_01_FormClosing);
@@ -78,12 +75,30 @@ namespace JJManager.Pages.ButtonBox
             CmbBoxSelectProfile.SelectedIndexChanged += new EventHandler(CmbBoxSelectProfile_SelectedIndexChanged);
 
             // Fill Forms
-            foreach (String Profile in _DatabaseConnection.GetProfiles(_Device.Id))
+            foreach (String Profile in _DatabaseConnection.GetProfiles(_device.Id))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = 0;
 
         }
+
+        private void OpenInputModal(int idInput)
+        {
+            Thread thr = new Thread(() => {
+                if (!_IsInputSelected)
+                {
+                    _IsInputSelected = true;
+                    ChangeInputInfo inputForm = new ChangeInputInfo(_profile, idInput);
+                    inputForm.ShowDialog();
+                    _profile.UpdateInputs();
+                    _IsInputSelected = false;
+                }
+
+                Thread.CurrentThread.Abort();
+            });
+            thr.Start();
+        }
+
 
         #region Events
         private void JJB_01_FormClosing(object sender, FormClosingEventArgs e)
@@ -103,7 +118,6 @@ namespace JJManager.Pages.ButtonBox
         private void JJB_01_FormClosed(object sender, FormClosedEventArgs e)
         {
             Enabled = false;
-            thrTimers.Abort();
             GC.Collect();
         }
 
@@ -116,20 +130,17 @@ namespace JJManager.Pages.ButtonBox
 
         private void TimerReceiveJoystickMessage_Tick(object sender, EventArgs e)
         {
-            String ValueX = _Device.GetJoystickAxisPercentage(_Joystick, "1", "X", _Profile.Id);
-            String ValueY = _Device.GetJoystickAxisPercentage(_Joystick, "2", "Y", _Profile.Id);
+            int valueX = _device.GetJoystickAxisPercentage(_Joystick, "X");
+            int valueY = _device.GetJoystickAxisPercentage(_Joystick, "Y");
 
-            //String ValueX = "50";
-            //String ValueY = "50";
+            if (valueX == -1 || valueY == -1)
+            {
+                _DisconnectDevice = true;
+                Close();
+            }
 
-            LastAxisXValue = (ValueX != "" ? ValueX : LastAxisXValue);
-            LastAxisYValue = (ValueY != "" ? ValueY : LastAxisYValue);
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
-            _JJManagerAudioManager.ChangeInputVolume(_Profile.Id, "1", (LastAxisXValue != "" ? (Int16.Parse(LastAxisXValue)) : 0));
-            _JJManagerAudioManager.ChangeInputVolume(_Profile.Id, "2", (LastAxisYValue != "" ? (Int16.Parse(LastAxisYValue)) : 0));
+            _audioManager.ChangeInputVolume(_profile.GetInputById(1), valueX);
+            _audioManager.ChangeInputVolume(_profile.GetInputById(2), valueY);
         }
 
         private void CmbBoxSelectProfile_DropDown(object sender, EventArgs e)
@@ -138,7 +149,7 @@ namespace JJManager.Pages.ButtonBox
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in _DatabaseConnection.GetProfiles(_Device.Id))
+            foreach (String Profile in Profiles.GetList(_device.Id))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -146,26 +157,22 @@ namespace JJManager.Pages.ButtonBox
 
         private void CmbBoxSelectProfile_SelectedIndexChanged(object sender, EventArgs e)
         {
-            _Profile.Id = _DatabaseConnection.GetProfileId(CmbBoxSelectProfile.SelectedItem.ToString(), _Device.Id);
+            if (CmbBoxSelectProfile.SelectedItem.ToString() != "")
+            {
+                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id);
+            }
+            else
+            {
+                CmbBoxSelectProfile.SelectedIndex = 0;
+                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id);
+            }
         }
         #endregion
 
         #region Buttons
         private void BtnInput01JJB01_Click(object sender, EventArgs e)
         {
-            Thread thr = new Thread(() => {
-                if (!_IsInputSelected)
-                {
-                    _IsInputSelected = true;
-                    ChangeInputInfo inputForm = new ChangeInputInfo(_Profile.Id, "1");
-                    inputForm.ShowDialog();
-                    _IsInputSelected = false;
-                }
-
-                Thread.CurrentThread.Abort();
-            });
-            thr.Start();
-
+            OpenInputModal(1);
         }
 
         private void BtnInput01JJB01_MouseEnter(object sender, EventArgs e)
@@ -181,18 +188,7 @@ namespace JJManager.Pages.ButtonBox
 
         private void BtnInput02JJB01_Click(object sender, EventArgs e)
         {
-            Thread thr = new Thread(() => {
-                if (!_IsInputSelected)
-                {
-                    _IsInputSelected = true;
-                    ChangeInputInfo inputForm = new ChangeInputInfo(_Profile.Id, "2");
-                    inputForm.ShowDialog();
-                    _IsInputSelected = false;
-                }
-
-                Thread.CurrentThread.Abort();
-            });
-            thr.Start();
+            OpenInputModal(2);
         }
 
         private void BtnInput02JJB01_MouseEnter(object sender, EventArgs e)
@@ -218,7 +214,7 @@ namespace JJManager.Pages.ButtonBox
             {
                 Thread thr = new Thread(() => {
                     _IsCreateProfileOpened = true;
-                    CreateProfile createProfile = new CreateProfile(_Device);
+                    CreateProfile createProfile = new CreateProfile(_device);
                     createProfile.ShowDialog();
                     _IsCreateProfileOpened = false;
                     Thread.CurrentThread.Abort();
@@ -246,11 +242,11 @@ namespace JJManager.Pages.ButtonBox
 
             if (dialogResult == DialogResult.Yes)
             {
-                _DatabaseConnection.DeleteProfile(CmbBoxSelectProfile.SelectedItem.ToString(), _Device.Id);
+                _DatabaseConnection.DeleteProfile(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id);
 
                 CmbBoxSelectProfile.Items.Clear();
 
-                foreach (String Profile in _DatabaseConnection.GetProfiles(_Device.Id))
+                foreach (String Profile in _DatabaseConnection.GetProfiles(_device.Id))
                     CmbBoxSelectProfile.Items.Add(Profile);
 
                 CmbBoxSelectProfile.SelectedIndex = 0;

@@ -37,12 +37,71 @@ namespace JJManager.Class
             }
         }
 
+        public bool RunSQLMigrateFile(String sql)
+        {
+            bool isQueryExecuted = false;
+            string sqlSplited = "";
+
+            using (var connection = new SqlConnection(Properties.Settings.Default.DatabaseConnectionString))
+            {
+                connection.Open();
+                SqlTransaction transaction = connection.BeginTransaction();
+
+                try
+                {
+                    if (connection.State == ConnectionState.Open)
+                    {
+                        using (var cmd = new SqlCommand())
+                        {
+                            cmd.Connection = connection;
+                            cmd.Transaction = transaction;
+
+                            cmd.Parameters.Clear();
+
+                            foreach (String line in sql.Split(new string[2] { "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                if (line.ToUpperInvariant().Trim() == "GO")
+                                {
+                                    cmd.CommandText = sqlSplited;
+                                    cmd.ExecuteNonQuery();
+                                    sqlSplited = String.Empty;
+                                }
+                                else
+                                {
+                                    sqlSplited += line + "\n";
+                                }
+                            }
+
+                            isQueryExecuted = true;
+                            cmd.Dispose();
+                            transaction.Commit();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    MessageBox.Show(ex.ToString());
+                }
+                finally
+                {
+                    if (connection.State == System.Data.ConnectionState.Open)
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                }
+            }
+
+            return isQueryExecuted;
+        }
+
         /// <summary>
         /// Método responsável por executar querys SQL no DBLocal com retorno.
         /// </summary>
         /// <param name="sql">Query SQL</param>
         /// <returns>Variável 'SqlDataReader' contendo o resultado caso o SQL tenha sido executado com sucesso, caso não, retornará NULL.</returns>
-        private JsonDocument RunSQLWithResults(String sql)
+        public JsonDocument RunSQLWithResults(String sql)
         {
             JsonDocument Json = null;
             String JsonString = "";
@@ -115,7 +174,7 @@ namespace JJManager.Class
         /// </summary>
         /// <param name="sql">Query SQL</param>
         /// <returns>TRUE caso o SQL tenha sido executado com sucesso, caso não, retornará FALSE.</returns>
-        private bool RunSQL(String sql)
+        public bool RunSQL(String sql)
         {
             bool isQueryExecuted = false;
 
@@ -131,9 +190,8 @@ namespace JJManager.Class
                             cmd.Connection = connection;
                             cmd.CommandText = sql;
 
-                            if (cmd.ExecuteNonQuery() > 0)
-                                isQueryExecuted = true;
-
+                            cmd.ExecuteNonQuery();
+                            isQueryExecuted = true;
                             cmd.Dispose();
                         }
                     }
@@ -157,15 +215,24 @@ namespace JJManager.Class
 
         private void InitDatabase ()
         {
-            Version lastVersion = Assembly.GetEntryAssembly().GetName().Version;
+            Version actualVersion = Assembly.GetEntryAssembly().GetName().Version;
 
-            String sql = "INSERT INTO dbo.configs (Id, theme, software_version) VALUES (1 ,'dark', '" + lastVersion.Major.ToString() + "." + lastVersion.Minor.ToString() + "." + lastVersion.Build.ToString() + "');";
+            String sql = "INSERT INTO dbo.configs (Id, theme, software_version) VALUES (1 ,'dark', '" + actualVersion.Major.ToString() + "." + actualVersion.Minor.ToString() + "." + actualVersion.Build.ToString() + "');";
             
             if (!RunSQL(sql))
             {
                 // TODO: Create LOGFILE
             }
         }
+
+
+
+
+
+
+
+
+
         public String GetProductId(String productName)
         {
             String sql = "SELECT id FROM dbo.products WHERE name = '" + productName + "';";

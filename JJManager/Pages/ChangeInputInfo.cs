@@ -1,4 +1,5 @@
 ﻿using AudioSwitcher.AudioApi.CoreAudio;
+using AudioSwitcher.AudioApi.Session;
 using JJManager.Class;
 using MaterialSkin;
 using MaterialSkin.Controls;
@@ -21,31 +22,54 @@ namespace JJManager.Pages
     {
         List<CoreAudioDevice> devices = new CoreAudioController().GetDevices().ToList();
         Dictionary<string, string> inputParams = new Dictionary<string, string>();
-        DatabaseConnection dbConn = new DatabaseConnection();
 
-        private String _IdInput = "";
-        private String _IdProfile = "";
+        private int _IdInput = 0;
+        private Profiles _profile = null;
+        private Inputs _input = null;
 
         #region WinForms
         private MaterialSkinManager materialSkinManager = null;
         #endregion
 
 
-        public ChangeInputInfo(String idProfile, String IdInput)
+        public ChangeInputInfo(Profiles profile, int idInput)
         {
-            InitializeComponent();
+            DatabaseConnection database = new DatabaseConnection();
 
-            _IdInput = IdInput;
-            _IdProfile = idProfile;
+            InitializeComponent();
+            components = new System.ComponentModel.Container();
+
+            _IdInput = idInput;
+            _profile = profile;
+            _input = _profile.GetInputById(_IdInput);
 
             // MaterialDesign
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
-            materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
+            materialSkinManager.Theme = database.GetTheme();
             materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
+
+            UpdateProgramsToCmb();
+            UpdateDevicesToChkBox();
 
             // Events
             FormClosed += new FormClosedEventHandler(ChangeInputInfo_FormClosed);
+        }
+
+        private void ShowAppForms()
+        {
+            TxtMultiLineApplications.Show();
+            CmbProgramsWithAudio.Show();
+            BtnAddProgram.Show();
+            ChkBoxInputDevices.Hide();
+        }
+
+        private void ShowDeviceForms()
+        {
+            TxtMultiLineApplications.Hide();
+            CmbProgramsWithAudio.Hide();
+            BtnAddProgram.Hide();
+            ChkBoxInputDevices.Show();
         }
 
         private void ChangeInputInfo_FormClosed(object sender, FormClosedEventArgs e)
@@ -63,6 +87,7 @@ namespace JJManager.Pages
             String InputType = "";
             String InputInfo = "";
             List<String> ChkInputId = new List<String>();
+
             if (RdBtnInputApp.Checked)
             {
                 InputType = "app";
@@ -95,85 +120,67 @@ namespace JJManager.Pages
                 }
             }
 
+            _input.SaveInputData(TxtInputName.Text, InputType, InputInfo, ChkBoxInvertAxis.Checked);
 
-            dbConn.SaveInputData(_IdProfile, Int16.Parse(_IdInput), TxtInputName.Text, InputType, InputInfo, (ChkBoxInvertAxis.Checked ? "inverted" : "normal"));
+            //_DatabaseConnection.SaveInputData(_IdProfile, Int16.Parse(_IdInput), TxtInputName.Text, InputType, InputInfo, (ChkBoxInvertAxis.Checked ? "inverted" : "normal"));
             this.Close();
         }
 
         private void RdBtnInput_CheckedChanged(object sender, EventArgs e)
         {
             if (RdBtnInputApp.Checked)
-            {
-                TxtMultiLineApplications.Show();
-                ChkBoxInputDevices.Hide();
-
-            }
+                ShowAppForms();
             else
-            {
-                TxtMultiLineApplications.Hide();
-                UpdateDevicesToChkBox();
-                ChkBoxInputDevices.Show();
-            }
+                ShowDeviceForms();
         }
 
         private void UpdateDevicesToChkBox()
         {
             ChkBoxInputDevices.Items.Clear();
-
+            
             foreach (CoreAudioDevice device in devices)
             {
                 ChkBoxInputDevices.Items.Add(device.Name + " - " + device.InterfaceName + " (" + device.Id + ")");
             }
         }
 
+        private void UpdateProgramsToCmb()
+        {
+            CmbProgramsWithAudio.Items.Clear();
+
+            foreach (CoreAudioDevice device in devices)
+            {
+                if (device.IsPlaybackDevice)
+                {
+                    foreach (var audioSession in device.GetCapability<IAudioSessionController>().ActiveSessions())
+                    {
+                        if (audioSession.ExecutablePath != null)
+                        {
+                            CmbProgramsWithAudio.Items.Add(audioSession.DisplayName + " (" + audioSession.ExecutablePath.Split('\\').Last() + ")");
+                        }
+                    }
+                }
+            }
+        }
+
         private void ChangeInputInfo_Load(object sender, EventArgs e)
         {
+            DatabaseConnection database = new DatabaseConnection();
+
             this.Text = "Input " + _IdInput + " - Configurações";
-            String returnDictionary = "";
 
-            inputParams = dbConn.GetInputData(_IdProfile, Int16.Parse(_IdInput));
+            TxtInputName.Text = _input.Name;
 
-            if (inputParams.TryGetValue("input_name", out returnDictionary))
+            switch(_input.Type)
             {
-                TxtInputName.Text = returnDictionary;
-            }
-            else
-            {
-                TxtInputName.Text = "";
-            }
-
-            if (inputParams.TryGetValue("input_type", out returnDictionary))
-            {
-                if (returnDictionary == "device")
-                {
-                    RdBtnInputDevices.Checked = true;
-                    TxtMultiLineApplications.Hide();
-                    ChkBoxInputDevices.Show();
-                }
-                else
-                {
+                case "app":
                     RdBtnInputApp.Checked = true;
-                    TxtMultiLineApplications.Show();
-                    ChkBoxInputDevices.Hide();
-                }
-            }
-            else
-            {
-                TxtInputName.Text = "";
-                TxtMultiLineApplications.Show();
-                ChkBoxInputDevices.Hide();
-            }
-
-
-            if (inputParams.TryGetValue("input_info", out returnDictionary))
-            {
-                if (RdBtnInputApp.Checked)
-                {
-                    TxtMultiLineApplications.Text = returnDictionary.Replace("|", "\n");
-                }
-                else
-                {
-                    String[] ChkArray = returnDictionary.Split('|');
+                    TxtMultiLineApplications.Text = _input.Info.Replace("|", "\n");
+                    ShowAppForms();
+                    break;
+                case "device":
+                    RdBtnInputDevices.Checked = true;
+                    String[] ChkArray = _input.Info.Split('|');
 
                     foreach (var InputTypeChkBox in ChkBoxInputDevices.Items)
                     {
@@ -185,28 +192,34 @@ namespace JJManager.Pages
                             }
                         }
                     }
-                }
-            }
-            else
-            {
-                TxtMultiLineApplications.Text = "";
+                    ShowDeviceForms();
+                    break;
+                default:
+                    TxtInputName.Text = "";
+                    ShowAppForms();
+                    TxtMultiLineApplications.Text = "";
+                    break;
             }
 
-            if (inputParams.TryGetValue("axis_orientation", out returnDictionary))
-            {
-                if (returnDictionary == "inverted")
-                {
-                    ChkBoxInvertAxis.Checked = true;
-                }
-                else
-                {
-                    ChkBoxInvertAxis.Checked = false;
-                }
-            }
-            else
-            {
-                ChkBoxInvertAxis.Checked = false;
-            }
+            ChkBoxInvertAxis.Checked = _input.InvertedAxis;
+        }
+
+        private void BtnAddProgram_Click(object sender, EventArgs e)
+        {
+            int pFrom = CmbProgramsWithAudio.Text.IndexOf("(") + 1;
+            int pTo = CmbProgramsWithAudio.Text.LastIndexOf(")");
+
+            String text = CmbProgramsWithAudio.Text.Substring(pFrom, pTo - pFrom);
+
+
+            TxtMultiLineApplications.AppendText(TxtMultiLineApplications.Text.Length > 0 ? "\n" + text : text);
+            CmbProgramsWithAudio.SelectedIndex = -1;
+            CmbProgramsWithAudio.Items.Clear();
+        }
+
+        private void CmbProgramsWithAudio_DropDown(object sender, EventArgs e)
+        {
+            UpdateProgramsToCmb();
         }
     }
 }

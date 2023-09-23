@@ -67,6 +67,8 @@ namespace JJManager
             Version actualVersion = Assembly.GetEntryAssembly().GetName().Version;
             lblAboutVersion.Text = "JJManager Versão " + actualVersion.Major.ToString() + "." + actualVersion.Minor.ToString() + "." + actualVersion.Build.ToString();
             lblAboutText.Text = "Criado com o propósito de servir como um gerenciador para os produtos da série JJM, JJSD e JJB, o JJManager é uma solução completa que trás aos usuários diversas funções em seus produtos nos quais não são disponíveis de forma autônoma.";
+
+            Migrate migrate = new Migrate();
         }
 
         private void timerSerialComUpdate_Tick(object sender, EventArgs e)
@@ -244,6 +246,20 @@ namespace JJManager
                 BtnUpdateSoftware.Text = "Baixando Instalador, Aguarde...";
                 _JJManagerUpdater.Update();
             }
+        }
+
+        private void BtnUpdateDevice_Click(object sender, EventArgs e)
+        {
+            Thread thr = new Thread(() => {
+                UpdateDevice updateForm = new UpdateDevice();
+                updateForm.ShowDialog();
+                Thread.CurrentThread.Abort();
+            });
+
+            thr.SetApartmentState(ApartmentState.STA);
+            thr.IsBackground = true;
+            thr.Start();
+
         }
     }
 }

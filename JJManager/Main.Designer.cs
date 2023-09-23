@@ -41,12 +41,12 @@
             this.LblThemeColor = new MaterialSkin.Controls.MaterialLabel();
             this.SwtThemeColor = new MaterialSkin.Controls.MaterialSwitch();
             this.tabUpdate = new System.Windows.Forms.TabPage();
-            this.materialButton1 = new MaterialSkin.Controls.MaterialButton();
+            this.BtnUpdateDevice = new MaterialSkin.Controls.MaterialButton();
             this.BtnUpdateSoftware = new MaterialSkin.Controls.MaterialButton();
             this.tabAbout = new System.Windows.Forms.TabPage();
-            this.ImgAbout = new System.Windows.Forms.PictureBox();
-            this.lblAboutVersion = new MaterialSkin.Controls.MaterialLabel();
             this.lblAboutText = new MaterialSkin.Controls.MaterialLabel();
+            this.lblAboutVersion = new MaterialSkin.Controls.MaterialLabel();
+            this.ImgAbout = new System.Windows.Forms.PictureBox();
             this.materialTabControl1.SuspendLayout();
             this.tabConnect.SuspendLayout();
             this.tabOptions.SuspendLayout();
@@ -202,7 +202,7 @@
             // 
             // tabUpdate
             // 
-            this.tabUpdate.Controls.Add(this.materialButton1);
+            this.tabUpdate.Controls.Add(this.BtnUpdateDevice);
             this.tabUpdate.Controls.Add(this.BtnUpdateSoftware);
             this.tabUpdate.ImageKey = "JJManager_icones_update_16.png";
             this.tabUpdate.Location = new System.Drawing.Point(4, 23);
@@ -212,26 +212,27 @@
             this.tabUpdate.Text = "Atualizações";
             this.tabUpdate.UseVisualStyleBackColor = true;
             // 
-            // materialButton1
+            // BtnUpdateDevice
             // 
-            this.materialButton1.AutoSize = false;
-            this.materialButton1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.materialButton1.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
-            this.materialButton1.Depth = 0;
-            this.materialButton1.Enabled = false;
-            this.materialButton1.HighEmphasis = true;
-            this.materialButton1.Icon = null;
-            this.materialButton1.Location = new System.Drawing.Point(103, 161);
-            this.materialButton1.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
-            this.materialButton1.MouseState = MaterialSkin.MouseState.HOVER;
-            this.materialButton1.Name = "materialButton1";
-            this.materialButton1.NoAccentTextColor = System.Drawing.Color.Empty;
-            this.materialButton1.Size = new System.Drawing.Size(280, 36);
-            this.materialButton1.TabIndex = 3;
-            this.materialButton1.Text = "Enviar Firmware";
-            this.materialButton1.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
-            this.materialButton1.UseAccentColor = false;
-            this.materialButton1.UseVisualStyleBackColor = true;
+            this.BtnUpdateDevice.AutoSize = false;
+            this.BtnUpdateDevice.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnUpdateDevice.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.BtnUpdateDevice.Depth = 0;
+            this.BtnUpdateDevice.Enabled = false;
+            this.BtnUpdateDevice.HighEmphasis = true;
+            this.BtnUpdateDevice.Icon = null;
+            this.BtnUpdateDevice.Location = new System.Drawing.Point(103, 161);
+            this.BtnUpdateDevice.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.BtnUpdateDevice.MouseState = MaterialSkin.MouseState.HOVER;
+            this.BtnUpdateDevice.Name = "BtnUpdateDevice";
+            this.BtnUpdateDevice.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.BtnUpdateDevice.Size = new System.Drawing.Size(280, 36);
+            this.BtnUpdateDevice.TabIndex = 3;
+            this.BtnUpdateDevice.Text = "Enviar Firmware";
+            this.BtnUpdateDevice.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.BtnUpdateDevice.UseAccentColor = false;
+            this.BtnUpdateDevice.UseVisualStyleBackColor = true;
+            this.BtnUpdateDevice.Click += new System.EventHandler(this.BtnUpdateDevice_Click);
             // 
             // BtnUpdateSoftware
             // 
@@ -267,28 +268,6 @@
             this.tabAbout.Text = "Sobre";
             this.tabAbout.UseVisualStyleBackColor = true;
             // 
-            // ImgAbout
-            // 
-            this.ImgAbout.BackgroundImage = global::JJManager.Properties.Resources.Logo_JohnJohn_JJMixer;
-            this.ImgAbout.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.ImgAbout.Location = new System.Drawing.Point(3, 8);
-            this.ImgAbout.Name = "ImgAbout";
-            this.ImgAbout.Size = new System.Drawing.Size(480, 103);
-            this.ImgAbout.TabIndex = 0;
-            this.ImgAbout.TabStop = false;
-            // 
-            // lblAboutVersion
-            // 
-            this.lblAboutVersion.Depth = 0;
-            this.lblAboutVersion.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
-            this.lblAboutVersion.Location = new System.Drawing.Point(3, 114);
-            this.lblAboutVersion.MouseState = MaterialSkin.MouseState.HOVER;
-            this.lblAboutVersion.Name = "lblAboutVersion";
-            this.lblAboutVersion.Size = new System.Drawing.Size(480, 26);
-            this.lblAboutVersion.TabIndex = 2;
-            this.lblAboutVersion.Text = "JJManager Versão 1.1.13";
-            this.lblAboutVersion.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
             // lblAboutText
             // 
             this.lblAboutText.Depth = 0;
@@ -301,6 +280,28 @@
             this.lblAboutText.TabIndex = 3;
             this.lblAboutText.Text = resources.GetString("lblAboutText.Text");
             this.lblAboutText.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // lblAboutVersion
+            // 
+            this.lblAboutVersion.Depth = 0;
+            this.lblAboutVersion.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.lblAboutVersion.Location = new System.Drawing.Point(3, 114);
+            this.lblAboutVersion.MouseState = MaterialSkin.MouseState.HOVER;
+            this.lblAboutVersion.Name = "lblAboutVersion";
+            this.lblAboutVersion.Size = new System.Drawing.Size(480, 26);
+            this.lblAboutVersion.TabIndex = 2;
+            this.lblAboutVersion.Text = "JJManager Versão 1.1.13";
+            this.lblAboutVersion.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // ImgAbout
+            // 
+            this.ImgAbout.BackgroundImage = global::JJManager.Properties.Resources.Logo_JohnJohn_JJMixer;
+            this.ImgAbout.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.ImgAbout.Location = new System.Drawing.Point(3, 8);
+            this.ImgAbout.Name = "ImgAbout";
+            this.ImgAbout.Size = new System.Drawing.Size(480, 103);
+            this.ImgAbout.TabIndex = 0;
+            this.ImgAbout.TabStop = false;
             // 
             // Main
             // 
@@ -343,7 +344,7 @@
         private System.Windows.Forms.TabPage tabAbout;
         private MaterialSkin.Controls.MaterialSwitch SwtThemeColor;
         private MaterialSkin.Controls.MaterialButton BtnUpdateSoftware;
-        private MaterialSkin.Controls.MaterialButton materialButton1;
+        private MaterialSkin.Controls.MaterialButton BtnUpdateDevice;
         private MaterialSkin.Controls.MaterialLabel LblThemeColor;
         private System.Windows.Forms.PictureBox ImgAbout;
         private MaterialSkin.Controls.MaterialLabel lblAboutVersion;

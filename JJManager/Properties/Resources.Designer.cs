@@ -179,5 +179,14 @@ namespace JJManager.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a teste.
+        /// </summary>
+        internal static string SQL_1_1_14 {
+            get {
+                return ResourceManager.GetString("SQL_1_1_14", resourceCulture);
+            }
+        }
     }
 }

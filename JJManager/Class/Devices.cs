@@ -30,6 +30,7 @@ namespace JJManager.Class
         private String _Id = "";
         private String _ProductName = "";
         private String _SerialNumber = "";
+        
 
         private DatabaseConnection _DatabaseConnection = new DatabaseConnection();
 
@@ -322,6 +323,10 @@ namespace JJManager.Class
             {
 
             }
+            catch (ThreadAbortException ex)
+            {
+                MessageBox.Show("Bugou");
+            }
         }
 
         public String ReceiveHIDMessage()
@@ -397,47 +402,32 @@ namespace JJManager.Class
             {
 
             }
+            catch(ThreadAbortException ex)
+            {
+
+            }
 
             return String.Empty;
         }
 
-        public String GetJoystickAxisPercentage(Joystick joystick, String idInput, String joystickAxis, String idProfile)
+
+        public int GetJoystickAxisPercentage(Joystick joystick, String joystickAxis)
         {
-            DatabaseConnection _DatabaseConnection = new DatabaseConnection();
-            String axisOrientation = "";
-            
-            axisOrientation = _DatabaseConnection.GetInputAxisOrientation(idInput, idProfile);
-            
-            String Value = "";
-            Dictionary<String, String> inverseDictionaryValue = new Dictionary<String, String>();
-
-            int InverseValue = 100;
-
-            for (int i = 0; i <= 100;i++)
-            {
-                inverseDictionaryValue.Add(i.ToString(), InverseValue.ToString());
-                InverseValue--;
-            }
-
-
             try
             {
                 joystick.Poll();
+                var currentState = joystick.GetCurrentState(); //only show the last state
 
-                var lastState = joystick.GetBufferedData(); //only show the last state
-
-                foreach (var state in lastState)
+                if (joystickAxis == "X")
+                    return (currentState.X * 100 / 65530);
+                else if (joystickAxis == "Y")
+                    return (currentState.Y * 100 / 65530);
+            }
+            catch (SharpDXException ex)
+            {
+                if ((ex.ResultCode == ResultCode.NotAcquired) || (ex.ResultCode == ResultCode.InputLost))
                 {
-                    if (joystickAxis == "X")
-                    {
-                        if (state.Offset == JoystickOffset.X)
-                            Value = (state.Value * 100 / 65530).ToString();
-                    }
-                    else if (joystickAxis == "Y")
-                    {
-                        if (state.Offset == JoystickOffset.Y)
-                            Value = (state.Value * 100 / 65530).ToString();
-                    }
+                    return -1;
                 }
             }
             catch (Exception ex)
@@ -445,10 +435,7 @@ namespace JJManager.Class
                 MessageBox.Show(ex.Message);
             }
 
-            if (axisOrientation == "inverted" && Value != "")
-                return inverseDictionaryValue[Value];
-            else
-                return Value;
+            return -1;
         }
     }
 }

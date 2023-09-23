@@ -1,6 +1,8 @@
 ﻿using AudioSwitcher.AudioApi;
 using AudioSwitcher.AudioApi.CoreAudio;
+using AudioSwitcher.AudioApi.Observables;
 using AudioSwitcher.AudioApi.Session;
+using SharpDX.DirectInput;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,40 +20,32 @@ namespace JJManager.Class
 
         public AudioManager ()
         {
-            //_coreAudioController.AudioDeviceChanged
+            IObservable<DeviceChangedArgs> deviceChangedTypes = _coreAudioController.AudioDeviceChanged;
+
+            deviceChangedTypes.Subscribe(x => {
+                _devices.Clear();
+                _devices = new List<CoreAudioDevice>(_coreAudioController.GetDevices());
+            });
         }
 
-        private void RefreshAudioDevices()
+        public void ChangeInputVolume(Inputs input, int settedVolume)
         {
-            _devices.Clear();
-            _devices = new List<CoreAudioDevice>(_coreAudioController.GetDevices());
-        }
+            if (input == null)
+                return;
 
-        public void ChangeInputVolume(String idProfile, String InputId, int SettedVolume)
-        {
-            RefreshAudioDevices();
+            if (input.InvertedAxis)
+                settedVolume = Math.Abs(settedVolume - 100);
 
-            String InputType = _DatabaseConnection.GetInputType(idProfile, Int16.Parse(InputId));
-
-            if (InputType == "app")
+            foreach (String info in input.Info.Split('|'))
             {
-                foreach (String App in _DatabaseConnection.GetInputInfo(idProfile, Int16.Parse(InputId))) 
-                {
-                    if (App != String.Empty)
-                        this.ChangeAppVolume(App, SettedVolume);
-                }
-            }
-            else if (InputType == "device")
-            {
-                foreach (String DeviceId in _DatabaseConnection.GetInputInfo(idProfile, Int16.Parse(InputId)))
-                {
-                    if (DeviceId != String.Empty)
-                        this.ChangeDeviceVolume(DeviceId, SettedVolume);
-                }
+                if (input.Type == "app" && info != String.Empty)
+                    ChangeAppVolume(info, settedVolume);
+                else if (input.Type == "device" && info != String.Empty)
+                    ChangeDeviceVolume(info, settedVolume);
             }
         }
 
-        public void ChangeAppVolume(String AppExecutable, int SettedVolume)
+        private void ChangeAppVolume(String AppExecutable, int SettedVolume)
         {
             foreach (CoreAudioDevice device in _devices)
             {
@@ -68,7 +62,7 @@ namespace JJManager.Class
             }
         }
 
-        public void ChangeDeviceVolume(String DeviceId, int SettedVolume)
+        private void ChangeDeviceVolume(String DeviceId, int SettedVolume)
         {
             foreach (CoreAudioDevice device in _devices)
             {
