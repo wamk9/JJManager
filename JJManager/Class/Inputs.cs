@@ -53,11 +53,11 @@ namespace JJManager.Class
         {
             DatabaseConnection database = new DatabaseConnection();
             
-            String sql = "MERGE analog_inputs WITH (SERIALIZABLE) AS T USING (VALUES (" + _id + ",'" + name + "', '" + type + "', '" + info + "', " + (invertedAxis ? 1 : 0) + ", '" + _idProfile + "')) AS U (id, name, type, info, axis_orientation, id_profile) " +
+            String sql = "MERGE analog_inputs WITH (SERIALIZABLE) AS T USING (VALUES (" + _id + ",'" + name + "', '" + type + "', '" + info + "', " + (invertedAxis ? 1 : 0) + ", " + _idProfile + ")) AS U (id, name, type, info, inverted_axis, id_profile) " +
                             "ON U.id = T.id AND U.id_profile = T.id_profile WHEN MATCHED THEN " +
                                 "UPDATE SET name='" + name + "', type='" + type + "', info='" + info + "', inverted_axis=" + (invertedAxis ? 1 : 0) + " " +
                             "WHEN NOT MATCHED THEN " +
-                            "INSERT (id, name, type, info, inverted_axis, id_profile) VALUES (" + _id + ", '" + name + "', '" + type + "', '" + info + "', " + (invertedAxis ? 1 : 0) + " , '" + _idProfile + "');";
+                            "INSERT (id, name, type, info, inverted_axis, id_profile) VALUES (" + _id + ", '" + name + "', '" + type + "', '" + info + "', " + (invertedAxis ? 1 : 0) + " , " + _idProfile + ");";
 
             if (!database.RunSQL(sql))
             {

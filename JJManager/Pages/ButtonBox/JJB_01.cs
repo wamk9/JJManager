@@ -58,9 +58,15 @@ namespace JJManager.Pages.ButtonBox
             foreach (String Profile in Profiles.GetList(_device.Id))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
-            CmbBoxSelectProfile.SelectedIndex = 0;
-            _profile = new Profiles(CmbBoxSelectProfile.Items[0].ToString(), _device.Id);
-
+            if (CmbBoxSelectProfile.Items.Count == 0)
+            {
+                _profile = new Profiles("Perfil Padrão", _device.Id, 2);
+            }
+            else
+            {
+                CmbBoxSelectProfile.SelectedIndex = 0;
+                _profile = new Profiles(CmbBoxSelectProfile.Items[0].ToString(), _device.Id, 2);
+            }
 
             // Start NotifyIcon
             notifyIcon = new AppModulesNotifyIcon(components, _Joystick.Properties.ProductName, NotifyIcon_Click);
@@ -159,12 +165,12 @@ namespace JJManager.Pages.ButtonBox
         {
             if (CmbBoxSelectProfile.SelectedItem.ToString() != "")
             {
-                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id);
+                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id, 2);
             }
             else
             {
                 CmbBoxSelectProfile.SelectedIndex = 0;
-                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id);
+                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id, 2);
             }
         }
         #endregion
@@ -246,7 +252,7 @@ namespace JJManager.Pages.ButtonBox
 
                 CmbBoxSelectProfile.Items.Clear();
 
-                foreach (String Profile in _DatabaseConnection.GetProfiles(_device.Id))
+                foreach (String Profile in Profiles.GetList(_device.Id))
                     CmbBoxSelectProfile.Items.Add(Profile);
 
                 CmbBoxSelectProfile.SelectedIndex = 0;

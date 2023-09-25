@@ -198,7 +198,7 @@ namespace JJManager.Class
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("RunSQL: " + ex);
+                    MessageBox.Show("RunSQL: " + sql + "\n" + ex);
                 }
                 finally
                 {

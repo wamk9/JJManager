@@ -21,7 +21,7 @@ namespace JJManager.Pages
 {
     public partial class JJM_01 : MaterialForm
     {
-        private static Class.Devices _Device;
+        private static Class.Devices _device;
         private static AudioManager _audioManager = new AudioManager();
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
         private static Profiles _profile = null;
@@ -56,17 +56,24 @@ namespace JJManager.Pages
                 Close();
             }
 
-            _Device = new Devices(device);
+            _device = new Devices(device);
 
             // Fill Forms
-            foreach (String Profile in Profiles.GetList(_Device.Id))
+            foreach (String Profile in Profiles.GetList(_device.Id))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
-            CmbBoxSelectProfile.SelectedIndex = 0;
-            _profile = new Profiles(CmbBoxSelectProfile.Items[0].ToString(), _Device.Id);
+            if (CmbBoxSelectProfile.Items.Count == 0)
+            {
+                _profile = new Profiles("Perfil Padrão", _device.Id, 2);
+            }
+            else
+            {
+                CmbBoxSelectProfile.SelectedIndex = 0;
+                _profile = new Profiles(CmbBoxSelectProfile.Items[0].ToString(), _device.Id, 2);
+            }
 
             // Start NotifyIcon
-            notifyIcon = new AppModulesNotifyIcon(components, _Device.ProductName, NotifyIcon_Click);
+            notifyIcon = new AppModulesNotifyIcon(components, _device.ProductName, NotifyIcon_Click);
             HidReceiver = new AppModulesTimer(components, 50, timerReceiveHIDMessage_Tick);
 
             //Start Timers
@@ -136,7 +143,7 @@ namespace JJManager.Pages
             {
                 for (int i = 1; i <= 5; i++)
                 {
-                    _Device.SendInputNameToDeviceScreen(i, _profile.Id);
+                    _device.SendInputNameToDeviceScreen(i, _profile.Id);
                     Thread.Sleep(200);
                 }
             }
@@ -144,7 +151,7 @@ namespace JJManager.Pages
 
         private void timerReceiveHIDMessage_Tick(object sender, EventArgs e)
         {
-            DataReceived = _Device.ReceiveHIDMessage();
+            DataReceived = _device.ReceiveHIDMessage();
 
             if (DataReceived != String.Empty)
             {
@@ -175,7 +182,7 @@ namespace JJManager.Pages
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in Profiles.GetList(_Device.Id))
+            foreach (String Profile in Profiles.GetList(_device.Id))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -185,12 +192,12 @@ namespace JJManager.Pages
         {
             if (CmbBoxSelectProfile.SelectedItem.ToString() != "")
             {
-                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _Device.Id);
+                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id, 5);
             }
             else
             {
                 CmbBoxSelectProfile.SelectedIndex = 0;
-                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _Device.Id);
+                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id, 5);
             }
 
         }
@@ -289,7 +296,7 @@ namespace JJManager.Pages
                 if (!_IsCreateProfileOpened)
                 {
                     _IsCreateProfileOpened = true;
-                    CreateProfile createProfile = new CreateProfile(_Device);
+                    CreateProfile createProfile = new CreateProfile(_device);
                     createProfile.ShowDialog();
                     _IsCreateProfileOpened = false;
                 }
@@ -316,11 +323,11 @@ namespace JJManager.Pages
 
             if (dialogResult == DialogResult.Yes)
             {
-                _DatabaseConnection.DeleteProfile(CmbBoxSelectProfile.SelectedItem.ToString(), _Device.Id);
+                _DatabaseConnection.DeleteProfile(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id);
 
                 CmbBoxSelectProfile.Items.Clear();
 
-                foreach (String Profile in _DatabaseConnection.GetProfiles(_Device.Id))
+                foreach (String Profile in Profiles.GetList(_device.Id))
                     CmbBoxSelectProfile.Items.Add(Profile);
 
                 CmbBoxSelectProfile.SelectedIndex = 0;

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -23,26 +24,12 @@ namespace JJManager.Class
         public String Id { get => _id; }
         public String IdProduct { get => _idProduct; }
 
-
-        public Profiles (String name, String idProduct)
-        {
-            _idProduct = idProduct;
-            _name = name;
-            InitProfile();
-        }
-
         public Profiles(String name, String idProduct, int qtdInputs)
         {
             DatabaseConnection database = new DatabaseConnection();
             Inputs tmpInput = null;
-            String sql = "INSERT INTO profiles (name, id_product) VALUES ('" + name + "', " + idProduct + ");";
 
-            if (!database.RunSQL(sql))
-            {
-                // TODO: Create LOGFILE
-            }
-
-            sql = "SELECT TOP 1 id FROM profiles ORDER BY id desc;";
+            String sql = "SELECT id FROM profiles WHERE name = '" + name + "' AND id_product = '" + idProduct + "';";
 
             using (JsonDocument json = database.RunSQLWithResults(sql))
             {
@@ -54,48 +41,34 @@ namespace JJManager.Class
                 }
             }
 
+            if (_id == "")
+            {
+                sql = "INSERT INTO profiles (name, id_product) VALUES ('" + name + "', " + idProduct + ");";
+
+                if (!database.RunSQL(sql))
+                {
+                    // TODO: Create LOGFILE
+                }
+
+                sql = "SELECT TOP 1 id FROM profiles ORDER BY id desc;";
+
+                using (JsonDocument json = database.RunSQLWithResults(sql))
+                {
+                    if (json != null)
+                    {
+                        _id = json.RootElement[0].GetProperty("id").ToString();
+                        _idProduct = idProduct;
+                        _name = name;
+                    }
+                }
+            }
+
+            _inputs = new Inputs[qtdInputs];
+
             for (int j = 0; j < qtdInputs; j++)
             {
                 tmpInput = new Inputs(_id, j.ToString());
                 _inputs[j] = tmpInput;
-            }
-        }
-
-        private void InitProfile()
-        {
-            DatabaseConnection database = new DatabaseConnection();
-            String sql = "";
-            int qtdInputs = 0;
-            Inputs tmpInput = null;
-
-            sql = "SELECT " +
-                "p.id," +
-                "p.name," +
-                "COUNT(DISTINCT i.id) AS input_count " +
-                "FROM profiles AS p " +
-                "INNER JOIN analog_inputs AS i ON (p.id = i.id_profile) " +
-                "WHERE id_product = '" + _idProduct + "' AND p.name = '" + _name + "' " +
-                "GROUP BY p.id, p.name;";
-
-            using (JsonDocument json = database.RunSQLWithResults(sql))
-            {
-                if (json != null)
-                {
-                    for (int i = 0; i < json.RootElement.GetArrayLength(); i++)
-                    {
-                        _id = json.RootElement[0].GetProperty("id").ToString();
-                        _name = json.RootElement[0].GetProperty("name").ToString();
-                        qtdInputs = Int16.Parse(json.RootElement[0].GetProperty("input_count").ToString());
-
-                        _inputs = new Inputs[qtdInputs];
-
-                        for (int j = 1; j <= qtdInputs; j++)
-                        {
-                            tmpInput = new Inputs(_id, j.ToString());
-                            _inputs[(j - 1)] = tmpInput;
-                        }
-                    }
-                }
             }
         }
 
