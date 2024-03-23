@@ -37,7 +37,7 @@ namespace JJManager.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/storage/apps/lastversions_dev.json")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/storage/apps/lastversions.json")]
         public string LastVersionURL {
             get {
                 return ((string)(this["LastVersionURL"]));
