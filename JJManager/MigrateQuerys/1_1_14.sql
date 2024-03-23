@@ -34,6 +34,8 @@ ALTER TABLE analog_inputs ADD DEFAULT 0 FOR inverted_axis;
 ALTER TABLE analog_inputs ALTER COLUMN type varchar(10);
 UPDATE analog_inputs SET inverted_axis = 0 WHERE inverted_axis = 'normal';
 UPDATE analog_inputs SET inverted_axis = 1 WHERE inverted_axis = 'inverted';
+GO
+ALTER TABLE analog_inputs ALTER COLUMN inverted_axis BIT;
 
 UPDATE dbo.configs SET software_version = '1.1.14';
 

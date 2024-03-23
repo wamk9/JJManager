@@ -21,14 +21,14 @@ namespace JJManager.Class
     {
         System.Windows.Forms.NotifyIcon notifyIcon;
 
-        public AppModulesNotifyIcon(System.ComponentModel.IContainer components, String productName, EventHandler clickEvent)
+        public AppModulesNotifyIcon(System.ComponentModel.IContainer components, String message, EventHandler clickEvent)
         {
             notifyIcon = new System.Windows.Forms.NotifyIcon(components);
 
             notifyIcon.Visible = false;
             notifyIcon.Click += new EventHandler(clickEvent);
             notifyIcon.BalloonTipTitle = "JJManager";
-            notifyIcon.BalloonTipText = "Você continua conectado a " + productName + ", para encerrar o JJManager é necessário desconecta-lo.";
+            notifyIcon.BalloonTipText = message;
             notifyIcon.Icon = JJManager.Properties.Resources.JJManagerIcon_256;
         }
 

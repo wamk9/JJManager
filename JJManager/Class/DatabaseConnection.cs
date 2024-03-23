@@ -20,19 +20,21 @@ namespace JJManager.Class
     internal class DatabaseConnection
     {
         SqlConnection _connection;
+        private string _DbFolderPath = "";
+        private string _DbPath = "";
 
         public DatabaseConnection()
         {
-            string _dbFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "JohnJohn3D", "JJManager");
-            string _dbPath = Path.Combine(_dbFolderPath, "JJManagerDB.mdf");
+            _DbFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "JohnJohn3D", "JJManager");
+            _DbPath = Path.Combine(_DbFolderPath, "JJManagerDB.mdf");
 
-            if (!Directory.Exists(_dbFolderPath))
-                Directory.CreateDirectory(_dbFolderPath);
+            if (!Directory.Exists(_DbFolderPath))
+                Directory.CreateDirectory(_DbFolderPath);
                 
             
-            if (!File.Exists(_dbPath))
+            if (!File.Exists(_DbPath))
             {
-                File.Copy(Path.Combine(Directory.GetCurrentDirectory(), "JJManagerDB_blank.mdf"), _dbPath);
+                File.Copy(Path.Combine(Directory.GetCurrentDirectory(), "JJManagerDB_blank.mdf"), _DbPath);
                 InitDatabase();
             }
         }
@@ -62,6 +64,8 @@ namespace JJManager.Class
                             {
                                 if (line.ToUpperInvariant().Trim() == "GO")
                                 {
+                                    //Log.Insert("Migration", "Problema ocorrido na migração de dados (RunSQLMigrateFile)\r\n" + sqlSplited );
+
                                     cmd.CommandText = sqlSplited;
                                     cmd.ExecuteNonQuery();
                                     sqlSplited = String.Empty;
@@ -71,17 +75,18 @@ namespace JJManager.Class
                                     sqlSplited += line + "\n";
                                 }
                             }
-
-                            isQueryExecuted = true;
+                            
                             cmd.Dispose();
                             transaction.Commit();
+                            
+                            isQueryExecuted = true;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
-                    MessageBox.Show(ex.ToString());
+                    Log.Insert("Migration", "Problema ocorrido na migração de dados (RunSQLMigrateFile)\r\n" + sqlSplited + "\r\n", ex);
                 }
                 finally
                 {
@@ -138,7 +143,7 @@ namespace JJManager.Class
 
                                     JsonString += "}";
 
-                                    Row.Add(JsonString);
+                                    Row.Add(JsonString.Replace("\\", "\\\\"));
                                 }
 
                                 if (Row.Count > 0)
@@ -225,48 +230,39 @@ namespace JJManager.Class
             }
         }
 
-
-
-
-
-
-
-
-
-        public String GetProductId(String productName)
+        public void CreateBackup() 
         {
-            String sql = "SELECT id FROM dbo.products WHERE name = '" + productName + "';";
-            String id = "";
+            string sql = "";
 
-            using (JsonDocument Json = RunSQLWithResults(sql))
+            try
             {
-                if (Json == null)
-                    id = SetProductId(productName);
-                else
-                    id = Json.RootElement[0].GetProperty("id").ToString();
-            }
-
-            return id;
-        }
-
-        private String SetProductId(String productName)
-        {
-            String sql = "INSERT INTO dbo.products (name) VALUES ('" + productName + "');";
-            String id = "";
-
-            if (RunSQL(sql))
-            {
-                sql = "SELECT id FROM dbo.products WHERE name = '" + productName + "';";
+                DatabaseConnection connection = new DatabaseConnection();
+                sql = "SELECT software_version FROM dbo.configs;";
 
                 using (JsonDocument Json = RunSQLWithResults(sql))
                 {
-                    id = Json.RootElement[0].GetProperty("id").ToString();
-                    SaveProfile("Perfil Padrão", id);
+                    if (!Directory.Exists(Path.Combine(_DbFolderPath, "Backup")))
+                        Directory.CreateDirectory(Path.Combine(_DbFolderPath, "Backup"));
+
+                    sql = "BACKUP DATABASE \"" + _DbPath + "\" TO DISK = '" + Path.Combine(_DbFolderPath, "Backup", "JJManagerDB_" + Json.RootElement[0].GetProperty("software_version").GetString().Replace(".", "_") + ".bkp") + "' WITH FORMAT, COPY_ONLY";
+
+                    RunSQL(sql);
                 }
             }
-
-            return id;
+            catch (Exception ex)
+            {
+                Log.Insert("Backup", "Problema ocorrido no backup de dados (CreateBackup)\r\n" + sql + "\r\n", ex);
+            }
         }
+
+
+
+
+
+
+
+
+       
 
         public void SaveInputData (String id_profile, int input_id, String input_name, String input_type, String input_info, string invert_axis)
         {

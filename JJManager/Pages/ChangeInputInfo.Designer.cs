@@ -34,11 +34,14 @@
             this.TxtInputName = new MaterialSkin.Controls.MaterialTextBox();
             this.RdBtnInputApp = new MaterialSkin.Controls.MaterialRadioButton();
             this.RdBtnInputDevices = new MaterialSkin.Controls.MaterialRadioButton();
-            this.TxtMultiLineApplications = new MaterialSkin.Controls.MaterialMultiLineTextBox();
-            this.ChkBoxInputDevices = new MaterialSkin.Controls.MaterialCheckedListBox();
             this.ChkBoxInvertAxis = new MaterialSkin.Controls.MaterialCheckbox();
-            this.BtnAddProgram = new MaterialSkin.Controls.MaterialButton();
-            this.CmbProgramsWithAudio = new MaterialSkin.Controls.MaterialComboBox();
+            this.btnAddFolder = new MaterialSkin.Controls.MaterialButton();
+            this.btnAddExecutable = new MaterialSkin.Controls.MaterialButton();
+            this.btnAddSessionActive = new MaterialSkin.Controls.MaterialButton();
+            this.lvwApps = new MaterialSkin.Controls.MaterialListView();
+            this.appPath = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.btnDeleteItems = new MaterialSkin.Controls.MaterialButton();
+            this.cklDevices = new MaterialSkin.Controls.MaterialCheckedListBox();
             this.SuspendLayout();
             // 
             // BtnSaveInputConf
@@ -49,7 +52,7 @@
             this.BtnSaveInputConf.Depth = 0;
             this.BtnSaveInputConf.HighEmphasis = true;
             this.BtnSaveInputConf.Icon = null;
-            this.BtnSaveInputConf.Location = new System.Drawing.Point(372, 530);
+            this.BtnSaveInputConf.Location = new System.Drawing.Point(853, 549);
             this.BtnSaveInputConf.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             this.BtnSaveInputConf.MouseState = MaterialSkin.MouseState.HOVER;
             this.BtnSaveInputConf.Name = "BtnSaveInputConf";
@@ -70,7 +73,7 @@
             this.BtnCancelInputConf.Depth = 0;
             this.BtnCancelInputConf.HighEmphasis = true;
             this.BtnCancelInputConf.Icon = null;
-            this.BtnCancelInputConf.Location = new System.Drawing.Point(268, 530);
+            this.BtnCancelInputConf.Location = new System.Drawing.Point(749, 549);
             this.BtnCancelInputConf.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             this.BtnCancelInputConf.MouseState = MaterialSkin.MouseState.HOVER;
             this.BtnCancelInputConf.Name = "BtnCancelInputConf";
@@ -98,7 +101,7 @@
             this.TxtInputName.MouseState = MaterialSkin.MouseState.OUT;
             this.TxtInputName.Multiline = false;
             this.TxtInputName.Name = "TxtInputName";
-            this.TxtInputName.Size = new System.Drawing.Size(435, 50);
+            this.TxtInputName.Size = new System.Drawing.Size(916, 50);
             this.TxtInputName.TabIndex = 4;
             this.TxtInputName.Text = "";
             this.TxtInputName.TrailingIcon = null;
@@ -109,7 +112,7 @@
             this.RdBtnInputApp.AutoSize = true;
             this.RdBtnInputApp.Checked = true;
             this.RdBtnInputApp.Depth = 0;
-            this.RdBtnInputApp.Location = new System.Drawing.Point(42, 141);
+            this.RdBtnInputApp.Location = new System.Drawing.Point(283, 141);
             this.RdBtnInputApp.Margin = new System.Windows.Forms.Padding(0);
             this.RdBtnInputApp.MouseLocation = new System.Drawing.Point(-1, -1);
             this.RdBtnInputApp.MouseState = MaterialSkin.MouseState.HOVER;
@@ -127,7 +130,7 @@
             this.RdBtnInputDevices.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.RdBtnInputDevices.AutoSize = true;
             this.RdBtnInputDevices.Depth = 0;
-            this.RdBtnInputDevices.Location = new System.Drawing.Point(171, 141);
+            this.RdBtnInputDevices.Location = new System.Drawing.Point(412, 141);
             this.RdBtnInputDevices.Margin = new System.Windows.Forms.Padding(0);
             this.RdBtnInputDevices.MouseLocation = new System.Drawing.Point(-1, -1);
             this.RdBtnInputDevices.MouseState = MaterialSkin.MouseState.HOVER;
@@ -140,44 +143,12 @@
             this.RdBtnInputDevices.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.RdBtnInputDevices.UseVisualStyleBackColor = true;
             // 
-            // TxtMultiLineApplications
-            // 
-            this.TxtMultiLineApplications.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.TxtMultiLineApplications.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.TxtMultiLineApplications.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.TxtMultiLineApplications.Depth = 0;
-            this.TxtMultiLineApplications.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
-            this.TxtMultiLineApplications.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.TxtMultiLineApplications.Location = new System.Drawing.Point(13, 241);
-            this.TxtMultiLineApplications.MouseState = MaterialSkin.MouseState.HOVER;
-            this.TxtMultiLineApplications.Name = "TxtMultiLineApplications";
-            this.TxtMultiLineApplications.Size = new System.Drawing.Size(435, 280);
-            this.TxtMultiLineApplications.TabIndex = 8;
-            this.TxtMultiLineApplications.Text = "";
-            // 
-            // ChkBoxInputDevices
-            // 
-            this.ChkBoxInputDevices.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ChkBoxInputDevices.AutoScroll = true;
-            this.ChkBoxInputDevices.BackColor = System.Drawing.SystemColors.Control;
-            this.ChkBoxInputDevices.Depth = 0;
-            this.ChkBoxInputDevices.Location = new System.Drawing.Point(13, 187);
-            this.ChkBoxInputDevices.MouseState = MaterialSkin.MouseState.HOVER;
-            this.ChkBoxInputDevices.Name = "ChkBoxInputDevices";
-            this.ChkBoxInputDevices.Size = new System.Drawing.Size(435, 334);
-            this.ChkBoxInputDevices.Striped = false;
-            this.ChkBoxInputDevices.StripeDarkColor = System.Drawing.Color.Empty;
-            this.ChkBoxInputDevices.TabIndex = 9;
-            // 
             // ChkBoxInvertAxis
             // 
             this.ChkBoxInvertAxis.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.ChkBoxInvertAxis.AutoSize = true;
             this.ChkBoxInvertAxis.Depth = 0;
-            this.ChkBoxInvertAxis.Location = new System.Drawing.Point(13, 528);
+            this.ChkBoxInvertAxis.Location = new System.Drawing.Point(13, 547);
             this.ChkBoxInvertAxis.Margin = new System.Windows.Forms.Padding(0);
             this.ChkBoxInvertAxis.MouseLocation = new System.Drawing.Point(-1, -1);
             this.ChkBoxInvertAxis.MouseState = MaterialSkin.MouseState.HOVER;
@@ -189,71 +160,157 @@
             this.ChkBoxInvertAxis.Text = "Inverter Eixo";
             this.ChkBoxInvertAxis.UseVisualStyleBackColor = true;
             // 
-            // BtnAddProgram
+            // btnAddFolder
             // 
-            this.BtnAddProgram.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnAddProgram.AutoSize = false;
-            this.BtnAddProgram.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.BtnAddProgram.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
-            this.BtnAddProgram.Depth = 0;
-            this.BtnAddProgram.HighEmphasis = true;
-            this.BtnAddProgram.Icon = null;
-            this.BtnAddProgram.Location = new System.Drawing.Point(321, 184);
-            this.BtnAddProgram.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
-            this.BtnAddProgram.MouseState = MaterialSkin.MouseState.HOVER;
-            this.BtnAddProgram.Name = "BtnAddProgram";
-            this.BtnAddProgram.NoAccentTextColor = System.Drawing.Color.Empty;
-            this.BtnAddProgram.Size = new System.Drawing.Size(127, 53);
-            this.BtnAddProgram.TabIndex = 14;
-            this.BtnAddProgram.Text = "Acrescentar";
-            this.BtnAddProgram.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
-            this.BtnAddProgram.UseAccentColor = false;
-            this.BtnAddProgram.UseVisualStyleBackColor = true;
-            this.BtnAddProgram.Click += new System.EventHandler(this.BtnAddProgram_Click);
+            this.btnAddFolder.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnAddFolder.AutoSize = false;
+            this.btnAddFolder.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnAddFolder.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnAddFolder.Depth = 0;
+            this.btnAddFolder.HighEmphasis = true;
+            this.btnAddFolder.Icon = null;
+            this.btnAddFolder.Location = new System.Drawing.Point(7, 185);
+            this.btnAddFolder.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnAddFolder.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnAddFolder.Name = "btnAddFolder";
+            this.btnAddFolder.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnAddFolder.Size = new System.Drawing.Size(225, 53);
+            this.btnAddFolder.TabIndex = 15;
+            this.btnAddFolder.Text = "Adicionar executáveis de pasta";
+            this.btnAddFolder.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnAddFolder.UseAccentColor = false;
+            this.btnAddFolder.UseVisualStyleBackColor = true;
+            this.btnAddFolder.Click += new System.EventHandler(this.btnAddFolder_Click);
             // 
-            // CmbProgramsWithAudio
+            // btnAddExecutable
             // 
-            this.CmbProgramsWithAudio.AutoResize = false;
-            this.CmbProgramsWithAudio.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.CmbProgramsWithAudio.Depth = 0;
-            this.CmbProgramsWithAudio.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
-            this.CmbProgramsWithAudio.DropDownHeight = 174;
-            this.CmbProgramsWithAudio.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.CmbProgramsWithAudio.DropDownWidth = 121;
-            this.CmbProgramsWithAudio.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
-            this.CmbProgramsWithAudio.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.CmbProgramsWithAudio.FormattingEnabled = true;
-            this.CmbProgramsWithAudio.IntegralHeight = false;
-            this.CmbProgramsWithAudio.ItemHeight = 43;
-            this.CmbProgramsWithAudio.Location = new System.Drawing.Point(13, 186);
-            this.CmbProgramsWithAudio.MaxDropDownItems = 4;
-            this.CmbProgramsWithAudio.MouseState = MaterialSkin.MouseState.OUT;
-            this.CmbProgramsWithAudio.Name = "CmbProgramsWithAudio";
-            this.CmbProgramsWithAudio.Size = new System.Drawing.Size(294, 49);
-            this.CmbProgramsWithAudio.StartIndex = 0;
-            this.CmbProgramsWithAudio.TabIndex = 13;
-            this.CmbProgramsWithAudio.DropDown += new System.EventHandler(this.CmbProgramsWithAudio_DropDown);
+            this.btnAddExecutable.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnAddExecutable.AutoSize = false;
+            this.btnAddExecutable.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnAddExecutable.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnAddExecutable.Depth = 0;
+            this.btnAddExecutable.HighEmphasis = true;
+            this.btnAddExecutable.Icon = null;
+            this.btnAddExecutable.Location = new System.Drawing.Point(240, 185);
+            this.btnAddExecutable.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnAddExecutable.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnAddExecutable.Name = "btnAddExecutable";
+            this.btnAddExecutable.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnAddExecutable.Size = new System.Drawing.Size(225, 53);
+            this.btnAddExecutable.TabIndex = 15;
+            this.btnAddExecutable.Text = "Adicionar Executável Individualmente";
+            this.btnAddExecutable.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnAddExecutable.UseAccentColor = false;
+            this.btnAddExecutable.UseVisualStyleBackColor = true;
+            this.btnAddExecutable.Click += new System.EventHandler(this.btnAddExecutable_Click);
+            // 
+            // btnAddSessionActive
+            // 
+            this.btnAddSessionActive.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnAddSessionActive.AutoSize = false;
+            this.btnAddSessionActive.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnAddSessionActive.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnAddSessionActive.Depth = 0;
+            this.btnAddSessionActive.HighEmphasis = true;
+            this.btnAddSessionActive.Icon = null;
+            this.btnAddSessionActive.Location = new System.Drawing.Point(473, 185);
+            this.btnAddSessionActive.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnAddSessionActive.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnAddSessionActive.Name = "btnAddSessionActive";
+            this.btnAddSessionActive.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnAddSessionActive.Size = new System.Drawing.Size(225, 53);
+            this.btnAddSessionActive.TabIndex = 14;
+            this.btnAddSessionActive.Text = "Adicionar Executável via Sessão de Áudio";
+            this.btnAddSessionActive.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnAddSessionActive.UseAccentColor = false;
+            this.btnAddSessionActive.UseVisualStyleBackColor = true;
+            this.btnAddSessionActive.Click += new System.EventHandler(this.btnAddSessionActive_Click);
+            // 
+            // lvwApps
+            // 
+            this.lvwApps.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lvwApps.AutoSizeTable = false;
+            this.lvwApps.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.lvwApps.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.lvwApps.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.appPath});
+            this.lvwApps.Depth = 0;
+            this.lvwApps.FullRowSelect = true;
+            this.lvwApps.HideSelection = false;
+            this.lvwApps.Location = new System.Drawing.Point(7, 247);
+            this.lvwApps.MinimumSize = new System.Drawing.Size(200, 100);
+            this.lvwApps.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.lvwApps.MouseState = MaterialSkin.MouseState.OUT;
+            this.lvwApps.Name = "lvwApps";
+            this.lvwApps.OwnerDraw = true;
+            this.lvwApps.Size = new System.Drawing.Size(924, 297);
+            this.lvwApps.TabIndex = 16;
+            this.lvwApps.UseCompatibleStateImageBehavior = false;
+            this.lvwApps.View = System.Windows.Forms.View.Details;
+            this.lvwApps.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.lvwApps_ItemSelectionChanged);
+            // 
+            // appPath
+            // 
+            this.appPath.Text = "Aplicativos controlados";
+            this.appPath.Width = 907;
+            // 
+            // btnDeleteItems
+            // 
+            this.btnDeleteItems.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnDeleteItems.AutoSize = false;
+            this.btnDeleteItems.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnDeleteItems.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnDeleteItems.Depth = 0;
+            this.btnDeleteItems.Enabled = false;
+            this.btnDeleteItems.HighEmphasis = true;
+            this.btnDeleteItems.Icon = null;
+            this.btnDeleteItems.Location = new System.Drawing.Point(706, 185);
+            this.btnDeleteItems.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnDeleteItems.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnDeleteItems.Name = "btnDeleteItems";
+            this.btnDeleteItems.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnDeleteItems.Size = new System.Drawing.Size(225, 53);
+            this.btnDeleteItems.TabIndex = 17;
+            this.btnDeleteItems.Text = "Excluir itens selecionados";
+            this.btnDeleteItems.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnDeleteItems.UseAccentColor = false;
+            this.btnDeleteItems.UseVisualStyleBackColor = true;
+            this.btnDeleteItems.Click += new System.EventHandler(this.btnDeleteItems_Click);
+            // 
+            // cklDevices
+            // 
+            this.cklDevices.AutoScroll = true;
+            this.cklDevices.BackColor = System.Drawing.SystemColors.Control;
+            this.cklDevices.Depth = 0;
+            this.cklDevices.Location = new System.Drawing.Point(7, 185);
+            this.cklDevices.MouseState = MaterialSkin.MouseState.HOVER;
+            this.cklDevices.Name = "cklDevices";
+            this.cklDevices.Size = new System.Drawing.Size(924, 359);
+            this.cklDevices.Striped = false;
+            this.cklDevices.StripeDarkColor = System.Drawing.Color.Empty;
+            this.cklDevices.TabIndex = 18;
             // 
             // ChangeInputInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(461, 581);
-            this.Controls.Add(this.BtnAddProgram);
-            this.Controls.Add(this.CmbProgramsWithAudio);
+            this.ClientSize = new System.Drawing.Size(942, 600);
+            this.Controls.Add(this.cklDevices);
+            this.Controls.Add(this.btnDeleteItems);
+            this.Controls.Add(this.lvwApps);
+            this.Controls.Add(this.btnAddSessionActive);
+            this.Controls.Add(this.btnAddExecutable);
             this.Controls.Add(this.ChkBoxInvertAxis);
-            this.Controls.Add(this.TxtMultiLineApplications);
+            this.Controls.Add(this.btnAddFolder);
             this.Controls.Add(this.RdBtnInputDevices);
             this.Controls.Add(this.RdBtnInputApp);
             this.Controls.Add(this.TxtInputName);
             this.Controls.Add(this.BtnCancelInputConf);
             this.Controls.Add(this.BtnSaveInputConf);
-            this.Controls.Add(this.ChkBoxInputDevices);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.MinimumSize = new System.Drawing.Size(400, 480);
+            this.MinimumSize = new System.Drawing.Size(700, 600);
             this.Name = "ChangeInputInfo";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Input 1 - Configurações";
@@ -271,10 +328,13 @@
         private MaterialSkin.Controls.MaterialTextBox TxtInputName;
         private MaterialSkin.Controls.MaterialRadioButton RdBtnInputApp;
         private MaterialSkin.Controls.MaterialRadioButton RdBtnInputDevices;
-        private MaterialSkin.Controls.MaterialMultiLineTextBox TxtMultiLineApplications;
-        private MaterialSkin.Controls.MaterialCheckedListBox ChkBoxInputDevices;
         private MaterialSkin.Controls.MaterialCheckbox ChkBoxInvertAxis;
-        private MaterialSkin.Controls.MaterialButton BtnAddProgram;
-        private MaterialSkin.Controls.MaterialComboBox CmbProgramsWithAudio;
+        private MaterialSkin.Controls.MaterialButton btnAddFolder;
+        private MaterialSkin.Controls.MaterialButton btnAddExecutable;
+        private MaterialSkin.Controls.MaterialButton btnAddSessionActive;
+        private MaterialSkin.Controls.MaterialListView lvwApps;
+        public System.Windows.Forms.ColumnHeader appPath;
+        private MaterialSkin.Controls.MaterialButton btnDeleteItems;
+        private MaterialSkin.Controls.MaterialCheckedListBox cklDevices;
     }
 }

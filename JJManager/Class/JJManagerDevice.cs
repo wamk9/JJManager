@@ -11,6 +11,8 @@ using HidSharp;
 using System.Threading;
 using System.Windows.Forms;
 using System.Collections;
+using RJCP.IO.Ports;
+using System.Diagnostics;
 
 namespace JJManager.Class
 {
@@ -151,6 +153,18 @@ namespace JJManager.Class
             }
 
             return HIDList;
+        }
+
+        public static List<String> UpdateSerialDevices()
+        {
+            List<String> SerialList = new List<String>();
+
+            foreach (PortDescription desc in SerialPortStream.GetPortDescriptions())
+            {
+                SerialList.Add("GetPortDescriptions: " + desc.Port + "; Description: " + desc.Description);
+            }
+
+            return SerialList;
         }
     }
 }

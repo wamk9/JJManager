@@ -32,7 +32,6 @@
             this.ImgJJB01 = new System.Windows.Forms.PictureBox();
             this.BtnInput01JJB01 = new System.Windows.Forms.PictureBox();
             this.BtnInput02JJB01 = new System.Windows.Forms.PictureBox();
-            this.BtnDisconnectJJB01 = new MaterialSkin.Controls.MaterialButton();
             this.CmbBoxSelectProfile = new MaterialSkin.Controls.MaterialComboBox();
             this.BtnAddProfile = new MaterialSkin.Controls.MaterialButton();
             this.BtnRemoveProfile = new MaterialSkin.Controls.MaterialButton();
@@ -74,26 +73,6 @@
             this.BtnInput02JJB01.Click += new System.EventHandler(this.BtnInput02JJB01_Click);
             this.BtnInput02JJB01.MouseEnter += new System.EventHandler(this.BtnInput02JJB01_MouseEnter);
             this.BtnInput02JJB01.MouseLeave += new System.EventHandler(this.BtnInput02JJB01_MouseLeave);
-            // 
-            // BtnDisconnectJJB01
-            // 
-            this.BtnDisconnectJJB01.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.BtnDisconnectJJB01.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
-            this.BtnDisconnectJJB01.Depth = 0;
-            this.BtnDisconnectJJB01.HighEmphasis = true;
-            this.BtnDisconnectJJB01.Icon = null;
-            this.BtnDisconnectJJB01.Location = new System.Drawing.Point(279, 613);
-            this.BtnDisconnectJJB01.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
-            this.BtnDisconnectJJB01.MouseState = MaterialSkin.MouseState.HOVER;
-            this.BtnDisconnectJJB01.Name = "BtnDisconnectJJB01";
-            this.BtnDisconnectJJB01.NoAccentTextColor = System.Drawing.Color.Empty;
-            this.BtnDisconnectJJB01.Size = new System.Drawing.Size(214, 36);
-            this.BtnDisconnectJJB01.TabIndex = 9;
-            this.BtnDisconnectJJB01.Text = "Desconectar ButtonBox";
-            this.BtnDisconnectJJB01.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
-            this.BtnDisconnectJJB01.UseAccentColor = false;
-            this.BtnDisconnectJJB01.UseVisualStyleBackColor = true;
-            this.BtnDisconnectJJB01.Click += new System.EventHandler(this.BtnDisconnectJJB01_Click);
             // 
             // CmbBoxSelectProfile
             // 
@@ -170,7 +149,6 @@
             this.Controls.Add(this.BtnRemoveProfile);
             this.Controls.Add(this.BtnAddProfile);
             this.Controls.Add(this.CmbBoxSelectProfile);
-            this.Controls.Add(this.BtnDisconnectJJB01);
             this.Controls.Add(this.BtnInput02JJB01);
             this.Controls.Add(this.BtnInput01JJB01);
             this.Controls.Add(this.ImgJJB01);
@@ -186,7 +164,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput01JJB01)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput02JJB01)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -194,7 +171,6 @@
         private System.Windows.Forms.PictureBox ImgJJB01;
         private System.Windows.Forms.PictureBox BtnInput01JJB01;
         private System.Windows.Forms.PictureBox BtnInput02JJB01;
-        private MaterialSkin.Controls.MaterialButton BtnDisconnectJJB01;
         private MaterialSkin.Controls.MaterialComboBox CmbBoxSelectProfile;
         private MaterialSkin.Controls.MaterialButton BtnAddProfile;
         private MaterialSkin.Controls.MaterialButton BtnRemoveProfile;

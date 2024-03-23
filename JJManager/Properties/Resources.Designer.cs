@@ -181,11 +181,72 @@ namespace JJManager.Properties {
         }
         
         /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a teste.
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///--BEGIN TRANSACTION _1_1_14
+        ///
+        ///declare @schema_name nvarchar(256)
+        ///declare @table_name nvarchar(256)
+        ///declare @col_name nvarchar(256)
+        ///declare @Command  nvarchar(1000)
+        ///
+        ///set @schema_name = N&apos;dbo&apos;
+        ///set @table_name = N&apos;analog_inputs&apos;
+        ///set @col_name = N&apos;axis_orientation&apos;
+        ///
+        ///select @Command = &apos;ALTER TABLE &apos; + @schema_name + &apos;.[&apos; + @table_name + &apos;] DROP CONSTRAINT &apos; + d.name
+        /// from sys.tables  [o restante da cadeia de caracteres foi truncado]&quot;;.
         /// </summary>
         internal static string SQL_1_1_14 {
             get {
                 return ResourceManager.GetString("SQL_1_1_14", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///UPDATE dbo.configs SET software_version = &apos;1.1.15&apos;;
+        ///GO
+        ///
+        ///SET ANSI_WARNINGS on
+        ///GO.
+        /// </summary>
+        internal static string SQL_1_1_15 {
+            get {
+                return ResourceManager.GetString("SQL_1_1_15", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///CREATE TABLE dbo.jj_products (
+        ///    id INT IDENTITY (1, 1) NOT NULL,
+        ///    product_name VARCHAR (50) NOT NULL,
+        ///    analog_inputs_qtd TINYINT NOT NULL DEFAULT 0, 
+        ///    digital_inputs_qtd TINYINT NOT NULL DEFAULT 0, 
+        ///    CONSTRAINT PK_JJ_PRODUCT PRIMARY KEY CLUSTERED (id ASC)
+        ///);
+        ///
+        ///
+        ///CREATE TABLE dbo.digital_inputs
+        ///(
+        ///    id              INT      NOT NULL,
+        ///    name            VARCHAR (15 [o restante da cadeia de caracteres foi truncado]&quot;;.
+        /// </summary>
+        internal static string SQL_1_2_0 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_0", resourceCulture);
             }
         }
     }

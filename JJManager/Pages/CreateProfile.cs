@@ -15,16 +15,16 @@ namespace JJManager.Pages
 {
     public partial class CreateProfile : MaterialForm
     {
-        private static Class.Devices _JJManagerCommunication;
-        private static AudioManager _JJManagerAudioManager = new AudioManager();
+        private static Class.Device _JJManagerCommunication;
+        //private static AudioManager _JJManagerAudioManager = new AudioManager();
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
-        private static Devices _Device = null;
+        private static Device _Device = null;
         
         #region WinForms
         private MaterialSkinManager materialSkinManager = null;
         #endregion
 
-        public CreateProfile(Devices device)
+        public CreateProfile(Device device)
         {
             InitializeComponent();
             components = new System.ComponentModel.Container();

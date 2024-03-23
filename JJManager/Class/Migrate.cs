@@ -33,7 +33,9 @@ namespace JJManager.Class
                     Version dbVersion = new Version(json.RootElement[0].GetProperty("software_version").ToString());
 
                     if (_actualVersion > dbVersion)
+                    {
                         ExecuteMigration(dbVersion);
+                    }
                 }
             }
         }
@@ -46,23 +48,30 @@ namespace JJManager.Class
             _versions.Clear();
 
             _versions.Add(new Version(1, 1, 13)); // First Version
-            //_versions.Add(new Version(1, 1, 1)); // Others Versions...
-            _versions.Add(new Version(1, 1, 14)); // Last Version
+            _versions.Add(new Version(1, 1, 14));
+            _versions.Add(new Version(1, 1, 15));
+            _versions.Add(new Version(1, 2, 0)); // Last Version
         }
 
-        private void ExecuteMigration (Version migrate_from)
+        private void ExecuteMigration (Version actual_version)
         {
             foreach (Version version in _versions)
             {
-                if (migrate_from < version)
+                if (version > actual_version)
                 {
-                    
+                    _database.CreateBackup();
+
                     String sql = Resources.ResourceManager.GetString("SQL_" + version.Major.ToString() + "_" + version.Minor.ToString() + "_" + version.Build.ToString(), Resources.Culture);
 
                     if (_database.RunSQLMigrateFile(sql))
-                        MessageBox.Show("Banco de Dados atualizado para a versão " + version.Major.ToString() + "." + version.Minor.ToString() + "." + version.Build.ToString());
+                    {
+                        actual_version = version;
+                        MessageBox.Show("Banco de Dados atualizado para a versão " + actual_version.Major.ToString() + "." + actual_version.Minor.ToString() + "." + actual_version.Build.ToString());
+                    }
                     else
+                    {
                         MessageBox.Show("Ocorreu um erro na atualização do banco de dados.");
+                    }
                 }
             }
         }

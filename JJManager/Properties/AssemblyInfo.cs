@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("JJManager")]
 [assembly: AssemblyDescription("Programa para gerenciar os dispositivos da criados pela JohnJohn3D.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("JohnJohn3D")]
+[assembly: AssemblyCompany("JohnJohn 3D")]
 [assembly: AssemblyProduct("JJManager")]
 [assembly: AssemblyCopyright("Copyright ©  2023")]
 [assembly: AssemblyTrademark("")]
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // É possível especificar todos os valores ou usar como padrão os Números de Build e da Revisão
 // usando o "*" como mostrado abaixo:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.1.14.0")]
-[assembly: AssemblyFileVersion("1.1.14.0")]
+[assembly: AssemblyVersion("1.2.0.0")]
+[assembly: AssemblyFileVersion("1.2.0.0")]

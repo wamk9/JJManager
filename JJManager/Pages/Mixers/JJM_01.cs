@@ -17,22 +17,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace JJManager.Pages
+namespace JJManager.Pages.Mixers
 {
     public partial class JJM_01 : MaterialForm
     {
-        private static Class.Devices _device;
-        private static AudioManager _audioManager = new AudioManager();
+        private static JJManager.Class.Device _device;
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
-        private static Profiles _profile = null;
+        private static Profile _profile = null;
         private Thread thr = null;
         private Thread thrTimers = null;
         private bool _DisconnectDevice = false;
-        private bool _IsInputSelected = false;
+        private static bool _IsInputSelected = false;
         private bool _IsCreateProfileOpened = false;
         private String DataReceived = "";
         private String[] DataTreated = null;
-
+        private MaterialForm _parent = null;
         #region WinForms
         MaterialSkinManager materialSkinManager = null;
         private AppModulesTimer HidReceiver = null;
@@ -40,7 +39,7 @@ namespace JJManager.Pages
         #endregion
 
 
-        public JJM_01(HidDevice device)
+        public JJM_01(MaterialForm parent, Class.Device device)
         {
             InitializeComponent();
             components = new System.ComponentModel.Container();
@@ -56,25 +55,28 @@ namespace JJManager.Pages
                 Close();
             }
 
-            _device = new Devices(device);
+            _device = device;
+            _parent = parent;
 
             // Fill Forms
-            foreach (String Profile in Profiles.GetList(_device.Id))
+            foreach (String Profile in Profile.GetList(_device.Id))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             if (CmbBoxSelectProfile.Items.Count == 0)
             {
-                _profile = new Profiles("Perfil Padrão", _device.Id, 2);
+                _profile = new Profile("Perfil Padrão", _device.JJID, 5);
+                CmbBoxSelectProfile.Items.Add(_profile.Name);
+                CmbBoxSelectProfile.SelectedIndex = 0;
             }
             else
             {
-                CmbBoxSelectProfile.SelectedIndex = 0;
-                _profile = new Profiles(CmbBoxSelectProfile.Items[0].ToString(), _device.Id, 2);
+                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.ActiveProfile.Name);;
+                //_profile = new Profile(CmbBoxSelectProfile.Items[0].ToString(), _device.Id, 5);
             }
 
             // Start NotifyIcon
-            notifyIcon = new AppModulesNotifyIcon(components, _device.ProductName, NotifyIcon_Click);
-            HidReceiver = new AppModulesTimer(components, 50, timerReceiveHIDMessage_Tick);
+            //notifyIcon = new AppModulesNotifyIcon(components, NotifyIcon_Click);
+            //HidReceiver = new AppModulesTimer(components, 50, timerReceiveHIDMessage_Tick);
 
             //Start Timers
             /*thrTimers = new Thread(() => {
@@ -89,61 +91,44 @@ namespace JJManager.Pages
 
             // Events
             FormClosing += new FormClosingEventHandler(JJM_01_FormClosing);
-            FormClosed += new FormClosedEventHandler(JJM_01_FormClosed);
+            //FormClosed += new FormClosedEventHandler(JJM_01_FormClosed);
             CmbBoxSelectProfile.DropDown += new EventHandler(CmbBoxSelectProfile_DropDown);
             CmbBoxSelectProfile.SelectedIndexChanged += new EventHandler(CmbBoxSelectProfile_SelectedIndexChanged);
 
-            thr = new Thread(() => ThreadSendInputNameToDeviceScreen()); ;
-            thr.Start();
+            //thr = new Thread(() => ThreadSendInputNameToDeviceScreen()); ;
+            //thr.Start();
         }
 
-        private void OpenInputModal(int idInput)
+        private void OpenInputModal(Profile profile, int idInput)
         {
-            Thread thr = new Thread(() => {
-                if (!_IsInputSelected)
-                {
-                    _IsInputSelected = true;
-                    ChangeInputInfo inputForm = new ChangeInputInfo(_profile, idInput);
-                    inputForm.ShowDialog();
-                    _profile.UpdateInputs();
-                    _IsInputSelected = false;
-                }
-
-                Thread.CurrentThread.Abort();
-            });
-            thr.Start();
+            ChangeInputInfo inputForm = new ChangeInputInfo(this, _device.ActiveProfile, idInput);
+            Visible = false;
+            inputForm.ShowDialog();
+            _device.ActiveProfile.UpdateInputs();
+            _IsInputSelected = false;
         }
 
         #region Events
         private void JJM_01_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (e.CloseReason == CloseReason.UserClosing && !_DisconnectDevice)
-            {
-                e.Cancel = true;
-                notifyIcon.Show();
-                Visible = false;
-            }
-            else
-            {
-                HidReceiver.Stop();
-            }
+            _parent.Visible = true;
         }
 
-        private void JJM_01_FormClosed(object sender, FormClosedEventArgs e)
+        /*private void JJM_01_FormClosed(object sender, FormClosedEventArgs e)
         {
             Enabled = false;
             //thrTimers.Abort();
             thr.Abort();
             GC.Collect();
         }
-
+        
         private void ThreadSendInputNameToDeviceScreen()
         {
             while (true) 
             {
                 for (int i = 1; i <= 5; i++)
                 {
-                    _device.SendInputNameToDeviceScreen(i, _profile.Id);
+                    device.SendInputNameToDeviceScreen(i, _profile.Id);
                     Thread.Sleep(200);
                 }
             }
@@ -151,7 +136,7 @@ namespace JJManager.Pages
 
         private void timerReceiveHIDMessage_Tick(object sender, EventArgs e)
         {
-            DataReceived = _device.ReceiveHIDMessage();
+            DataReceived = device.ReceiveHIDMessage();
 
             if (DataReceived != String.Empty)
             {
@@ -167,7 +152,7 @@ namespace JJManager.Pages
                 //Thread.CurrentThread.Abort();
                 Close();
             }
-        }
+        }*/
 
         private void NotifyIcon_Click(object sender, EventArgs e)
         {
@@ -182,7 +167,7 @@ namespace JJManager.Pages
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in Profiles.GetList(_device.Id))
+            foreach (String Profile in Profile.GetList(_device.JJID))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -190,23 +175,38 @@ namespace JJManager.Pages
 
         private void CmbBoxSelectProfile_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (CmbBoxSelectProfile.SelectedItem.ToString() != "")
-            {
-                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id, 5);
-            }
-            else
+            if (CmbBoxSelectProfile.SelectedIndex == -1)
             {
                 CmbBoxSelectProfile.SelectedIndex = 0;
-                _profile = new Profiles(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id, 5);
             }
-
+            
+            _device.UpdateActiveProfile(CmbBoxSelectProfile.SelectedItem.ToString());
         }
         #endregion
 
         #region Buttons
         private void BtnInput01JJM01_Click(object sender, EventArgs e)
         {
-            OpenInputModal(1);
+            if (_IsInputSelected)
+                return;
+
+            _IsInputSelected = true;
+
+            Thread thr = new Thread(() => {
+                if (InvokeRequired)
+                {
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        OpenInputModal(_device.ActiveProfile, 1);
+                    });
+                }
+                else
+                {
+                    OpenInputModal(_device.ActiveProfile, 1);
+                }
+            });
+            thr.Name = "JJM01_Input_01";
+            thr.Start();
         }
 
         private void BtnInput01JJM01_MouseEnter(object sender, EventArgs e)
@@ -222,7 +222,26 @@ namespace JJManager.Pages
 
         private void BtnInput02JJM01_Click(object sender, EventArgs e)
         {
-            OpenInputModal(2);
+            if (_IsInputSelected)
+                return;
+
+            _IsInputSelected = true;
+
+            Thread thr = new Thread(() => {
+                if (InvokeRequired)
+                {
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        OpenInputModal(_device.ActiveProfile, 2);
+                    });
+                }
+                else
+                {
+                    OpenInputModal(_device.ActiveProfile, 2);
+                }
+            });
+            thr.Name = "JJM01_Input_02";
+            thr.Start();
         }
 
         private void BtnInput02JJM01_MouseEnter(object sender, EventArgs e)
@@ -238,7 +257,26 @@ namespace JJManager.Pages
 
         private void BtnInput03JJM01_Click(object sender, EventArgs e)
         {
-            OpenInputModal(3);
+            if (_IsInputSelected)
+                return;
+
+            _IsInputSelected = true;
+
+            Thread thr = new Thread(() => {
+                if (InvokeRequired)
+                {
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        OpenInputModal(_device.ActiveProfile, 3);
+                    });
+                }
+                else
+                {
+                    OpenInputModal(_device.ActiveProfile, 3);
+                }
+            });
+            thr.Name = "JJM01_Input_03";
+            thr.Start();
         }
 
         private void BtnInput03JJM01_MouseEnter(object sender, EventArgs e)
@@ -254,7 +292,26 @@ namespace JJManager.Pages
 
         private void BtnInput04JJM01_Click(object sender, EventArgs e)
         {
-            OpenInputModal(4);
+            if (_IsInputSelected)
+                return;
+
+            _IsInputSelected = true;
+
+            Thread thr = new Thread(() => {
+                if (InvokeRequired)
+                {
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        OpenInputModal(_device.ActiveProfile, 4);
+                    });
+                }
+                else
+                {
+                    OpenInputModal(_device.ActiveProfile, 4);
+                }
+            });
+            thr.Name = "JJM01_Input_04";
+            thr.Start();
         }
 
         private void BtnInput04JJM01_MouseEnter(object sender, EventArgs e)
@@ -270,7 +327,26 @@ namespace JJManager.Pages
 
         private void BtnInput05JJM01_Click(object sender, EventArgs e)
         {
-            OpenInputModal(5);
+            if (_IsInputSelected)
+                return;
+
+            _IsInputSelected = true;
+
+            Thread thr = new Thread(() => {
+                if (InvokeRequired)
+                {
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        OpenInputModal(_device.ActiveProfile, 5);
+                    });
+                }
+                else
+                {
+                    OpenInputModal(_device.ActiveProfile, 5);
+                }
+            });
+            thr.Name = "JJM01_Input_05";
+            thr.Start();
         }
 
         private void BtnInput05JJM01_MouseEnter(object sender, EventArgs e)
@@ -284,24 +360,35 @@ namespace JJManager.Pages
             BtnInput05JJM01.Image = JJManager.Properties.Resources.JJM_01_input;
         }
 
-        private void BtnDisconnectJJM01_Click(object sender, EventArgs e)
-        {
-            _DisconnectDevice = true;
-            Close();
-        }
-
         private void BtnAddProfile_Click(object sender, EventArgs e)
         {
             Thread thr = new Thread(() => {
-                if (!_IsCreateProfileOpened)
+                if (InvokeRequired)
                 {
-                    _IsCreateProfileOpened = true;
-                    CreateProfile createProfile = new CreateProfile(_device);
-                    createProfile.ShowDialog();
-                    _IsCreateProfileOpened = false;
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        if (!_IsCreateProfileOpened)
+                        {
+                            _IsCreateProfileOpened = true;
+                            CreateProfile createProfile = new CreateProfile(_device);
+                            createProfile.ShowDialog();
+                            _IsCreateProfileOpened = false;
+                        }
+                   });
+                }
+                else
+                {
+                    if (!_IsCreateProfileOpened)
+                    {
+                        _IsCreateProfileOpened = true;
+                        CreateProfile createProfile = new CreateProfile(_device);
+                        createProfile.ShowDialog();
+                        _IsCreateProfileOpened = false;
+                    }
                 }
                 Thread.CurrentThread.Abort();
             });
+            thr.Name = "Add_Profile";
             thr.Start();
         }
 
@@ -327,7 +414,7 @@ namespace JJManager.Pages
 
                 CmbBoxSelectProfile.Items.Clear();
 
-                foreach (String Profile in Profiles.GetList(_device.Id))
+                foreach (String Profile in Profile.GetList(_device.Id))
                     CmbBoxSelectProfile.Items.Add(Profile);
 
                 CmbBoxSelectProfile.SelectedIndex = 0;
