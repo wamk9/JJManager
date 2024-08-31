@@ -1,4 +1,5 @@
 ﻿using JJManager.Properties;
+using Microsoft.SqlServer.Management.Smo;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -50,7 +51,12 @@ namespace JJManager.Class
             _versions.Add(new Version(1, 1, 13)); // First Version
             _versions.Add(new Version(1, 1, 14));
             _versions.Add(new Version(1, 1, 15));
-            _versions.Add(new Version(1, 2, 0)); // Last Version
+            _versions.Add(new Version(1, 2, 0));
+            _versions.Add(new Version(1, 2, 1));
+            _versions.Add(new Version(1, 2, 2));
+            _versions.Add(new Version(1, 2, 3));
+            _versions.Add(new Version(1, 2, 3, 1));
+            _versions.Add(new Version(1, 2, 4)); // Last Version
         }
 
         private void ExecuteMigration (Version actual_version)
@@ -61,15 +67,32 @@ namespace JJManager.Class
                 {
                     _database.CreateBackup();
 
-                    String sql = Resources.ResourceManager.GetString("SQL_" + version.Major.ToString() + "_" + version.Minor.ToString() + "_" + version.Build.ToString(), Resources.Culture);
+                    String sql = Resources.ResourceManager.GetString("SQL_" + version.Major.ToString() + "_" + version.Minor.ToString() + "_" + version.Build.ToString() + (version.Revision  <= 0  ? "" : "_" + version.Revision.ToString()), Resources.Culture);
 
                     if (_database.RunSQLMigrateFile(sql))
                     {
                         actual_version = version;
-                        MessageBox.Show("Banco de Dados atualizado para a versão " + actual_version.Major.ToString() + "." + actual_version.Minor.ToString() + "." + actual_version.Build.ToString());
+
+                        // Fully qualified name including namespace
+                        string className = "JJManager.MigrateCommands._" + version.Major.ToString() + "_" + version.Minor.ToString() + "_" + version.Build.ToString() + (version.Revision <= 0 ? "" : "_" + version.Revision.ToString());
+
+                        // Get the type of the class
+                        Type type = Type.GetType(className);
+
+                        if (type != null)
+                        {
+                            type.GetMethod("ExecuteMigration").Invoke(null, null);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Class not found.");
+                        }
+
+                        MessageBox.Show("Banco de Dados atualizado para a versão " + actual_version.ToString());
                     }
                     else
                     {
+                        //_database.RestoreBackup(actual_version);
                         MessageBox.Show("Ocorreu um erro na atualização do banco de dados.");
                     }
                 }

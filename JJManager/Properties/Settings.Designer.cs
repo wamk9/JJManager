@@ -12,7 +12,7 @@ namespace JJManager.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.9.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.11.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -37,10 +37,30 @@ namespace JJManager.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/storage/apps/lastversions.json")]
-        public string LastVersionURL {
+        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_app.json")]
+        public string LastVersionAppURL {
             get {
-                return ((string)(this["LastVersionURL"]));
+                return ((string)(this["LastVersionAppURL"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_device.json")]
+        public string LastVersionDeviceURL {
+            get {
+                return ((string)(this["LastVersionDeviceURL"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_plugin.json")]
+        public string LastVersionPluginURL {
+            get {
+                return ((string)(this["LastVersionPluginURL"]));
             }
         }
     }

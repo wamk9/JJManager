@@ -38,6 +38,8 @@
             this.CmbBoxSelectProfile = new MaterialSkin.Controls.MaterialComboBox();
             this.BtnAddProfile = new MaterialSkin.Controls.MaterialButton();
             this.BtnRemoveProfile = new MaterialSkin.Controls.MaterialButton();
+            this.btnCloseConfig = new MaterialSkin.Controls.MaterialButton();
+            this.materialDivider1 = new MaterialSkin.Controls.MaterialDivider();
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput01JJM01)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJM01)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput02JJM01)).BeginInit();
@@ -190,12 +192,46 @@
             this.BtnRemoveProfile.UseVisualStyleBackColor = true;
             this.BtnRemoveProfile.Click += new System.EventHandler(this.BtnRemoveProfile_Click);
             // 
+            // btnCloseConfig
+            // 
+            this.btnCloseConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCloseConfig.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnCloseConfig.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnCloseConfig.Depth = 0;
+            this.btnCloseConfig.HighEmphasis = true;
+            this.btnCloseConfig.Icon = null;
+            this.btnCloseConfig.Location = new System.Drawing.Point(660, 385);
+            this.btnCloseConfig.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnCloseConfig.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnCloseConfig.Name = "btnCloseConfig";
+            this.btnCloseConfig.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnCloseConfig.Size = new System.Drawing.Size(81, 36);
+            this.btnCloseConfig.TabIndex = 21;
+            this.btnCloseConfig.Text = " Fechar";
+            this.btnCloseConfig.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnCloseConfig.UseAccentColor = false;
+            this.btnCloseConfig.UseVisualStyleBackColor = true;
+            this.btnCloseConfig.Click += new System.EventHandler(this.btnCloseConfig_Click);
+            // 
+            // materialDivider1
+            // 
+            this.materialDivider1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.materialDivider1.Depth = 0;
+            this.materialDivider1.Location = new System.Drawing.Point(7, 375);
+            this.materialDivider1.MouseState = MaterialSkin.MouseState.HOVER;
+            this.materialDivider1.Name = "materialDivider1";
+            this.materialDivider1.Size = new System.Drawing.Size(734, 1);
+            this.materialDivider1.TabIndex = 20;
+            this.materialDivider1.Text = "materialDivider1";
+            // 
             // JJM_01
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImage = global::JJManager.Properties.Resources.JJM_01;
             this.ClientSize = new System.Drawing.Size(750, 430);
+            this.Controls.Add(this.btnCloseConfig);
+            this.Controls.Add(this.materialDivider1);
             this.Controls.Add(this.BtnRemoveProfile);
             this.Controls.Add(this.BtnAddProfile);
             this.Controls.Add(this.CmbBoxSelectProfile);
@@ -219,6 +255,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput05JJM01)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput04JJM01)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -233,5 +270,7 @@
         private MaterialSkin.Controls.MaterialComboBox CmbBoxSelectProfile;
         private MaterialSkin.Controls.MaterialButton BtnAddProfile;
         private MaterialSkin.Controls.MaterialButton BtnRemoveProfile;
+        private MaterialSkin.Controls.MaterialButton btnCloseConfig;
+        private MaterialSkin.Controls.MaterialDivider materialDivider1;
     }
 }

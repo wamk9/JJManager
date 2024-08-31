@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using JJManager.Class.App.Input;
 
 namespace JJManager.Class.Devices
 {
@@ -83,7 +84,7 @@ namespace JJManager.Class.Devices
                                 }
                             }
                             hidStream.Close();
-                            hidStream.Dispose();
+                            //hidStream.Dispose();
 
                         }
                     }
@@ -91,7 +92,7 @@ namespace JJManager.Class.Devices
             }
             catch (Exception ex)
             {
-                Log.Insert("Devices", "Ocorreu um erro ao receber a informação via HID (ReceiveMessage): ", ex);
+                Log.Insert("JJB01", "Ocorreu um erro ao receber a informação via HID (ReceiveMessage): ", ex);
             }
 
             _ReceiveInProgress = false;
@@ -101,24 +102,23 @@ namespace JJManager.Class.Devices
 
         public void ExecuteInputFunction(int id, String value)
         {
-            AnalogInput inputInUse = _device.ActiveProfile.GetAnalogInputById(id);
+            Input inputInUse = _device.ActiveProfile.Inputs[id];
 
-            bool audioCoreRestart = false;
-            //if (input.Type == "audio")
-            //{
-            inputInUse.ManageAudioVolume(int.Parse(value), out audioCoreRestart);
-
-            if (inputInUse.AudioManager.AudioCoreNeedsRestart)
+            if (inputInUse.Mode == Input.InputMode.AudioController && inputInUse.AudioController != null)
             {
-                inputInUse.AudioManager.AudioCoreNeedsRestart = false;
-                CoreAudioController coreAudioController = new CoreAudioController();
+                inputInUse.AudioController.ChangeVolume(int.Parse(value));
 
-                foreach (AnalogInput input in _device.ActiveProfile.getAllInputs())
+                if (inputInUse.AudioController.AudioCoreNeedsRestart)
                 {
-                    input.AudioManager.ResetCoreAudioController(coreAudioController);
+                    inputInUse.AudioController.AudioCoreNeedsRestart = false;
+                    CoreAudioController coreAudioController = new CoreAudioController();
+
+                    foreach (Input input in _device.ActiveProfile.Inputs)
+                    {
+                        input.AudioController.ResetCoreAudioController(coreAudioController);
+                    }
                 }
             }
-            //}
         }
     }
 }

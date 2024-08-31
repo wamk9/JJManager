@@ -2,28 +2,24 @@
 using MaterialSkin;
 using MaterialSkin.Controls;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using ConfigClass = JJManager.Class.App.Config.Config;
 
 namespace JJManager.Pages.App
 {
     public partial class UpdateAppNotification : MaterialForm
     {
-        JJManager.Class.SoftwareUpdater _softwareUpdater = null;
+        JJManager.Class.App.SoftwareUpdater _softwareUpdater = null;
         MaterialForm _parent = null;
 
         #region WinForms
         private MaterialSkinManager materialSkinManager = null;
         #endregion
 
-        public UpdateAppNotification(JJManager.Class.SoftwareUpdater softwareUpdater)
+        public UpdateAppNotification(JJManager.Class.App.SoftwareUpdater softwareUpdater)
         {
             DatabaseConnection database = new DatabaseConnection();
 
@@ -36,8 +32,8 @@ namespace JJManager.Pages.App
             // MaterialDesign
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
-            materialSkinManager.Theme = database.GetTheme();
-            materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
+            materialSkinManager.Theme = ConfigClass.Theme.SelectedTheme;
+            materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
             FillChangeLog();
 
@@ -49,7 +45,7 @@ namespace JJManager.Pages.App
             CloseUpdateAppNotification();
         }
 
-        public UpdateAppNotification(MaterialForm parent, JJManager.Class.SoftwareUpdater softwareUpdater)
+        public UpdateAppNotification(MaterialForm parent, JJManager.Class.App.SoftwareUpdater softwareUpdater)
         {
             DatabaseConnection database = new DatabaseConnection();
             _parent = parent;
@@ -63,8 +59,8 @@ namespace JJManager.Pages.App
             // MaterialDesign
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
-            materialSkinManager.Theme = database.GetTheme();
-            materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
+            materialSkinManager.Theme = ConfigClass.Theme.SelectedTheme;
+            materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
             FillChangeLog();
 
@@ -87,25 +83,33 @@ namespace JJManager.Pages.App
 
         private Image GetImageFromWeb(string url)
         {
-            if (url == "" || url == "#")
-            {
-                return Properties.Resources.Logo_JohnJohn_JJMixer;
-            }
-
-            WebClient webClient = new WebClient();
-            byte[] imageBytes = webClient.DownloadData(url);
-
             Image image = null;
 
-            if (imageBytes != null && imageBytes.Length > 0)
+            try
             {
-                using (var ms = new System.IO.MemoryStream(imageBytes))
+
+                if (url == "" || url == "#")
                 {
-                    image = Image.FromStream(ms);
+                    return Properties.Resources.Logo_JohnJohn_JJMixer;
+                }
+
+                WebClient webClient = new WebClient();
+                byte[] imageBytes = webClient.DownloadData(url);
+
+                if (imageBytes != null && imageBytes.Length > 0)
+                {
+                    using (var ms = new System.IO.MemoryStream(imageBytes))
+                    {
+                        image = Image.FromStream(ms);
+                    }
+                }
+
+                if (image == null)
+                {
+                    image = Properties.Resources.Logo_JohnJohn_JJMixer;
                 }
             }
-
-            if (image == null)
+            catch (Exception)
             {
                 image = Properties.Resources.Logo_JohnJohn_JJMixer;
             }

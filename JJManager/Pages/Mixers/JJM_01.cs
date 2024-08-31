@@ -1,29 +1,19 @@
-﻿using HidSharp;
-using JJManager.Class;
+﻿using JJManager.Class;
 using MaterialSkin;
 using MaterialSkin.Controls;
-using SharpDX.DirectInput;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.IO;
-using System.IO.Ports;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using ConfigClass = JJManager.Class.App.Config.Config;
+using ProfileClass = JJManager.Class.App.Profile.Profile;
 
 namespace JJManager.Pages.Mixers
 {
     public partial class JJM_01 : MaterialForm
     {
         private static JJManager.Class.Device _device;
-        private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
-        private static Profile _profile = null;
+        //private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
+        //private static ProfileClass _profile = null;
         private Thread thr = null;
         private Thread thrTimers = null;
         private bool _DisconnectDevice = false;
@@ -46,8 +36,8 @@ namespace JJManager.Pages.Mixers
 
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
-            materialSkinManager.Theme = _DatabaseConnection.GetTheme();
-            materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
+            materialSkinManager.Theme = ConfigClass.Theme.SelectedTheme;
+            materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
             if (device == null)
             {
@@ -59,52 +49,35 @@ namespace JJManager.Pages.Mixers
             _parent = parent;
 
             // Fill Forms
-            foreach (String Profile in Profile.GetList(_device.Id))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.Id))
+            {
                 CmbBoxSelectProfile.Items.Add(Profile);
+            }
 
             if (CmbBoxSelectProfile.Items.Count == 0)
             {
-                _profile = new Profile("Perfil Padrão", _device.JJID, 5);
-                CmbBoxSelectProfile.Items.Add(_profile.Name);
+                _device.ActiveProfile.CreateNewProfileIntoObject(_device, "Perfil Padrão", true);
+                CmbBoxSelectProfile.Items.Add(_device.ActiveProfile.Name);
                 CmbBoxSelectProfile.SelectedIndex = 0;
             }
             else
             {
-                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.ActiveProfile.Name);;
-                //_profile = new Profile(CmbBoxSelectProfile.Items[0].ToString(), _device.Id, 5);
+                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.ActiveProfile.Name);
             }
-
-            // Start NotifyIcon
-            //notifyIcon = new AppModulesNotifyIcon(components, NotifyIcon_Click);
-            //HidReceiver = new AppModulesTimer(components, 50, timerReceiveHIDMessage_Tick);
-
-            //Start Timers
-            /*thrTimers = new Thread(() => {
-                HidReceiver = new AppModulesTimer(components, 50, timerReceiveHIDMessage_Tick);
-
-                while (true)
-                {
-                    Application.DoEvents();
-                }
-            });
-            thrTimers.Start();*/
 
             // Events
             FormClosing += new FormClosingEventHandler(JJM_01_FormClosing);
-            //FormClosed += new FormClosedEventHandler(JJM_01_FormClosed);
+
             CmbBoxSelectProfile.DropDown += new EventHandler(CmbBoxSelectProfile_DropDown);
             CmbBoxSelectProfile.SelectedIndexChanged += new EventHandler(CmbBoxSelectProfile_SelectedIndexChanged);
-
-            //thr = new Thread(() => ThreadSendInputNameToDeviceScreen()); ;
-            //thr.Start();
         }
 
-        private void OpenInputModal(Profile profile, int idInput)
+        private void OpenInputModal(ProfileClass profile, int idInput)
         {
-            ChangeInputInfo inputForm = new ChangeInputInfo(this, _device.ActiveProfile, idInput);
+            Pages.App.AudioController inputForm = new Pages.App.AudioController(this, _device.ActiveProfile, idInput);
             Visible = false;
             inputForm.ShowDialog();
-            _device.ActiveProfile.UpdateInputs();
+            //_device.ActiveProfile.UpdateAnalogInputs(idInput);
             _IsInputSelected = false;
         }
 
@@ -114,60 +87,13 @@ namespace JJManager.Pages.Mixers
             _parent.Visible = true;
         }
 
-        /*private void JJM_01_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            Enabled = false;
-            //thrTimers.Abort();
-            thr.Abort();
-            GC.Collect();
-        }
-        
-        private void ThreadSendInputNameToDeviceScreen()
-        {
-            while (true) 
-            {
-                for (int i = 1; i <= 5; i++)
-                {
-                    device.SendInputNameToDeviceScreen(i, _profile.Id);
-                    Thread.Sleep(200);
-                }
-            }
-        }
-
-        private void timerReceiveHIDMessage_Tick(object sender, EventArgs e)
-        {
-            DataReceived = device.ReceiveHIDMessage();
-
-            if (DataReceived != String.Empty)
-            {
-                DataTreated = DataReceived.Split('|').ToArray();
-
-                for (int i = 0; i < DataTreated.Length; i++)
-                    if (_profile.Id != "")
-                        _audioManager.ChangeInputVolume(_profile.GetInputById((i + 1)), Int16.Parse(DataTreated[i]));
-            }
-            else
-            {
-                _DisconnectDevice = true;
-                //Thread.CurrentThread.Abort();
-                Close();
-            }
-        }*/
-
-        private void NotifyIcon_Click(object sender, EventArgs e)
-        {
-            notifyIcon.Hide();
-            Visible = true;
-            BringToFront();
-        }
-
         private void CmbBoxSelectProfile_DropDown(object sender, EventArgs e)
         {
             int selectedIndex = CmbBoxSelectProfile.SelectedIndex;
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in Profile.GetList(_device.JJID))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.JJID))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -197,12 +123,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 1);
+                        OpenInputModal(_device.ActiveProfile, 0);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 1);
+                    OpenInputModal(_device.ActiveProfile, 0);
                 }
             });
             thr.Name = "JJM01_Input_01";
@@ -232,12 +158,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 2);
+                        OpenInputModal(_device.ActiveProfile, 1);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 2);
+                    OpenInputModal(_device.ActiveProfile, 1);
                 }
             });
             thr.Name = "JJM01_Input_02";
@@ -267,12 +193,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 3);
+                        OpenInputModal(_device.ActiveProfile, 2);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 3);
+                    OpenInputModal(_device.ActiveProfile, 2);
                 }
             });
             thr.Name = "JJM01_Input_03";
@@ -302,12 +228,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 4);
+                        OpenInputModal(_device.ActiveProfile, 3);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 4);
+                    OpenInputModal(_device.ActiveProfile, 3);
                 }
             });
             thr.Name = "JJM01_Input_04";
@@ -337,12 +263,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 5);
+                        OpenInputModal(_device.ActiveProfile, 4);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 5);
+                    OpenInputModal(_device.ActiveProfile, 4);
                 }
             });
             thr.Name = "JJM01_Input_05";
@@ -410,18 +336,23 @@ namespace JJManager.Pages.Mixers
 
             if (dialogResult == DialogResult.Yes)
             {
-                _DatabaseConnection.DeleteProfile(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id);
+                string profileNameToExclude = CmbBoxSelectProfile.SelectedItem.ToString();
 
-                CmbBoxSelectProfile.Items.Clear();
+                CmbBoxSelectProfile.Items.Remove(CmbBoxSelectProfile.SelectedItem);
 
-                foreach (String Profile in Profile.GetList(_device.Id))
-                    CmbBoxSelectProfile.Items.Add(Profile);
-
+                string profileNameToActive = CmbBoxSelectProfile.Items[0].ToString();
                 CmbBoxSelectProfile.SelectedIndex = 0;
+
+                _device.ActiveProfile.Delete(_device, profileNameToActive);
 
                 MessageBox.Show("Perfil excluído com sucesso!");
             }
         }
         #endregion
+
+        private void btnCloseConfig_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
     }
 }

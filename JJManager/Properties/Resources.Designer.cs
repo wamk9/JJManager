@@ -61,6 +61,46 @@ namespace JJManager.Properties {
         }
         
         /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Byte[].
+        /// </summary>
+        internal static byte[] CompatibleDevices {
+            get {
+                object obj = ResourceManager.GetObject("CompatibleDevices", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Byte[].
+        /// </summary>
+        internal static byte[] Font_Awesome_6_Brands_Regular_400 {
+            get {
+                object obj = ResourceManager.GetObject("Font_Awesome_6_Brands_Regular_400", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Byte[].
+        /// </summary>
+        internal static byte[] Font_Awesome_6_Free_Regular_400 {
+            get {
+                object obj = ResourceManager.GetObject("Font_Awesome_6_Free_Regular_400", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Byte[].
+        /// </summary>
+        internal static byte[] Font_Awesome_6_Free_Solid_900 {
+            get {
+                object obj = ResourceManager.GetObject("Font_Awesome_6_Free_Solid_900", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap JJB_01 {
@@ -113,6 +153,66 @@ namespace JJManager.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap JJB_01_v2_off {
+            get {
+                object obj = ResourceManager.GetObject("JJB-01-v2_off", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJB_01_v2_on {
+            get {
+                object obj = ResourceManager.GetObject("JJB-01-v2_on", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJB_999_off {
+            get {
+                object obj = ResourceManager.GetObject("JJB-999_off", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJB_999_on {
+            get {
+                object obj = ResourceManager.GetObject("JJB-999_on", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJBP_06_off {
+            get {
+                object obj = ResourceManager.GetObject("JJBP-06_off", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJBP_06_on {
+            get {
+                object obj = ResourceManager.GetObject("JJBP-06_on", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap JJM_01 {
             get {
                 object obj = ResourceManager.GetObject("JJM-01", resourceCulture);
@@ -147,6 +247,36 @@ namespace JJManager.Properties {
             get {
                 object obj = ResourceManager.GetObject("JJManagerIcon_256", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJSD_01 {
+            get {
+                object obj = ResourceManager.GetObject("JJSD-01", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJSD01_input {
+            get {
+                object obj = ResourceManager.GetObject("JJSD01_input", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJSD01_input_hover {
+            get {
+                object obj = ResourceManager.GetObject("JJSD01_input_hover", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -247,6 +377,105 @@ namespace JJManager.Properties {
         internal static string SQL_1_2_0 {
             get {
                 return ResourceManager.GetString("SQL_1_2_0", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///UPDATE dbo.configs SET software_version = &apos;1.2.1&apos;;
+        ///GO
+        ///
+        ///SET ANSI_WARNINGS on
+        ///GO.
+        /// </summary>
+        internal static string SQL_1_2_1 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///IF OBJECT_ID(&apos;dbo.frames&apos;, &apos;U&apos;) IS NULL
+        ///BEGIN
+        ///    CREATE TABLE [dbo].[frames] (
+        ///        [id] BIGINT IDENTITY(1,1) NOT NULL,
+        ///        [info] TEXT NOT NULL,
+        ///        [num_order] INT NOT NULL,
+        ///        [delay] INT DEFAULT 1000 NOT NULL,
+        ///        [id_profile] INT NOT NULL,
+        ///        CONSTRAINT [PK_FRAME] PRIMARY KEY CLUSTERED ([id] ASC, [id_profile] ASC),
+        ///        CONSTRAINT [FK_PROFILE_FRAM [o restante da cadeia de caracteres foi truncado]&quot;;.
+        /// </summary>
+        internal static string SQL_1_2_2 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///UPDATE dbo.configs SET software_version = &apos;1.2.3&apos;;
+        ///GO
+        ///
+        ///SET ANSI_WARNINGS on
+        ///GO.
+        /// </summary>
+        internal static string SQL_1_2_3 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///UPDATE dbo.configs SET software_version = &apos;1.2.3.1&apos;;
+        ///GO
+        ///
+        ///SET ANSI_WARNINGS on
+        ///GO.
+        /// </summary>
+        internal static string SQL_1_2_3_1 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_3_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///CREATE TABLE [dbo].[device_inputs] (
+        ///    [id]         INT          NOT NULL,
+        ///    [name]       VARCHAR (15) NULL,
+        ///    [data]       TEXT         NULL,
+        ///    [type]       VARCHAR (30) NOT NULL,
+        ///	[mode]       VARCHAR (30) NOT NULL,
+        ///    [id_profile] INT          NOT NULL,
+        ///    CONSTRAINT [PK_DEVICE_INPUT] PRIMARY KEY CLUSTERED ([id] ASC, [id_profile] ASC),
+        ///    CONSTRAINT [FK_PROFILE_DEVICE [o restante da cadeia de caracteres foi truncado]&quot;;.
+        /// </summary>
+        internal static string SQL_1_2_4 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_4", resourceCulture);
             }
         }
     }

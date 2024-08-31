@@ -1,20 +1,11 @@
-﻿using AudioSwitcher.AudioApi;
-using HidSharp;
-using JJManager.Class;
+﻿using JJManager.Class;
 using MaterialSkin;
 using MaterialSkin.Controls;
-using SharpDX.DirectInput;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using ConfigClass = JJManager.Class.App.Config.Config;
+using ProfileClass = JJManager.Class.App.Profile.Profile;
 
 namespace JJManager.Pages.ButtonBox
 {
@@ -41,20 +32,20 @@ namespace JJManager.Pages.ButtonBox
             // MaterialDesign
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
-            materialSkinManager.Theme = _DatabaseConnection.GetTheme();
-            materialSkinManager.ColorScheme = new ColorScheme(Primary.BlueGrey800, Primary.BlueGrey900, Primary.BlueGrey500, Accent.LightBlue200, TextShade.WHITE);
+            materialSkinManager.Theme = ConfigClass.Theme.SelectedTheme;
+            materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
             _device = device;
 
             _parent = parent;
 
             // Fill Forms
-            foreach (String Profile in Profile.GetList(_device.JJID))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.JJID))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             if (CmbBoxSelectProfile.Items.Count == 0)
             {
-                CmbBoxSelectProfile.Items.Add(new Profile("Perfil Padrão", _device.JJID, 5).Name);
+                CmbBoxSelectProfile.Items.Add(new ProfileClass(_device, "Perfil Padrão", true));
                 CmbBoxSelectProfile.SelectedIndex = 0;
             }
             else
@@ -69,12 +60,12 @@ namespace JJManager.Pages.ButtonBox
             CmbBoxSelectProfile.SelectedIndexChanged += new EventHandler(CmbBoxSelectProfile_SelectedIndexChanged);
         }
 
-        private void OpenInputModal(Profile profile, int idInput)
+        private void OpenInputModal(ProfileClass profile, int idInput)
         {
-            ChangeInputInfo inputForm = new ChangeInputInfo(this, _device.ActiveProfile, idInput);
+            Pages.App.AudioController inputForm = new Pages.App.AudioController(this, _device.ActiveProfile, idInput);
             Visible = false;
             inputForm.ShowDialog();
-            _device.ActiveProfile.UpdateInputs();
+            //_device.ActiveProfile.UpdateAnalogInputs(idInput);
             _IsInputSelected = false;
         }
 
@@ -110,7 +101,7 @@ namespace JJManager.Pages.ButtonBox
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in Profile.GetList(_device.JJID))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.JJID))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -141,12 +132,12 @@ namespace JJManager.Pages.ButtonBox
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 1);
+                        OpenInputModal(_device.ActiveProfile, 0);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 1);
+                    OpenInputModal(_device.ActiveProfile, 0);
                 }
             });
             thr.Name = "JJB01_Input_01";
@@ -176,12 +167,12 @@ namespace JJManager.Pages.ButtonBox
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 2);
+                        OpenInputModal(_device.ActiveProfile, 1);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 2);
+                    OpenInputModal(_device.ActiveProfile, 1);
                 }
             });
             thr.Name = "JJB01_Input_02";
@@ -250,14 +241,14 @@ namespace JJManager.Pages.ButtonBox
 
             if (dialogResult == DialogResult.Yes)
             {
-                _DatabaseConnection.DeleteProfile(CmbBoxSelectProfile.SelectedItem.ToString(), _device.Id);
+                string profileNameToExclude = CmbBoxSelectProfile.SelectedItem.ToString();
 
-                CmbBoxSelectProfile.Items.Clear();
+                CmbBoxSelectProfile.Items.Remove(CmbBoxSelectProfile.SelectedItem);
 
-                foreach (String Profile in Profile.GetList(_device.Id))
-                    CmbBoxSelectProfile.Items.Add(Profile);
-
+                string profileNameToActive = CmbBoxSelectProfile.Items[0].ToString();
                 CmbBoxSelectProfile.SelectedIndex = 0;
+                
+                _device.ActiveProfile.Delete(_device, profileNameToActive);
 
                 MessageBox.Show("Perfil excluído com sucesso!");
             }

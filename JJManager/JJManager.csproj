@@ -80,292 +80,369 @@
   <ItemGroup>
     <Reference Include="ArduinoUploader, Version=3.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\ArduinoUploader.3.2.0\lib\net452\ArduinoUploader.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="AudioSwitcher.AudioApi, Version=4.0.0.308, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
       <HintPath>..\packages\AudioSwitcher.AudioApi.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="AudioSwitcher.AudioApi.CoreAudio, Version=4.0.0.308, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
       <HintPath>..\packages\AudioSwitcher.AudioApi.CoreAudio.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Azure.Core, Version=1.38.0.0, Culture=neutral, PublicKeyToken=92742159e12e44c8, processorArchitecture=MSIL">
-      <HintPath>..\packages\Azure.Core.1.38.0\lib\net472\Azure.Core.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Azure.Core, Version=1.42.0.0, Culture=neutral, PublicKeyToken=92742159e12e44c8, processorArchitecture=MSIL">
+      <HintPath>..\packages\Azure.Core.1.42.0\lib\net472\Azure.Core.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Azure.Identity, Version=1.10.4.0, Culture=neutral, PublicKeyToken=92742159e12e44c8, processorArchitecture=MSIL">
-      <HintPath>..\packages\Azure.Identity.1.10.4\lib\netstandard2.0\Azure.Identity.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Azure.Identity, Version=1.12.0.0, Culture=neutral, PublicKeyToken=92742159e12e44c8, processorArchitecture=MSIL">
+      <HintPath>..\packages\Azure.Identity.1.12.0\lib\netstandard2.0\Azure.Identity.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DeviceProgramming, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DeviceProgramming.1.0.3\lib\net45\DeviceProgramming.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="HidSharp, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\HidSharp.2.1.0\lib\net35\HidSharp.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="IntelHexFormatReader, Version=2.2.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\IntelHexFormatReader.2.2.3\lib\net46\IntelHexFormatReader.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="InTheHand.Net.Bluetooth, Version=4.1.0.0, Culture=neutral, PublicKeyToken=ea38caa273134499, processorArchitecture=MSIL">
+      <HintPath>..\packages\InTheHand.Net.Bluetooth.4.1.44\lib\net462\InTheHand.Net.Bluetooth.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="LibUsbDfu, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\LibUsbDfu.1.1.0\lib\net45\LibUsbDfu.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="LibUsbDotNet.LibUsbDotNet, Version=2.2.0.0, Culture=neutral, PublicKeyToken=c677239abe1e02a9, processorArchitecture=MSIL">
+      <HintPath>..\packages\LibUsbDotNet.2.2.29\lib\net45\LibUsbDotNet.LibUsbDotNet.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="MaterialSkin, Version=2.3.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MaterialSkin.2.2.3.1\lib\net461\MaterialSkin.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Data.SqlClient, Version=5.0.0.0, Culture=neutral, PublicKeyToken=23ec7fc2d6eaa4a5, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Data.SqlClient.5.2.0\lib\net462\Microsoft.Data.SqlClient.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\packages\Microsoft.Data.SqlClient.5.2.2\lib\net462\Microsoft.Data.SqlClient.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Data.Tools.Sql.BatchParser, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.Data.Tools.Sql.BatchParser.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Identity.Client, Version=4.59.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Identity.Client.4.59.0\lib\net462\Microsoft.Identity.Client.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.Identity.Client, Version=4.64.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Identity.Client.4.64.0\lib\net472\Microsoft.Identity.Client.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Identity.Client.Extensions.Msal, Version=4.59.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Identity.Client.Extensions.Msal.4.59.0\lib\netstandard2.0\Microsoft.Identity.Client.Extensions.Msal.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.Identity.Client.Extensions.Msal, Version=4.64.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Identity.Client.Extensions.Msal.4.64.0\lib\netstandard2.0\Microsoft.Identity.Client.Extensions.Msal.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.IdentityModel.Abstractions, Version=7.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.IdentityModel.Abstractions.7.4.1\lib\net472\Microsoft.IdentityModel.Abstractions.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.IdentityModel.Abstractions, Version=8.0.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Abstractions.8.0.2\lib\net472\Microsoft.IdentityModel.Abstractions.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.IdentityModel.JsonWebTokens, Version=7.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.IdentityModel.JsonWebTokens.7.4.1\lib\net472\Microsoft.IdentityModel.JsonWebTokens.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.IdentityModel.JsonWebTokens, Version=8.0.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.JsonWebTokens.8.0.2\lib\net472\Microsoft.IdentityModel.JsonWebTokens.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.IdentityModel.Logging, Version=7.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.IdentityModel.Logging.7.4.1\lib\net472\Microsoft.IdentityModel.Logging.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.IdentityModel.Logging, Version=8.0.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Logging.8.0.2\lib\net472\Microsoft.IdentityModel.Logging.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.IdentityModel.Protocols, Version=7.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.IdentityModel.Protocols.7.4.1\lib\net472\Microsoft.IdentityModel.Protocols.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.IdentityModel.Protocols, Version=8.0.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Protocols.8.0.2\lib\net472\Microsoft.IdentityModel.Protocols.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect, Version=7.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.IdentityModel.Protocols.OpenIdConnect.7.4.1\lib\net472\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect, Version=8.0.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Protocols.OpenIdConnect.8.0.2\lib\net472\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.IdentityModel.Tokens, Version=7.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.IdentityModel.Tokens.7.4.1\lib\net472\Microsoft.IdentityModel.Tokens.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.IdentityModel.Tokens, Version=8.0.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.IdentityModel.Tokens.8.0.2\lib\net472\Microsoft.IdentityModel.Tokens.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Assessment, Version=1.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.Assessment.1.1.17\lib\net462\Microsoft.SqlServer.Assessment.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.ConnectionInfo, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.ConnectionInfo.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Dmf, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Dmf.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Dmf.Common, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Dmf.Common.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.Assessment, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.Assessment.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.Collector, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.Collector.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.CollectorEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.CollectorEnum.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.HadrData, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.HadrData.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.HadrModel, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.HadrModel.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.RegisteredServers, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.RegisteredServers.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.Sdk.Sfc, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.Sdk.Sfc.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.SqlScriptPublish, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.SqlScriptPublish.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.XEvent, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.XEvent.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.XEventDbScoped, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.XEventDbScoped.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.XEventDbScopedEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.XEventDbScopedEnum.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Management.XEventEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Management.XEventEnum.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.PolicyEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.PolicyEnum.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.RegSvrEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.RegSvrEnum.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.ServiceBrokerEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.ServiceBrokerEnum.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Smo, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Smo.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.Smo.Notebook, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.Smo.Notebook.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.SmoExtended, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.SmoExtended.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.SqlClrProvider, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.SqlClrProvider.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.SqlEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.SqlEnum.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.SqlWmiManagement, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.SqlWmiManagement.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.SqlServer.WmiEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.171.30.0\lib\net462\Microsoft.SqlServer.WmiEnum.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Win32.Registry, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Win32.Registry.5.0.0\lib\net461\Microsoft.Win32.Registry.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Mono.HttpUtility, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Mono.HttpUtility.1.0.0.1\lib\net40\Mono.HttpUtility.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NAudio, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.2.2.1\lib\net472\NAudio.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NAudio.Asio, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.Asio.2.2.1\lib\netstandard2.0\NAudio.Asio.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NAudio.Core, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.Core.2.2.1\lib\netstandard2.0\NAudio.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NAudio.Midi, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.Midi.2.2.1\lib\netstandard2.0\NAudio.Midi.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NAudio.Wasapi, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.Wasapi.2.2.1\lib\netstandard2.0\NAudio.Wasapi.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NAudio.WinForms, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.WinForms.2.2.1\lib\net472\NAudio.WinForms.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NAudio.WinMM, Version=2.2.1.0, Culture=neutral, PublicKeyToken=e279aa5131008a41, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.WinMM.2.2.1\lib\netstandard2.0\NAudio.WinMM.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="RJCP.SerialPortStream, Version=2.4.2.0, Culture=neutral, PublicKeyToken=5f5e7b70c6a74deb, processorArchitecture=MSIL">
       <HintPath>..\packages\SerialPortStream.2.4.2\lib\net45\RJCP.SerialPortStream.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="SharpDX.DirectInput, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.DirectInput.4.2.0\lib\net45\SharpDX.DirectInput.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="STBootLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\STBootLib.1.0.0\lib\netstandard2.0\STBootLib.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System">
       <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.ClientModel, Version=1.0.0.0, Culture=neutral, PublicKeyToken=92742159e12e44c8, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ClientModel.1.0.0\lib\netstandard2.0\System.ClientModel.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.CodeDom, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.CodeDom.8.0.0\lib\net462\System.CodeDom.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Collections.Specialized, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Collections.Specialized.4.3.0\lib\net46\System.Collections.Specialized.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Configuration" />
+    <Reference Include="System.ComponentModel.Composition">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Configuration">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Configuration.ConfigurationManager, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Configuration.ConfigurationManager.8.0.0\lib\net462\System.Configuration.ConfigurationManager.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Data.OracleClient" />
-    <Reference Include="System.Design" />
-    <Reference Include="System.Diagnostics.DiagnosticSource, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Diagnostics.DiagnosticSource.8.0.0\lib\net462\System.Diagnostics.DiagnosticSource.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="System.Core">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Data.Linq">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Data.OracleClient">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Design">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=8.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Diagnostics.DiagnosticSource.8.0.1\lib\net462\System.Diagnostics.DiagnosticSource.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Diagnostics.FileVersionInfo, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Diagnostics.FileVersionInfo.4.3.0\lib\net46\System.Diagnostics.FileVersionInfo.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Diagnostics.TraceSource, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Diagnostics.TraceSource.4.3.0\lib\net46\System.Diagnostics.TraceSource.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.DirectoryServices" />
-    <Reference Include="System.IdentityModel" />
-    <Reference Include="System.IdentityModel.Tokens.Jwt, Version=7.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.IdentityModel.Tokens.Jwt.7.4.1\lib\net472\System.IdentityModel.Tokens.Jwt.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="System.DirectoryServices">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IdentityModel">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IdentityModel.Tokens.Jwt, Version=8.0.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IdentityModel.Tokens.Jwt.8.0.2\lib\net472\System.IdentityModel.Tokens.Jwt.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.IO.FileSystem, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.FileSystem.4.3.0\lib\net46\System.IO.FileSystem.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.IO.FileSystem.AccessControl, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.FileSystem.AccessControl.5.0.0\lib\net461\System.IO.FileSystem.AccessControl.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.IO.FileSystem.Primitives, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.FileSystem.Primitives.4.3.0\lib\net46\System.IO.FileSystem.Primitives.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.Management" />
+    <Reference Include="System.IO.Ports, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.Ports.8.0.0\lib\net462\System.IO.Ports.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Management">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Memory.Data, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Memory.Data.8.0.0\lib\net462\System.Memory.Data.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.Net" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Numerics" />
+    <Reference Include="System.Net">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Numerics">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime, Version=4.1.1.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.4.3.1\lib\net462\System.Runtime.dll</HintPath>
@@ -374,7 +451,7 @@
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.Extensions, Version=4.1.1.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.Extensions.4.3.1\lib\net462\System.Runtime.Extensions.dll</HintPath>
@@ -384,14 +461,20 @@
     <Reference Include="System.Runtime.InteropServices, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.InteropServices.4.3.0\lib\net463\System.Runtime.InteropServices.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.Security" />
+    <Reference Include="System.Security">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.AccessControl, Version=6.0.0.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.AccessControl.6.0.1\lib\net461\System.Security.AccessControl.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Security.Cryptography.Algorithms, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.1\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
       <Private>False</Private>
@@ -399,7 +482,7 @@
     </Reference>
     <Reference Include="System.Security.Cryptography.ProtectedData, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.ProtectedData.8.0.0\lib\net462\System.Security.Cryptography.ProtectedData.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.2\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
@@ -408,73 +491,126 @@
     </Reference>
     <Reference Include="System.Security.Permissions, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Permissions.8.0.0\lib\net462\System.Security.Permissions.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.ServiceProcess">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Text.Encodings.Web, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Text.Encodings.Web.8.0.0\lib\net462\System.Text.Encodings.Web.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.Text.Json, Version=8.0.0.3, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Text.Json.8.0.3\lib\net462\System.Text.Json.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="System.Text.Json, Version=8.0.0.4, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Json.8.0.4\lib\net462\System.Text.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Threading.Overlapped, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Overlapped.4.3.0\lib\net46\System.Threading.Overlapped.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Threading.Thread, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Thread.4.3.0\lib\net46\System.Threading.Thread.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Threading.ThreadPool, Version=4.0.11.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.ThreadPool.4.3.0\lib\net46\System.Threading.ThreadPool.dll</HintPath>
       <Private>True</Private>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.Transactions" />
+    <Reference Include="System.Transactions">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Deployment" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
+    <Reference Include="System.Web.Extensions">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CSharp">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Data">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Deployment">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Windows.Forms">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="WindowsBase">
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class\App\Config\Config.cs" />
+    <Compile Include="Class\App\Config\OthersConfigs\StartOnBoot.cs" />
+    <Compile Include="Class\App\Config\Theme\Theme.cs" />
+    <Compile Include="Class\App\Fonts\FontAwesome.cs" />
+    <Compile Include="Class\App\Input\AudioController\AudioController.cs" />
+    <Compile Include="Class\App\Input\AudioPlayer\AudioPlayer.cs" />
+    <Compile Include="Class\App\Input\Input.cs" />
+    <Compile Include="Class\App\Input\MacroKey\Keyboard\KeyboardController.cs" />
+    <Compile Include="Class\App\Input\MacroKey\MacroKeyAction.cs" />
+    <Compile Include="Class\App\Input\MacroKey\Mouse\MouseController.cs" />
+    <Compile Include="Class\App\Updater\PluginUpdater.cs" />
+    <Compile Include="Class\App\Connections\SimHubWebsocket.cs" />
+    <Compile Include="Class\App\Updater\Updater.cs" />
     <Compile Include="Class\App\CallForm.cs" />
+    <Compile Include="Class\App\Input\MacroKey\MacroKey.cs" />
+    <Compile Include="Class\App\OpenBLT.cs" />
+    <Compile Include="Class\App\PixelGrid\Grid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Class\App\PixelGrid\Pixel.cs" />
     <Compile Include="Class\App\WaitForm.cs" />
+    <Compile Include="Class\Devices\Connections\DeviceInfo.cs" />
+    <Compile Include="Class\Devices\JJB01_V2 .cs" />
+    <Compile Include="Class\Devices\JJB999.cs" />
+    <Compile Include="Class\Devices\JJBP06.cs" />
     <Compile Include="Class\Devices\JJB01.cs" />
     <Compile Include="Class\Devices\JJM01.cs" />
-    <Compile Include="Class\FirmwareUpdater.cs" />
+    <Compile Include="Class\Devices\JJQ01.cs" />
+    <Compile Include="Class\App\Updater\DeviceUpdater.cs" />
     <Compile Include="Class\AppModules.cs" />
-    <Compile Include="Class\App\AudioManager.cs" />
-    <Compile Include="Class\DatabaseConnection.cs" />
+    <Compile Include="Class\App\Connections\DatabaseConnection.cs" />
     <Compile Include="Class\Device.cs" />
-    <Compile Include="Class\AnalogInput.cs" />
-    <Compile Include="Class\JJManagerDevice.cs" />
+    <Compile Include="Class\Devices\JJSD01.cs" />
     <Compile Include="Class\Log.cs" />
     <Compile Include="Class\Migrate.cs" />
-    <Compile Include="Class\Profile.cs" />
-    <Compile Include="Class\SoftwareUpdater.cs" />
+    <Compile Include="Class\App\Profile\Profile.cs" />
+    <Compile Include="Class\App\Updater\SoftwareUpdater.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MigrateCommands\1_2_4.cs" />
+    <Compile Include="Pages\App\AudioPlayer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\App\AudioPlayer.Designer.cs">
+      <DependentUpon>AudioPlayer.cs</DependentUpon>
     </Compile>
     <Compile Include="Pages\App\AudioSession.cs">
       <SubType>Form</SubType>
@@ -482,11 +618,29 @@
     <Compile Include="Pages\App\AudioSession.Designer.cs">
       <DependentUpon>AudioSession.cs</DependentUpon>
     </Compile>
+    <Compile Include="Pages\App\MacroKeyAction.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\App\MacroKeyAction.Designer.cs">
+      <DependentUpon>MacroKeyAction.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\App\MacroKeyMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\App\MacroKeyMain.Designer.cs">
+      <DependentUpon>MacroKeyMain.cs</DependentUpon>
+    </Compile>
     <Compile Include="Pages\App\UpdateAppNotification.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Pages\App\UpdateAppNotification.Designer.cs">
       <DependentUpon>UpdateAppNotification.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\App\Updater\MultipleComPort.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\App\Updater\MultipleComPort.Designer.cs">
+      <DependentUpon>MultipleComPort.cs</DependentUpon>
     </Compile>
     <Compile Include="Pages\App\WaitForm.cs">
       <SubType>Form</SubType>
@@ -494,17 +648,35 @@
     <Compile Include="Pages\App\WaitForm.Designer.cs">
       <DependentUpon>WaitForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Pages\ButtonBox\JJB01_V2 .cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\ButtonBox\JJB01_V2 .Designer.cs">
+      <DependentUpon>JJB01_V2 .cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\ButtonBox\JJB999.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\ButtonBox\JJB999.Designer.cs">
+      <DependentUpon>JJB999.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\ButtonBox\JJBP06.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\ButtonBox\JJBP06.Designer.cs">
+      <DependentUpon>JJBP06.cs</DependentUpon>
+    </Compile>
     <Compile Include="Pages\ButtonBox\JJB_01.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Pages\ButtonBox\JJB_01.Designer.cs">
       <DependentUpon>JJB_01.cs</DependentUpon>
     </Compile>
-    <Compile Include="Pages\ChangeInputInfo.cs">
+    <Compile Include="Pages\App\AudioController.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Pages\ChangeInputInfo.Designer.cs">
-      <DependentUpon>ChangeInputInfo.cs</DependentUpon>
+    <Compile Include="Pages\App\AudioController.Designer.cs">
+      <DependentUpon>AudioController.cs</DependentUpon>
     </Compile>
     <Compile Include="Pages\CreateProfile.cs">
       <SubType>Form</SubType>
@@ -512,16 +684,28 @@
     <Compile Include="Pages\CreateProfile.Designer.cs">
       <DependentUpon>CreateProfile.cs</DependentUpon>
     </Compile>
+    <Compile Include="Pages\OthersDevices\JJSD01.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\OthersDevices\JJSD01.Designer.cs">
+      <DependentUpon>JJSD01.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\OthersDevices\JJQ01.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\OthersDevices\JJQ01.Designer.cs">
+      <DependentUpon>JJQ01.cs</DependentUpon>
+    </Compile>
     <Compile Include="Pages\Mixers\JJM_01.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Pages\Mixers\JJM_01.Designer.cs">
       <DependentUpon>JJM_01.cs</DependentUpon>
     </Compile>
-    <Compile Include="Pages\UpdateDevice.cs">
+    <Compile Include="Pages\App\UpdateDevice.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Pages\UpdateDevice.Designer.cs">
+    <Compile Include="Pages\App\UpdateDevice.Designer.cs">
       <DependentUpon>UpdateDevice.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
@@ -532,35 +716,68 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Settings.cs" />
+    <EmbeddedResource Include="Class\App\PixelGrid\Grid.resx">
+      <DependentUpon>Grid.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\App\AudioPlayer.resx">
+      <DependentUpon>AudioPlayer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pages\App\AudioSession.resx">
       <DependentUpon>AudioSession.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Pages\App\MacroKeyAction.resx">
+      <DependentUpon>MacroKeyAction.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\App\MacroKeyMain.resx">
+      <DependentUpon>MacroKeyMain.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Pages\App\UpdateAppNotification.resx">
       <DependentUpon>UpdateAppNotification.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Pages\App\Updater\MultipleComPort.resx">
+      <DependentUpon>MultipleComPort.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Pages\App\WaitForm.resx">
       <DependentUpon>WaitForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\ButtonBox\JJB01_V2 .resx">
+      <DependentUpon>JJB01_V2 .cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\ButtonBox\JJB999.resx">
+      <DependentUpon>JJB999.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\ButtonBox\JJBP06.resx">
+      <DependentUpon>JJBP06.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Pages\ButtonBox\JJB_01.resx">
       <DependentUpon>JJB_01.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="Pages\ChangeInputInfo.resx">
-      <DependentUpon>ChangeInputInfo.cs</DependentUpon>
+    <EmbeddedResource Include="Pages\App\AudioController.resx">
+      <DependentUpon>AudioController.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Pages\CreateProfile.resx">
       <DependentUpon>CreateProfile.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Pages\OthersDevices\JJQ01.resx">
+      <DependentUpon>JJQ01.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\OthersDevices\JJSD01.resx">
+      <DependentUpon>JJSD01.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Pages\Mixers\JJM_01.resx">
       <DependentUpon>JJM_01.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Pages\UpdateDevice.resx">
+    <EmbeddedResource Include="Pages\App\UpdateDevice.resx">
       <DependentUpon>UpdateDevice.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -585,6 +802,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\32px-Cog_font_awesome.png" />
+    <None Include="Resources\compatible_devices.json" />
+    <None Include="Resources\Font Awesome 6 Brands-Regular-400.otf" />
+    <None Include="Resources\Font Awesome 6 Free-Regular-400.otf" />
+    <None Include="Resources\Font Awesome 6 Free-Solid-900.otf" />
     <None Include="Resources\JJB-01_input02_hover.png" />
     <None Include="Resources\JJB-01_input02.png" />
     <None Include="Resources\JJB-01_input01.png" />
@@ -630,6 +851,22 @@
     </Content>
     <Content Include="JJManagerrIcon.ico" />
     <Content Include="MigrateQuerys\1_1_14.sql" />
+    <Content Include="MigrateQuerys\1_2_1.sql" />
+    <Content Include="MigrateQuerys\1_2_4 .sql" />
+    <Content Include="MigrateQuerys\1_2_3_1 .sql" />
+    <Content Include="MigrateQuerys\1_2_3 .sql" />
+    <Content Include="MigrateQuerys\1_2_2.sql" />
+    <None Include="Resources\JJSD01_input_hover.png" />
+    <None Include="Resources\JJSD01_input.png" />
+    <None Include="Resources\_alpha.png" />
+    <None Include="Resources\JJSD-01_input.png" />
+    <None Include="Resources\JJSD-01.png" />
+    <None Include="Resources\JJB-01-v2_on.png" />
+    <None Include="Resources\JJB-01-v2_off.png" />
+    <None Include="Resources\JJBP-06_on.png" />
+    <None Include="Resources\JJBP-06_off.png" />
+    <None Include="Resources\jjb-999-on.PNG" />
+    <None Include="Resources\jjb-999-off.PNG" />
     <None Include="MigrateQuerys\1_2_0.sql" />
     <None Include="MigrateQuerys\1_1_15.sql" />
     <None Include="Resources\Logo JohnJohn JJMixer.png" />
@@ -644,4 +881,14 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Data.SqlClient.SNI.5.2.0\build\net462\Microsoft.Data.SqlClient.SNI.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Data.SqlClient.SNI.5.2.0\build\net462\Microsoft.Data.SqlClient.SNI.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PostBuildEvent>if not exist "$(TargetDir)lib" mkdir "$(TargetDir)lib"
+
+move /Y "$(TargetDir)*.dll" "$(TargetDir)lib\"
+
+move /Y "$(TargetDir)*.xml" "$(TargetDir)lib\"
+
+move /Y "$(TargetDir)*.pdb" "$(TargetDir)lib\"
+</PostBuildEvent>
+  </PropertyGroup>
 </Project>
