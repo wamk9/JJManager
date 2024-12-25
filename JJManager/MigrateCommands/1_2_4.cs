@@ -29,46 +29,43 @@ namespace JJManager.MigrateCommands
 
             string sql = "SELECT id, name, type, info, inverted_axis, id_profile FROM dbo.analog_inputs;";
 
-            using (JsonDocument json = dbConnection.RunSQLWithResults(sql))
+            foreach (JsonObject json in dbConnection.RunSQLWithResults(sql))
             {
                 if (json != null)
                 {
-                    foreach (var item in json.RootElement.EnumerateArray())
+                    dataJson.Clear();
+                    valuesJson.Clear();
+
+                    foreach (string individualInfo in json["info"].GetValue<string>().Split('|'))
                     {
-                        dataJson.Clear();
-                        valuesJson.Clear();
-
-                        foreach (string individualInfo in item.GetProperty("info").GetString().Split('|'))
-                        {
-                            valuesJson.Add(individualInfo);
-                        }
-
-                        dataJson.Add("toManage", valuesJson);
-                        
-                        if (item.GetProperty("type").GetString() == "app")
-                        {
-                            dataJson.Add("audioMode", "application");
-                        }
-                        else if (item.GetProperty("type").GetString() == "device")
-                        {
-                            dataJson.Add("audioMode", "deviceplayback");
-                        }
-                        else if (item.GetProperty("type").GetString() == "nothing")
-                        {
-                            dataJson.Add("audioMode", "none");
-                        }
-
-                        id = (int.Parse(item.GetProperty("id").GetString()) - 1).ToString();
-                        name = item.GetProperty("name").GetString();
-                        data = dataJson.ToJsonString();
-                        mode = "audiocontroller";
-                        type = "analog";
-                        id_profile = item.GetProperty("id_profile").GetString();
-
-                        sql = $"INSERT INTO dbo.device_inputs (id, name, data, type, mode, id_profile) VALUES ('{id}', '{name}', '{data}', '{type}', '{mode}', '{id_profile}');";
-
-                        dbConnection.RunSQL(sql);
+                        valuesJson.Add(individualInfo);
                     }
+
+                    dataJson.Add("toManage", valuesJson);
+                        
+                    if (json["type"].GetValue<string>() == "app")
+                    {
+                        dataJson.Add("audioMode", "application");
+                    }
+                    else if (json["type"].GetValue<string>() == "device")
+                    {
+                        dataJson.Add("audioMode", "deviceplayback");
+                    }
+                    else if (json["type"].GetValue<string>() == "nothing")
+                    {
+                        dataJson.Add("audioMode", "none");
+                    }
+
+                    id = (int.Parse(json["id"].GetValue<string>()) - 1).ToString();
+                    name = json["name"].GetValue<string>();
+                    data = dataJson.ToJsonString();
+                    mode = "audiocontroller";
+                    type = "analog";
+                    id_profile = json["id_profile"].GetValue<string>();
+
+                    sql = $"INSERT INTO dbo.device_inputs (id, name, data, type, mode, id_profile) VALUES ('{id}', '{name}', '{data}', '{type}', '{mode}', '{id_profile}');";
+
+                    dbConnection.RunSQL(sql);
                 }
             }
         }

@@ -478,5 +478,27 @@ namespace JJManager.Properties {
                 return ResourceManager.GetString("SQL_1_2_4", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///ALTER TABLE dbo.jj_products
+        ///ADD analog_outputs_qtd TINYINT NOT NULL DEFAULT(0),
+        ///    digital_outputs_qtd TINYINT NOT NULL DEFAULT(0),
+        ///    conn_type VARCHAR (10) NULL,
+        ///    class_name VARCHAR (10) NULL;
+        ///GO
+        ///
+        ///UPDATE dbo.jj_products SET conn_type = &apos;HID&apos;, class_name = &apos;JJM01&apos; WHERE product_name = &apos;Mixer de �udio JJM-01&apos;;
+        ///UPDATE dbo.jj_products SET conn_type = &apos;Joystick&apos;, class_name = &apos;JJ [o restante da cadeia de caracteres foi truncado]&quot;;.
+        /// </summary>
+        internal static string SQL_1_2_5 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_5", resourceCulture);
+            }
+        }
     }
 }

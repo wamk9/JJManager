@@ -1,8 +1,13 @@
 [
 	[ "Streamdeck JJSD-01", "2024.09.01" ],
-	[ "Mixer de Áudio JJM-01", "2024.07.28" ],
+	[ "Mixer de Áudio JJM-01", "2024.11.29" ],
 	[ "ButtonBox JJB-01", null ],
-	[ "ButtonBox JJB-01 V2", "2024.08.03" ],
+	[ "ButtonBox JJB-01 V2", "2024.11.29" ],
 	[ "ButtonBox JJBP-06", null ],
-	[ "ButtonBox JJB-999", "2024.08.03" ]
+	[ "ButtonBox JJB-999", "2024.11.29" ],
+	[ "Hub ARGB JJHL-01", null ],
+	[ "Hub ARGB JJHL-01 Plus", null ],
+	[ "Hub RGB JJHL-02", null ],
+	[ "Hub RGB JJHL-02 Plus", null ],
+	[ "Dashboard JJDB-01", null ]
 ]

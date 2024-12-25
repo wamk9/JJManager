@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using MacroKeyInput = JJManager.Class.App.Input.MacroKey.MacroKey;
 using AudioControllerInput = JJManager.Class.App.Input.AudioController.AudioController;
 using AudioPlayerInput = JJManager.Class.App.Input.AudioPlayer.AudioPlayer;
+using AudioSwitcher.AudioApi.CoreAudio;
+using JJManager.Class.App.Profile;
+using Newtonsoft.Json.Linq;
 namespace JJManager.Class.App.Input
 {
     public class Input
@@ -115,6 +118,8 @@ namespace JJManager.Class.App.Input
         {
             _id = inputId;
             _profileId = profileId;
+            _data = new JsonObject();
+            _name = $"Input {(_id + 1)}";
 
             RestartInput();
         }
@@ -124,21 +129,13 @@ namespace JJManager.Class.App.Input
             DatabaseConnection database = new DatabaseConnection();
             String sql = $"SELECT name, mode, type, data FROM device_inputs WHERE id = '{_id}' AND id_profile = '{_profileId}';";
 
-            using (JsonDocument json = database.RunSQLWithResults(sql))
+
+            foreach (JsonObject json in database.RunSQLWithResults(sql))
             {
-                bool existsData = false;
-
-                existsData = (json != null && !string.IsNullOrEmpty(json.RootElement[0].GetProperty("data").GetString()));
-                _data = JsonObject.Parse(existsData ? json.RootElement[0].GetProperty("data").GetString() : "{}").AsObject();
-
-                existsData = (json != null && !string.IsNullOrEmpty(json.RootElement[0].GetProperty("name").GetString()));
-                _name = (existsData ? json.RootElement[0].GetProperty("name").GetString() : $"Input {_id}");
-
-                existsData = (json != null && !string.IsNullOrEmpty(json.RootElement[0].GetProperty("mode").GetString()));
-                _mode = ToInputMode((existsData ? json.RootElement[0].GetProperty("mode").GetString() : "none"));
-
-                existsData = (json != null && !string.IsNullOrEmpty(json.RootElement[0].GetProperty("type").GetString()));
-                _type = ToInputType((existsData ? json.RootElement[0].GetProperty("type").GetString() : "none"));
+                _data = json.ContainsKey("data") ? JsonObject.Parse(json["data"].GetValue<string>()).AsObject() : new JsonObject();
+                _name = json.ContainsKey("name") && json["name"].GetValue<string>() != string.Empty ? json["name"].GetValue<string>() : $"Input {_id}";
+                _mode = ToInputMode(json.ContainsKey("mode") ? json["mode"].GetValue<string>() : "none");
+                _type = ToInputType(json.ContainsKey("type") ? json["type"].GetValue<string>() : "none");
 
                 if (_mode == InputMode.MacroKey)
                 {
@@ -244,7 +241,7 @@ namespace JJManager.Class.App.Input
             _type = InputType.Digital;
         }
 
-        public void Execute()
+        public void Execute(JsonObject jsonData = null)
         {
             switch (_mode)
             {
@@ -252,6 +249,12 @@ namespace JJManager.Class.App.Input
                     _macroKey.Execute();
                     break;
                 case InputMode.AudioController:
+                    if (jsonData != null && jsonData.ContainsKey("value"))
+                    {
+                        AudioController.SettedVolume = jsonData["value"].GetValue<int>();
+                    }
+
+                    AudioController.ChangeVolume();
                     break;
                 case InputMode.AudioPlayer:
                     _audioPlayer.PlayAudio();

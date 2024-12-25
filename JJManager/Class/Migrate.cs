@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -27,11 +28,11 @@ namespace JJManager.Class
             String sql = "SELECT software_version FROM dbo.configs;";
 
 
-            using (JsonDocument json = _database.RunSQLWithResults(sql))
+            foreach (JsonObject json in _database.RunSQLWithResults(sql))
             {
-                if (json != null)
+                if (json.ContainsKey("software_version"))
                 {
-                    Version dbVersion = new Version(json.RootElement[0].GetProperty("software_version").ToString());
+                    Version dbVersion = new Version(json["software_version"].GetValue<string>());
 
                     if (_actualVersion > dbVersion)
                     {
@@ -56,7 +57,8 @@ namespace JJManager.Class
             _versions.Add(new Version(1, 2, 2));
             _versions.Add(new Version(1, 2, 3));
             _versions.Add(new Version(1, 2, 3, 1));
-            _versions.Add(new Version(1, 2, 4)); // Last Version
+            _versions.Add(new Version(1, 2, 4));
+            _versions.Add(new Version(1, 2, 5)); // Last Version
         }
 
         private void ExecuteMigration (Version actual_version)
@@ -88,12 +90,15 @@ namespace JJManager.Class
                             Console.WriteLine("Class not found.");
                         }
 
-                        MessageBox.Show("Banco de Dados atualizado para a versão " + actual_version.ToString());
+                        if (_versions.Last() == actual_version)
+                        {
+                            MessageBox.Show("Banco de Dados atualizado para a versão " + actual_version.ToString());
+                        }
                     }
                     else
                     {
                         //_database.RestoreBackup(actual_version);
-                        MessageBox.Show("Ocorreu um erro na atualização do banco de dados.");
+                        MessageBox.Show("Ocorreu um erro na atualização do banco de dados para a versão " + version.ToString() + ".");
                     }
                 }
             }

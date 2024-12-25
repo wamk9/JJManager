@@ -244,36 +244,32 @@ namespace JJManager.Class.App
                             JJManager.Class.App.DeviceUpdater deviceUpdater = this as JJManager.Class.App.DeviceUpdater;
                             string selectedComPort = null;
 
-                            if (string.IsNullOrEmpty(deviceUpdater.ComPort))
+                            if (deviceUpdater.ComPort.Count == 0)
                             {
-                                IReadOnlyList<string> ports = deviceUpdater.Device.GetComPortByVidPidAndProductName();
+                                Log.Insert("Updater", $"Não foi possível buscar as portas de comunicação do dispositivo '{deviceUpdater.Device.ProductName}' de ID '{deviceUpdater.Device.ConnId}'");
+                            }
+                            else if (deviceUpdater.ComPort.Count == 1)
+                            {
+                                selectedComPort = deviceUpdater.ComPort.First();
+                            }
+                            else // Multiple devices with same VID/PID
+                            {
+                                _MainForm.Invoke((MethodInvoker)delegate
+                                {
+                                    MultipleComPort multipleComPort = new MultipleComPort(deviceUpdater.ComPort);
 
-                                if (ports.Count() == 0)
-                                {
-                                    Log.Insert("Updater", $"Não foi possível buscar as portas de comunicação do dispositivo '{deviceUpdater.Device.ProductName}' de ID '{deviceUpdater.Device.ConnId}'");
-                                }
-                                else if (ports.Count() == 1)
-                                {
-                                    selectedComPort = ports.First();
-                                }
-                                else // Multiple devices with same VID/PID
-                                {
-                                    _MainForm.Invoke((MethodInvoker)delegate
+                                    DialogResult dialogResult = multipleComPort.ShowDialog();
+
+                                    if (dialogResult == DialogResult.OK)
                                     {
-                                        MultipleComPort multipleComPort = new MultipleComPort(ports);
-
-                                        DialogResult dialogResult = multipleComPort.ShowDialog();
-
-                                        if (dialogResult == DialogResult.OK)
-                                        {
-                                            selectedComPort = multipleComPort.Port;
-                                        }
-                                    });
-                                }
+                                        selectedComPort = multipleComPort.Port;
+                                    }
+                                });
+                                
                             }
                             ArduinoSketchUploaderOptions options = new ArduinoSketchUploaderOptions();
                             options.FileName = Path.Combine(_DownloadPath, _DownloadFileName);
-                            options.PortName = !string.IsNullOrEmpty(deviceUpdater.ComPort) ? deviceUpdater.ComPort : selectedComPort;
+                            options.PortName = selectedComPort;
                             options.ArduinoModel = ArduinoModel.Micro;
 
                             ArduinoSketchUploader uploader = new ArduinoSketchUploader(options);

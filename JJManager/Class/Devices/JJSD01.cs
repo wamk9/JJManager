@@ -14,180 +14,94 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Text.Json.Nodes;
+using AudioSwitcher.AudioApi.CoreAudio;
+using JJManager.Class.App.Input;
+using JJManager.Class.App.Profile;
+using HIDClass = JJManager.Class.Devices.Connections.HID;
 
 namespace JJManager.Class.Devices
 {
-    internal class JJSD01
+    internal class JJSD01 : HIDClass
     {
-        private Device _Device = null;
-        private bool _IsCommunicating = false;
-
-        public JJSD01(Device device)
+        public JJSD01(HidDevice hidDevice) : base(hidDevice)
         {
-            _Device = device;
+            _actionReceivingData = () => { ActionReceivingData(); };
+            _actionSendingData = () => { ActionSendingData(); };
         }
 
-        public bool ReceiveData() 
+        private void ActionReceivingData()
         {
-            HidStream hidStream;
-            dynamic receivedMessage = null;
-            byte[] receivedeBytes = null;
-            bool resetAsyncResult = false;
-
-            try
+            while (_isConnected)
             {
-                ReportDescriptor reportDescriptor = _Device.HidDevice.GetReportDescriptor();
-
-                foreach (DeviceItem deviceItem in reportDescriptor.DeviceItems)
+                if (!ReceiveData())
                 {
-                    if (_Device.HidDevice.TryOpen(out hidStream))
+                    Disconnect();
+                }
+            }
+        }
+
+        private void ActionSendingData()
+        {
+            while (_isConnected)
+            {
+                if (!SendData())
+                {
+                    Disconnect();
+                }
+            }
+        }
+
+        private bool SendData()
+        {
+            bool result = false;
+
+            if (_profile.NeedsUpdate)
+            {
+                _profile.Restart();
+                _profile.NeedsUpdate = false;
+            }
+
+            JsonArray jsonArray = new JsonArray();
+
+            for (int i = 0; i < _profile.Inputs.Count; i++)
+            {
+                string messageToSend = new JsonObject
                     {
-                        hidStream.ReadTimeout = Timeout.Infinite;
-
-                        using (hidStream)
-                        {
-                            byte[] inputReportBuffer = new byte[_Device.HidDevice.GetMaxInputReportLength()];
-                            HidDeviceInputReceiver inputReceiver = reportDescriptor.CreateHidDeviceInputReceiver();
-                            DeviceItemInputParser inputParser = deviceItem.CreateDeviceItemInputParser();
-
-                            IAsyncResult ar = null;
-
-                            while (true)
+                        { "data", new JsonObject
                             {
-                                if (ar == null || resetAsyncResult)
-                                {
-                                    ar = hidStream.BeginRead(inputReportBuffer, 0, inputReportBuffer.Length, null, null);
-                                    resetAsyncResult = false;
-                                }
-                                else
-                                {
-                                    if (ar.IsCompleted)
-                                    {
-                                        int byteCount = hidStream.EndRead(ar);
-                                        ar = null;
-
-                                        if (byteCount > 0)
-                                        {
-                                            receivedeBytes = inputReportBuffer.Take(byteCount).Where(x => x != 0x00).ToArray();
-                                            receivedMessage = Encoding.ASCII.GetString(receivedeBytes).Trim();
-
-                                            if ((receivedMessage.StartsWith("{") && receivedMessage.EndsWith("}")) || //For object
-                                                    (receivedMessage.StartsWith("[") && receivedMessage.EndsWith("]")))   //For array
-                                            {
-                                                JsonObject json = JsonObject.Parse(receivedMessage);
-                                                
-                                                //receivedMessage = JsonConvert.DeserializeObject<dynamic>(receivedMessage);
-
-                                                if (json != null)
-                                                {
-                                                    if (json.ContainsKey("data") && json["data"] is JsonObject dataObject)
-                                                    {
-                                                        if (dataObject.ContainsKey("key_pressed"))
-                                                        {
-                                                            _Device.ActiveProfile.Inputs[dataObject["key_pressed"].GetValue<int>()].Execute();
-                                                        }
-                                                        else if (dataObject.ContainsKey("key_released"))
-                                                        {
-
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            resetAsyncResult = true;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        ar.AsyncWaitHandle.WaitOne(1000);
-                                    }
-                                }
+                                { "connection", "ok" },
                             }
-                            //hidStream.Close();
-                            //hidStream.Dispose();
                         }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("JJSD01", "Ocorreu um problema ao realizar a comunicação com a JJSD-01 de ID '" + _Device.ConnId + "'", ex);
+                    }.ToJsonString();
+
+                result = SendHIDData(messageToSend).Result;
             }
 
-            return false;
+            return result;
         }
 
-        public bool SendData()
+        private bool ReceiveData()
         {
-            HidStream hidStream;
-            String MessageToSend = "";
+            var (success, jsonString) = ReceiveHIDData();
 
-            try
+            if (success && !string.IsNullOrEmpty(jsonString))
             {
-                if (_Device == null)
-                    MessageBox.Show("Device Desconectado");
+                JsonObject json = JsonObject.Parse(jsonString).AsObject();
 
-                ReportDescriptor reportDescriptor = _Device.HidDevice.GetReportDescriptor();
-
-                if (_Device.HidDevice.TryOpen(out hidStream))
+                if (json.ContainsKey("data") && json["data"] is JsonObject dataObject)
                 {
-                    hidStream.WriteTimeout = 3000;
-                    hidStream.ReadTimeout = 3000;
-
-                    using (hidStream)
+                    if (dataObject.ContainsKey("key_pressed"))
                     {
-                        if (_Device.ActiveProfileNeedsUpdated)
-                        {
-                            _Device.ActiveProfile.Restart();
-                            _Device.ActiveProfileNeedsUpdated = false;
-                        }
+                        _profile.Inputs[dataObject["key_pressed"].GetValue<int>()].Execute();
+                    }
+                    else if (dataObject.ContainsKey("key_released"))
+                    {
 
-                        JObject jsonObject = new JObject
-                        {
-                            { "data", new JObject
-                                {
-                                    { "connection", "ok" },
-                                }
-                            }
-                        };
-
-                        MessageToSend = jsonObject.ToString(Formatting.None);
-
-                        if (MessageToSend.Length > 63)
-                            throw new ArgumentOutOfRangeException();
-
-                        byte[] messageInBytes = Encoding.ASCII.GetBytes(MessageToSend);
-                        byte[] bytesToSend = new byte[(messageInBytes.Length + 1)];
-
-                        for (int i = 0; i < bytesToSend.Length; i++)
-                        {
-                            bytesToSend[i] = (byte)(i == 0 ? 0x00 : messageInBytes[(i - 1)]);
-                        }
-
-                        if (hidStream.CanRead && MessageToSend.Length > 1)
-                        {
-                            // Need do it to don't return a System.IO.IOException
-                            Thread.Sleep(1000);
-                            hidStream.Write(bytesToSend, 0, bytesToSend.Length);
-                            return true;
-                        }
                     }
                 }
             }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                Log.Insert("JJSD01", "Ocorreu um problema ao enviar os dados para a JJSD-01", ex);
-            }
-            catch (IOException ex)
-            {
-                Log.Insert("JJSD01", "Ocorreu um problema ao enviar os dados para a JJSD-01", ex);
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("JJSD01", "Ocorreu um erro ao receber a informação via HID (SendMessage): " + MessageToSend, ex);
-            }
 
-            return false;
+            return success;
         }
     }
 }

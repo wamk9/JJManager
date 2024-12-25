@@ -83,7 +83,7 @@ namespace JJManager.Class.App
                 _WebSocket.Dispose();
             }
         }
-        public (bool, JsonObject) RequestMessage(string request = "")
+        public (bool, JsonObject) RequestMessage(string request = "", int delay = 300)
         {
             JsonObject jsonToSend = new JsonObject();
             var senderBuffer = new byte[1024 * 4];
@@ -91,6 +91,8 @@ namespace JJManager.Class.App
             WebSocketReceiveResult result = null;
             try
             {
+                Thread.Sleep(delay);
+
                 while (_WebSocket.State == WebSocketState.Open)
                 {
                    if (!string.IsNullOrEmpty(request))
@@ -107,7 +109,7 @@ namespace JJManager.Class.App
                         try
                         {
                             var jsonData = Encoding.UTF8.GetString(receivedBuffer, 0, result.Count);
-                            jsonToSend = JsonNode.Parse(jsonData).AsObject();
+                            jsonToSend = JsonNode.Parse(jsonData.Replace("\n", "").Trim()).AsObject();
                             break;
                         }
                         catch (System.Text.Json.JsonException)
@@ -126,6 +128,14 @@ namespace JJManager.Class.App
             {
                 // Handle exception
             }
+            catch (SocketException)
+            {
+                // Handle exception
+            }
+            catch (AggregateException)
+            {
+                // Handle exception
+            }
 
             if (jsonToSend.Count == 0)
             {
@@ -136,14 +146,16 @@ namespace JJManager.Class.App
         }
 
 
-        public bool TranslateToButtonBoxHID(JsonObject messageReceived, out string translatedMessage, ref bool acceptedOldVersionPlugin, int brightness_limit = 100)
+        public bool TranslateToButtonBoxHID(JsonObject messageReceived, out string translatedMessage, string deviceTag, ref bool acceptedOldVersionPlugin, int brightness_limit = 100)
         {
             JsonObject jsonResult = messageReceived;
             JsonObject jsonValues = new JsonObject();
             try
             {
+                Console.WriteLine(messageReceived.ToJsonString());
+
                 if ((jsonResult.ContainsKey("status") && jsonResult["status"].ToString() == "online") &&
-                    (jsonResult.ContainsKey("data") && jsonResult["data"] is JsonObject dataObject) && 
+                    (jsonResult.ContainsKey("data") && jsonResult["data"] is JsonObject dataObject) &&
                     (dataObject.ContainsKey("SimHubLastData") && dataObject["SimHubLastData"] is JsonObject simHubLastData))
                 {
                     /*if (jsonResult["status"].ToString() == "old_version")
@@ -151,16 +163,37 @@ namespace JJManager.Class.App
                         MessageBox.Show("Parece que seu plugin 'JJManager Sync (Integração SimHub)' encontra-se desatualizado, recomendamos instalar a nova versão para garantir o funcionamento do sincronismo, para tal vá até a aba 'Atualizações' e instale a nova versão.");
                         acceptedOldVersionPlugin = true;
                     }*/
-                    if (simHubLastData.ContainsKey("led_mode") && simHubLastData["led_mode"].GetValue<int>() == 3)
+
+                    if (simHubLastData.ContainsKey("bbox.pulse_delay"))
                     {
-                        jsonValues.Add("led_mode", (simHubLastData.ContainsKey("led_mode") ? simHubLastData["led_mode"].GetValue<int>() : 0));
-                        jsonValues.Add("brightness", (simHubLastData.ContainsKey("brightness") ? simHubLastData["brightness"].GetValue<int>() : 0));
+                        jsonValues.Add("pulse_delay", (simHubLastData.ContainsKey("bbox.pulse_delay") ? simHubLastData["bbox.pulse_delay"].GetValue<int>() : 30)); // 0 to 255
                     }
-                    else
+
+                    if (simHubLastData.ContainsKey("bbox.blink_speed"))
                     {
-                        jsonValues.Add("led_mode", (simHubLastData.ContainsKey("led_mode") ? simHubLastData["led_mode"].GetValue<int>() : 0));
-                        jsonValues.Add("brightness", (simHubLastData.ContainsKey("brightness") ? Math.Min((simHubLastData.ContainsKey("brightness") ? simHubLastData["brightness"].GetValue<int>() : 0), brightness_limit) : 0));
+                        jsonValues.Add("blink_speed", (simHubLastData.ContainsKey("bbox.blink_speed") ? simHubLastData["bbox.blink_speed"].GetValue<int>() : 150)); // 0 to 255
                     }
+
+                    if (simHubLastData.ContainsKey("bbox.led_mode"))
+                    {
+                        jsonValues.Add("led_mode", (simHubLastData.ContainsKey("bbox.led_mode") ? simHubLastData["bbox.led_mode"].GetValue<int>() : 0)); // 0 to 255
+                    }
+
+                    if (simHubLastData.ContainsKey("bbox.brightness"))
+                    {
+                        jsonValues.Add("brightness", (simHubLastData.ContainsKey("bbox.brightness") ? Math.Min((simHubLastData.ContainsKey("bbox.brightness") ? simHubLastData["bbox.brightness"].GetValue<int>() : 0), brightness_limit) : 0)); // 0 to 100
+                    }
+
+                    //if (simHubLastData.ContainsKey("bbox.led_mode") && (simHubLastData["bbox.led_mode"].GetValue<int>() == 3 || simHubLastData["bbox.led_mode"].GetValue<int>() == 2))
+                    //{
+                    //    jsonValues.Add("led_mode", (simHubLastData.ContainsKey("bbox.led_mode") ? simHubLastData["bbox.led_mode"].GetValue<int>() : 0));
+                    //    jsonValues.Add("brightness", (simHubLastData.ContainsKey("bbox.brightness") ? simHubLastData["bbox.brightness"].GetValue<int>() : 0));
+                    //}
+                    //else
+                    //{
+                    //    jsonValues.Add("led_mode", (simHubLastData.ContainsKey("bbox.led_mode") ? simHubLastData["bbox.led_mode"].GetValue<int>() : 0));
+                    //    jsonValues.Add("brightness", (simHubLastData.ContainsKey("bbox.brightness") ? Math.Min((simHubLastData.ContainsKey("bbox.brightness") ? simHubLastData["bbox.brightness"].GetValue<int>() : 0), brightness_limit) : 0));
+                    //}
                 }
                 else if (jsonResult.ContainsKey("status") && jsonResult["status"].ToString() == "offline")
                 {
@@ -184,8 +217,69 @@ namespace JJManager.Class.App
 
             translatedMessage = (new JsonObject
             {
-                { "data", jsonValues }
+                { deviceTag.Length > 0 ? deviceTag + "_data" : "data", jsonValues }
             }).ToJsonString();
+            return true;
+        }
+
+        public bool TranslateToDashboardHID(JsonObject messageReceived, out JsonObject translatedMessage)
+        {
+            JsonObject jsonResult = messageReceived;
+            JsonObject jsonDashValues = new JsonObject();
+            JsonObject jsonLedValues = new JsonObject();
+            string propName = "";
+            string[] toLed = {
+                "RpmPercent",
+                "PSL"
+            };
+
+            Console.WriteLine(messageReceived.ToJsonString());
+
+            try
+            {
+                if ((jsonResult.ContainsKey("status") && jsonResult["status"].ToString() == "online") &&
+                    (jsonResult.ContainsKey("data") && jsonResult["data"] is JsonObject dataObject) &&
+                    (dataObject.ContainsKey("SimHubLastData") && dataObject["SimHubLastData"] is JsonObject simHubLastData))
+                {
+                    foreach (var data in simHubLastData)
+                    {
+                        if (data.Key.StartsWith("prop."))
+                        {
+                            propName = data.Key.Replace("prop.", "");
+
+                            jsonDashValues.Add(propName, data.Value?.ToString() ?? null);
+
+                            if (toLed.Contains(propName))
+                            {
+                                jsonLedValues.Add(propName, data.Value?.ToString() ?? null);
+                            }
+                        }
+                    }
+                }
+                else if (jsonResult.ContainsKey("status") && jsonResult["status"].ToString() == "offline")
+                {
+                    MessageBox.Show("Não foi possível se conectar ao SimHub, verifique se você está com o plugin de sincronismo instalado e com o SimHub em execução.");
+                    translatedMessage = new JsonObject();
+                    return false;
+                }
+                else if (jsonResult.ContainsKey("status") && jsonResult["status"].ToString() == "app_error")
+                {
+                    MessageBox.Show("Ocorreu um erro ao sincronizar com o SimHub, contate o suporte para avaliar o acontecimento.");
+                    translatedMessage = new JsonObject();
+                    return false;
+                }
+            }
+            catch (Newtonsoft.Json.JsonException ex)
+            {
+                jsonDashValues.Clear();
+                jsonLedValues.Clear();
+            }
+
+            translatedMessage = (new JsonObject
+            {
+                { "dash_data", jsonDashValues },
+                { "led_data", jsonLedValues }
+            });
             return true;
         }
 

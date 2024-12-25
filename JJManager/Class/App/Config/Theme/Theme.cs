@@ -1,6 +1,7 @@
 ﻿using MaterialSkin;
 using System;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace JJManager.Class.App.Config.Theme
 {
@@ -46,11 +47,20 @@ namespace JJManager.Class.App.Config.Theme
 
             String sql = $"SELECT theme FROM dbo.configs;";
 
-            using (JsonDocument Json = _dbConnection.RunSQLWithResults(sql))
+            foreach (JsonObject obj in _dbConnection.RunSQLWithResults(sql))
             {
-                if (Json != null)
+                if (obj.ContainsKey("theme"))
                 {
-                    _selectedTheme = (Json.RootElement[0].GetProperty("theme").ToString() == "dark" ? MaterialSkinManager.Themes.DARK : MaterialSkinManager.Themes.LIGHT);
+                    switch (obj["theme"].GetValue<string>())
+                    {
+                        case "light":
+                            _selectedTheme = MaterialSkinManager.Themes.LIGHT;
+                            break;
+                        case "dark":
+                        default:
+                            _selectedTheme = MaterialSkinManager.Themes.DARK;
+                            break;
+                    }
                 }
             }
         }
@@ -70,6 +80,5 @@ namespace JJManager.Class.App.Config.Theme
             _selectedTheme = themeName == "dark" ? MaterialSkinManager.Themes.DARK : MaterialSkinManager.Themes.LIGHT;
         }
         #endregion
-
     }
 }

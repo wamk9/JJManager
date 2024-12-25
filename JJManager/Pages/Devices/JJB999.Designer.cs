@@ -1,6 +1,6 @@
-﻿namespace JJManager.Pages.ButtonBox
+﻿namespace JJManager.Pages.Devices
 {
-    partial class JJB01_V2
+    partial class JJB999
     {
         /// <summary>
         /// Required designer variable.
@@ -28,19 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJB01_V2));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJB999));
             this.CmbBoxSelectProfile = new MaterialSkin.Controls.MaterialComboBox();
             this.BtnAddProfile = new MaterialSkin.Controls.MaterialButton();
             this.BtnRemoveProfile = new MaterialSkin.Controls.MaterialButton();
             this.cmdBoxLedMode = new MaterialSkin.Controls.MaterialComboBox();
             this.sldLedBrightness = new MaterialSkin.Controls.MaterialSlider();
             this.btnSaveConfig = new MaterialSkin.Controls.MaterialButton();
-            this.ImgJJB01V2Off = new System.Windows.Forms.PictureBox();
-            this.ImgJJB01V2On = new System.Windows.Forms.PictureBox();
+            this.ImgJJB999Off = new System.Windows.Forms.PictureBox();
+            this.ImgJJB999On = new System.Windows.Forms.PictureBox();
             this.materialDivider1 = new MaterialSkin.Controls.MaterialDivider();
             this.btnSaveAndCloseConfig = new MaterialSkin.Controls.MaterialButton();
-            ((System.ComponentModel.ISupportInitialize)(this.ImgJJB01V2Off)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ImgJJB01V2On)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ImgJJB999Off)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ImgJJB999On)).BeginInit();
             this.SuspendLayout();
             // 
             // CmbBoxSelectProfile
@@ -184,29 +184,29 @@
             this.btnSaveConfig.UseVisualStyleBackColor = true;
             this.btnSaveConfig.Click += new System.EventHandler(this.btnSaveConfig_Click);
             // 
-            // ImgJJB01V2Off
+            // ImgJJB999Off
             // 
-            this.ImgJJB01V2Off.BackColor = System.Drawing.Color.Transparent;
-            this.ImgJJB01V2Off.Image = global::JJManager.Properties.Resources.JJB_01_v2_off;
-            this.ImgJJB01V2Off.Location = new System.Drawing.Point(13, 130);
-            this.ImgJJB01V2Off.Margin = new System.Windows.Forms.Padding(10);
-            this.ImgJJB01V2Off.Name = "ImgJJB01V2Off";
-            this.ImgJJB01V2Off.Size = new System.Drawing.Size(406, 402);
-            this.ImgJJB01V2Off.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.ImgJJB01V2Off.TabIndex = 0;
-            this.ImgJJB01V2Off.TabStop = false;
+            this.ImgJJB999Off.BackColor = System.Drawing.Color.Transparent;
+            this.ImgJJB999Off.Image = global::JJManager.Properties.Resources.JJB_999_off;
+            this.ImgJJB999Off.Location = new System.Drawing.Point(13, 130);
+            this.ImgJJB999Off.Margin = new System.Windows.Forms.Padding(10);
+            this.ImgJJB999Off.Name = "ImgJJB999Off";
+            this.ImgJJB999Off.Size = new System.Drawing.Size(406, 402);
+            this.ImgJJB999Off.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.ImgJJB999Off.TabIndex = 0;
+            this.ImgJJB999Off.TabStop = false;
             // 
-            // ImgJJB01V2On
+            // ImgJJB999On
             // 
-            this.ImgJJB01V2On.BackColor = System.Drawing.Color.Transparent;
-            this.ImgJJB01V2On.Image = global::JJManager.Properties.Resources.JJB_01_v2_on;
-            this.ImgJJB01V2On.Location = new System.Drawing.Point(13, 130);
-            this.ImgJJB01V2On.Margin = new System.Windows.Forms.Padding(10);
-            this.ImgJJB01V2On.Name = "ImgJJB01V2On";
-            this.ImgJJB01V2On.Size = new System.Drawing.Size(406, 402);
-            this.ImgJJB01V2On.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.ImgJJB01V2On.TabIndex = 16;
-            this.ImgJJB01V2On.TabStop = false;
+            this.ImgJJB999On.BackColor = System.Drawing.Color.Transparent;
+            this.ImgJJB999On.Image = global::JJManager.Properties.Resources.JJB_999_on;
+            this.ImgJJB999On.Location = new System.Drawing.Point(13, 130);
+            this.ImgJJB999On.Margin = new System.Windows.Forms.Padding(10);
+            this.ImgJJB999On.Name = "ImgJJB999On";
+            this.ImgJJB999On.Size = new System.Drawing.Size(406, 402);
+            this.ImgJJB999On.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.ImgJJB999On.TabIndex = 16;
+            this.ImgJJB999On.TabStop = false;
             // 
             // materialDivider1
             // 
@@ -240,7 +240,7 @@
             this.btnSaveAndCloseConfig.UseVisualStyleBackColor = true;
             this.btnSaveAndCloseConfig.Click += new System.EventHandler(this.btnSaveAndCloseConfig_Click);
             // 
-            // JJB01_V2
+            // JJB999
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -253,18 +253,18 @@
             this.Controls.Add(this.BtnRemoveProfile);
             this.Controls.Add(this.BtnAddProfile);
             this.Controls.Add(this.CmbBoxSelectProfile);
-            this.Controls.Add(this.ImgJJB01V2Off);
-            this.Controls.Add(this.ImgJJB01V2On);
+            this.Controls.Add(this.ImgJJB999Off);
+            this.Controls.Add(this.ImgJJB999On);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(800, 600);
             this.MinimumSize = new System.Drawing.Size(500, 500);
-            this.Name = "JJB01_V2";
+            this.Name = "JJB999";
             this.Sizable = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "JJB-01 V2";
-            ((System.ComponentModel.ISupportInitialize)(this.ImgJJB01V2Off)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.ImgJJB01V2On)).EndInit();
+            this.Text = "JJB-999";
+            ((System.ComponentModel.ISupportInitialize)(this.ImgJJB999Off)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ImgJJB999On)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -277,8 +277,8 @@
         private MaterialSkin.Controls.MaterialComboBox cmdBoxLedMode;
         private MaterialSkin.Controls.MaterialSlider sldLedBrightness;
         private MaterialSkin.Controls.MaterialButton btnSaveConfig;
-        private System.Windows.Forms.PictureBox ImgJJB01V2Off;
-        private System.Windows.Forms.PictureBox ImgJJB01V2On;
+        private System.Windows.Forms.PictureBox ImgJJB999Off;
+        private System.Windows.Forms.PictureBox ImgJJB999On;
         private MaterialSkin.Controls.MaterialDivider materialDivider1;
         private MaterialSkin.Controls.MaterialButton btnSaveAndCloseConfig;
     }

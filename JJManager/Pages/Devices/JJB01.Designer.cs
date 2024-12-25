@@ -1,6 +1,6 @@
-﻿namespace JJManager.Pages.ButtonBox
+﻿namespace JJManager.Pages.Devices
 {
-    partial class JJB_01
+    partial class JJB01
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJB_01));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJB01));
             this.ImgJJB01 = new System.Windows.Forms.PictureBox();
             this.BtnInput01JJB01 = new System.Windows.Forms.PictureBox();
             this.BtnInput02JJB01 = new System.Windows.Forms.PictureBox();

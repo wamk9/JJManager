@@ -15,14 +15,15 @@ using System.Collections.Specialized;
 using ConfigClass = JJManager.Class.App.Config.Config;
 using JJManager.Class.App.Fonts;
 using System.Drawing.Drawing2D;
+using JJDeviceClass = JJManager.Class.Devices.JJDevice;
 
 namespace JJManager
 {
     public partial class Main : MaterialForm
     {
-        private ObservableCollection<JJManager.Class.Device> _DevicesList = new ObservableCollection<JJManager.Class.Device>();
+        private ObservableCollection<JJDeviceClass> _DevicesList = new ObservableCollection<JJDeviceClass>();
         private ObservableCollection<JJManager.Class.App.Updater> _UpdaterList = new ObservableCollection<JJManager.Class.App.Updater>();
-        private List<JJManager.Class.Device> _BtDevicesList = new List<JJManager.Class.Device>();
+        //private List<JJManager.Class.Device> _BtDevicesList = new List<JJManager.Class.Device>();
         private Point _mousePosition = Point.Empty;
 
         public static int LvDevicesIndex = -1;
@@ -77,7 +78,7 @@ namespace JJManager
             {
                 foreach (var newItem in e.NewItems)
                 {
-                    JJManager.Class.Device device = newItem as JJManager.Class.Device;
+                    JJDeviceClass device = newItem as JJDeviceClass;
                     device.PropertyChanged += Device_PropertyChanged;
 
                     if (InvokeRequired)
@@ -92,7 +93,7 @@ namespace JJManager
                             {
                                 device.ConnId,
                                 device.ProductName,
-                                device.ConnType,
+                                device.DeviceType.ToString(),
                                 device.IsConnected ? "Conectado" : "Desconectado"
                             }));
                         });
@@ -107,7 +108,7 @@ namespace JJManager
                             {
                                 device.ConnId,
                                 device.ProductName,
-                                device.ConnType,
+                                device.DeviceType.ToString(),
                                 device.IsConnected ? "Conectado" : "Desconectado"
                             }));
                     }
@@ -121,7 +122,7 @@ namespace JJManager
                     {
                         BeginInvoke((MethodInvoker)delegate
                         {
-                            JJManager.Class.Device device = oldItem as JJManager.Class.Device;
+                            JJDeviceClass device = oldItem as JJDeviceClass;
                             device.PropertyChanged -= Device_PropertyChanged;
 
                             for (int i = 0; i < lvDevices.Items.Count; i++)
@@ -135,7 +136,7 @@ namespace JJManager
                     }
                     else
                     {
-                        JJManager.Class.Device device = oldItem as JJManager.Class.Device;
+                        JJDeviceClass device = oldItem as JJDeviceClass;
                         device.PropertyChanged -= Device_PropertyChanged;
 
                         for (int i = 0; i < lvDevices.Items.Count; i++)
@@ -249,7 +250,7 @@ namespace JJManager
 
         private void Device_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            JJManager.Class.Device device = sender as JJManager.Class.Device;
+            JJDeviceClass device = sender as JJDeviceClass;
 
             if (InvokeRequired)
             {
@@ -267,31 +268,31 @@ namespace JJManager
         #endregion
 
         #region LoadAndManipulatingLists
-        private void CheckDevicesListBluetooth()
-        {
-            _BtDevicesList = JJManager.Class.Device.getBtDevicesList(_BtDevicesList);
+        //private void CheckDevicesListBluetooth()
+        //{
+        //    _BtDevicesList = JJManager.Class.Device.getBtDevicesList(_BtDevicesList);
 
-            if (lvDevices.Items.Count == 0 && _BtDevicesList.Count > 0 || lvDevices.Items.Count != (_DevicesList.Count + _BtDevicesList.Count))
-            {
-                //UpdateDevicesList();
-            }
-            else if (lvDevices.Items.Count == (_DevicesList.Count + _BtDevicesList.Count))
-            {
-                foreach (ListViewItem actualDeviceInList in lvDevices.Items)
-                {
-                    if (actualDeviceInList.SubItems[2].Text == "Bluetooth" &&
-                        (!_BtDevicesList.Exists(newDevice => newDevice.ConnId == actualDeviceInList.SubItems[0].Text && newDevice.IsConnected == (actualDeviceInList.SubItems[0].Text == "Conectado" ? true : false))))
-                    {
-                        //UpdateDevicesList();
-                    }
-                }
-            }
-        }
+        //    if (lvDevices.Items.Count == 0 && _BtDevicesList.Count > 0 || lvDevices.Items.Count != (_DevicesList.Count + _BtDevicesList.Count))
+        //    {
+        //        //UpdateDevicesList();
+        //    }
+        //    else if (lvDevices.Items.Count == (_DevicesList.Count + _BtDevicesList.Count))
+        //    {
+        //        foreach (ListViewItem actualDeviceInList in lvDevices.Items)
+        //        {
+        //            if (actualDeviceInList.SubItems[2].Text == "Bluetooth" &&
+        //                (!_BtDevicesList.Exists(newDevice => newDevice.ConnId == actualDeviceInList.SubItems[0].Text && newDevice.IsConnected == (actualDeviceInList.SubItems[0].Text == "Conectado" ? true : false))))
+        //            {
+        //                //UpdateDevicesList();
+        //            }
+        //        }
+        //    }
+        //}
 
         public async void CheckDevicesList()
         {
-            List<string> listToRemove = await JJManager.Class.Device.GetUnavailableListEntries(_DevicesList);
-            List<JJManager.Class.Device> listToAdd = await JJManager.Class.Device.GetAvailableListEntries(_DevicesList);
+            List<string> listToRemove = await JJDeviceClass.GetUnavailableListEntries(_DevicesList);
+            List<JJDeviceClass> listToAdd = await JJDeviceClass.GetAvailableListEntries(_DevicesList);
 
             foreach (string connId in listToRemove)
             {
@@ -310,7 +311,7 @@ namespace JJManager
                 _DevicesList.Add(deviceToAdd);
             });
 
-            JJManager.Class.Device.CheckRestartAllProfileFile(ref _DevicesList);
+            JJDeviceClass.CheckRestartAllProfileFile(ref _DevicesList);
         }
 
         public async void UpdateUpdaterList(bool initialization = false)
@@ -348,43 +349,36 @@ namespace JJManager
             }
         }
 
-        public bool ChangeDeviceConnection(string id, bool connectionStatus, bool updateListStatusOnly = false)
+        public bool ChangeDeviceConnection(string connId, bool connectionStatus, bool updateListStatusOnly = false)
         {
+            int selectedLvDevicesIndex = lvDevices.SelectedIndices[0];
+            int selectedDeviceObjIndex = -1;
             bool successfullyChanged = false;
-            JJManager.Class.Device deviceSelected = null;
 
-            for (int i = 0; i < lvDevices.Items.Count; i++)
+            for (int j = 0; j < _DevicesList.Count; j++)
             {
-                if (lvDevices.Items[i].SubItems[0].Text == id)
+                if (_DevicesList[j].ConnId == connId)
                 {
-                    switch (lvDevices.Items[i].SubItems[2].Text)
-                    {
-                        case "Bluetooth":
-                            deviceSelected = _BtDevicesList.First(device => device.ConnId == id);
-                            break;
-                        case "USB (HID)":
-                            deviceSelected = _DevicesList.First(device => device.ConnId == id);
-                            break;
-                    }
+                    selectedDeviceObjIndex = j;
 
-                    if (connectionStatus != deviceSelected.IsConnected && !updateListStatusOnly)
+                    if (connectionStatus != _DevicesList[j].IsConnected && !updateListStatusOnly)
                     {
                         if (connectionStatus)
                         {
-                            successfullyChanged = deviceSelected.Connect();
+                            successfullyChanged = _DevicesList[j].Connect();
                         }
                         else
                         {
-                            successfullyChanged = deviceSelected.Disconnect();
+                            successfullyChanged = _DevicesList[j].Disconnect();
                         }
                     }
-
-                    if (successfullyChanged || updateListStatusOnly)
-                    {
-                        lvDevices.Items[i].SubItems[3].Text = (deviceSelected.IsConnected ? "Conectado" : "Desconectado");
-                        return true;
-                    }
                 }
+            }
+
+            if (successfullyChanged || updateListStatusOnly)
+            {
+                lvDevices.Items[selectedLvDevicesIndex].SubItems[3].Text = (_DevicesList[selectedDeviceObjIndex].IsConnected ? "Conectado" : "Desconectado");
+                return true;
             }
 
             return false;
@@ -695,15 +689,15 @@ namespace JJManager
                 return;
             }
 
-            JJManager.Class.Device deviceSelected = null;
+            JJDeviceClass deviceSelected = null;
             string id = lvDevices.SelectedItems[0].SubItems[0].Text;
 
             switch (lvDevices.SelectedItems[0].SubItems[2].Text)
             {
                 case "Bluetooth":
-                    deviceSelected = _BtDevicesList.First(device => device.ConnId == id);
+                    //deviceSelected = _BtDevicesList.First(device => device.ConnId == id);
                     break;
-                case "USB (HID)":
+                case "HID":
                     deviceSelected = _DevicesList.First(device => device.ConnId == id);
                     break;
             }
@@ -720,7 +714,7 @@ namespace JJManager
             if (dialogResult == DialogResult.Yes)
             {
 
-                CheckDevicesListBluetooth();
+                //CheckDevicesListBluetooth();
             }
 
             txtStatus.Text = "";
@@ -806,15 +800,15 @@ namespace JJManager
                 return;
             }
 
-            JJManager.Class.Device deviceSelected = null;
+            JJDeviceClass deviceSelected = null;
             string id = lvDevices.SelectedItems[0].SubItems[0].Text;
 
             switch (lvDevices.SelectedItems[0].SubItems[2].Text)
             {
                 case "Bluetooth":
-                    deviceSelected = _BtDevicesList.First(device => device.ConnId == id);
+                    //deviceSelected = _BtDevicesList.First(device => device.ConnId == id);
                     break;
-                case "USB (HID)":
+                case "HID":
                     deviceSelected = _DevicesList.First(device => device.ConnId == id);
                     break;
             }

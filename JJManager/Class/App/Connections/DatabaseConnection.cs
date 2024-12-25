@@ -8,6 +8,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace JJManager.Class
 {
@@ -29,7 +30,6 @@ namespace JJManager.Class
             if (!File.Exists(_DbPath))
             {
                 File.Copy(Path.Combine(Directory.GetCurrentDirectory(), "JJManagerDB_blank.mdf"), _DbPath);
-                InitDatabase();
             }
         }
 
@@ -41,6 +41,7 @@ namespace JJManager.Class
             using (var connection = new SqlConnection(Properties.Settings.Default.DatabaseConnectionString))
             {
                 connection.Open();
+
                 SqlTransaction transaction = connection.BeginTransaction();
 
                 try
@@ -100,16 +101,16 @@ namespace JJManager.Class
         /// </summary>
         /// <param name="sql">Query SQL</param>
         /// <returns>Variável 'SqlDataReader' contendo o resultado caso o SQL tenha sido executado com sucesso, caso não, retornará NULL.</returns>
-        public JsonDocument RunSQLWithResults(String sql)
+        public JsonArray RunSQLWithResults(String sql)
         {
-            JsonDocument Json = null;
-            String JsonString = "";
+            JsonArray jsonRows = new JsonArray();
 
             using (var connection = new SqlConnection(Properties.Settings.Default.DatabaseConnectionString))
             {
                 try
                 {
                     connection.Open();
+
                     if (connection.State == ConnectionState.Open)
                     {
                         using (var cmd = new SqlCommand())
@@ -119,31 +120,29 @@ namespace JJManager.Class
                             
                             using (SqlDataReader reader = cmd.ExecuteReader())
                             {
-                                JsonString = "[";
-
-                                List<string> Row = new List<string>();
-                                Dictionary<string, string> objTmp = new Dictionary<string, string>();
-
                                 while (reader.Read())
                                 {
-                                    JsonString = "{";
+                                    JsonObject jsonRow = new JsonObject();
 
-                                    for(int i = 0; i < reader.FieldCount; i++)
+                                    for (int i = 0; i < reader.FieldCount; i++)
                                     {
-                                        objTmp[reader.GetName(i)] = reader.GetValue(i).ToString();
+                                        string columnName = reader.GetName(i);
+                                        object value = !reader.IsDBNull(i) ? reader.GetValue(i) : null;
+
+                                        // Check for empty or whitespace strings
+                                        if (value is null || (value is string strValue && string.IsNullOrWhiteSpace(strValue)))
+                                        {
+                                            value = ""; // Optionally replace with null or a specific marker
+                                        }
+
+                                        jsonRow.Add(columnName, value.ToString());
                                     }
 
-                                    Row.Add(JsonConvert.SerializeObject(objTmp));
+                                    jsonRows.Add(jsonRow);
                                 }
 
-                                if (Row.Count > 0)
-                                    Json = JsonDocument.Parse("[" + String.Join(",", Row.ToArray()) + "]");
-
                                 reader.Close();
-                                //reader.Dispose();
                             }
-
-                            //cmd.Dispose();
                         }
                     }
                 }
@@ -156,12 +155,11 @@ namespace JJManager.Class
                     if (connection.State == System.Data.ConnectionState.Open)
                     {
                         connection.Close();
-                        //connection.Dispose();
                     }
                 }
             }
 
-            return Json;
+            return jsonRows;
         }
 
         /// <summary>
@@ -208,18 +206,6 @@ namespace JJManager.Class
             return isQueryExecuted;
         }
 
-        private void InitDatabase ()
-        {
-            Version actualVersion = Assembly.GetEntryAssembly().GetName().Version;
-
-            String sql = "INSERT INTO dbo.configs (Id, theme, software_version) VALUES (1 ,'dark', '" + actualVersion.Major.ToString() + "." + actualVersion.Minor.ToString() + "." + actualVersion.Build.ToString() + "');";
-            
-            if (!RunSQL(sql))
-            {
-                // TODO: Create LOGFILE
-            }
-        }
-
         public void CreateBackup()
         {
             string sql = "";
@@ -229,14 +215,16 @@ namespace JJManager.Class
                 DatabaseConnection connection = new DatabaseConnection();
                 sql = "SELECT software_version FROM dbo.configs;";
 
-                using (JsonDocument Json = RunSQLWithResults(sql))
+                foreach (JsonObject json in RunSQLWithResults(sql))
                 {
                     if (!Directory.Exists(Path.Combine(_DbFolderPath, "Backup")))
                         Directory.CreateDirectory(Path.Combine(_DbFolderPath, "Backup"));
 
-                    sql = "BACKUP DATABASE \"" + _DbPath + "\" TO DISK = '" + Path.Combine(_DbFolderPath, "Backup", "JJManagerDB_" + Json.RootElement[0].GetProperty("software_version").GetString().Replace(".", "_") + ".bkp") + "' WITH FORMAT, COPY_ONLY";
-
-                    RunSQL(sql);
+                    if (json.ContainsKey("software_version"))
+                    {
+                        sql = "BACKUP DATABASE \"" + _DbPath + "\" TO DISK = '" + Path.Combine(_DbFolderPath, "Backup", "JJManagerDB_" + json["software_version"].GetValue<string>().Replace(".", "_") + ".bkp") + "' WITH FORMAT, COPY_ONLY";
+                        RunSQL(sql);
+                    }
                 }
             }
             catch (Exception ex)

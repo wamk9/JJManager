@@ -5,25 +5,25 @@ using System;
 using System.Windows.Forms;
 using ConfigClass = JJManager.Class.App.Config.Config;
 using ProfileClass = JJManager.Class.App.Profile.Profile;
+using JJDeviceClass = JJManager.Class.Devices.JJDevice;
+
 
 namespace JJManager.Pages
 {
     public partial class CreateProfile : MaterialForm
     {
-        private static Class.Device _JJManagerCommunication;
-        private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
-        private static Device _Device = null;
+        private JJDeviceClass _device = null;
         
         #region WinForms
         private MaterialSkinManager materialSkinManager = null;
         #endregion
 
-        public CreateProfile(Device device)
+        public CreateProfile(JJDeviceClass device)
         {
             InitializeComponent();
             components = new System.ComponentModel.Container();
 
-            _Device = device;
+            _device = device;
 
             // MaterialDesign
             materialSkinManager = MaterialSkinManager.Instance;
@@ -41,7 +41,7 @@ namespace JJManager.Pages
                 return;
             }
 
-            ProfileClass newProfile = new ProfileClass(_Device, TxtProfileName.Text);
+            ProfileClass newProfile = new ProfileClass(_device, TxtProfileName.Text);
 
             Close();
         }

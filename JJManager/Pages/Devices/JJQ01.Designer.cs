@@ -1,4 +1,4 @@
-﻿namespace JJManager.Pages.OtherDevices
+﻿namespace JJManager.Pages.Devices
 {
     partial class JJQ01
     {

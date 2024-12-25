@@ -2,16 +2,19 @@
 using MaterialSkin;
 using MaterialSkin.Controls;
 using System;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Windows.Forms;
 using ConfigClass = JJManager.Class.App.Config.Config;
 using ProfileClass = JJManager.Class.App.Profile.Profile;
+using JJDeviceClass = JJManager.Class.Devices.JJDevice;
 
-namespace JJManager.Pages.ButtonBox
+namespace JJManager.Pages.Devices
 {
-    public partial class JJB_01 : MaterialForm
+    public partial class JJBP06 : MaterialForm
     {
-        private static Class.Device _device;
+        private JJDeviceClass _device;
         //private static AudioManager _audioManager = new AudioManager();
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
         private Thread thrTimers = null;
@@ -24,7 +27,7 @@ namespace JJManager.Pages.ButtonBox
         private AppModulesNotifyIcon notifyIcon = null;
         #endregion
 
-        public JJB_01(MaterialForm parent, JJManager.Class.Device device)
+        public JJBP06(MaterialForm parent, JJDeviceClass device)
         {
             InitializeComponent();
             components = new System.ComponentModel.Container();
@@ -40,7 +43,7 @@ namespace JJManager.Pages.ButtonBox
             _parent = parent;
 
             // Fill Forms
-            foreach (String Profile in ProfileClass.GetProfilesList(_device.JJID))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.ProductId))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             if (CmbBoxSelectProfile.Items.Count == 0)
@@ -50,29 +53,83 @@ namespace JJManager.Pages.ButtonBox
             }
             else
             {
-                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.ActiveProfile.Name); ;
+                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.Profile.Name); ;
             }
 
             // Events
-            FormClosing += new FormClosingEventHandler(JJB_01_FormClosing);
-            //FormClosed += new FormClosedEventHandler(JJB_01_FormClosed);
+            FormClosing += new FormClosingEventHandler(JJBP06_FormClosing);
+            //FormClosed += new FormClosedEventHandler(JJBP06_FormClosed);
             CmbBoxSelectProfile.DropDown += new EventHandler(CmbBoxSelectProfile_DropDown);
             CmbBoxSelectProfile.SelectedIndexChanged += new EventHandler(CmbBoxSelectProfile_SelectedIndexChanged);
+
+            ShowProfileConfigs();
         }
 
         private void OpenInputModal(ProfileClass profile, int idInput)
         {
-            Pages.App.AudioController inputForm = new Pages.App.AudioController(this, _device.ActiveProfile, idInput);
+            Pages.App.AudioController inputForm = new Pages.App.AudioController(this, _device.Profile, idInput);
             Visible = false;
             inputForm.ShowDialog();
             //_device.ActiveProfile.UpdateAnalogInputs(idInput);
             _IsInputSelected = false;
         }
 
+        private void ShowProfileConfigs ()
+        {
+            if (_device.Profile.Data.ContainsKey("led_mode"))
+            {
+                switch (_device.Profile.Data["led_mode"].GetValueKind())
+                {
+                    case JsonValueKind.String:
+                        string ledModeString = _device.Profile.Data["led_mode"].GetValue<string>();
 
+                        if (int.TryParse(ledModeString, out int ledModeValue) && (ledModeValue < cmdBoxLedMode.Items.Count))
+                        {
+                            cmdBoxLedMode.SelectedIndex = ledModeValue;
+                        }
+
+                        break;
+                    case JsonValueKind.Number:
+                        cmdBoxLedMode.SelectedIndex = _device.Profile.Data["led_mode"].GetValue<Int16>();
+                        break;
+                }
+            }
+
+            cmdBoxLedMode.Refresh();
+
+            if (_device.Profile.Data.ContainsKey("brightness"))
+            {
+                switch (_device.Profile.Data["brightness"].GetValueKind())
+                {
+                    case JsonValueKind.String:
+                        string brightnessString = _device.Profile.Data["brightness"].GetValue<string>();
+
+                        if (int.TryParse(brightnessString, out int brightnessValue) && (brightnessValue < cmdBoxLedMode.Items.Count))
+                        {
+                            sldLedBrightness.Value = brightnessValue;
+                        }
+
+                        break;
+                    case JsonValueKind.Number:
+                        sldLedBrightness.Value = _device.Profile.Data["brightness"].GetValue<Int16>();
+                        break;
+                }
+            }
+
+            if (cmdBoxLedMode.SelectedIndex == 0)
+            {
+                ImgJJBP06Off.Visible = true;
+                ImgJJBP06On.Visible = false;
+            }
+            else
+            {
+                ImgJJBP06Off.Visible = false;
+                ImgJJBP06On.Visible = true;
+            }
+        }
 
         #region Events
-        private void JJB_01_FormClosing(object sender, FormClosingEventArgs e)
+        private void JJBP06_FormClosing(object sender, FormClosingEventArgs e)
         {
             _parent.Visible = true;
         }
@@ -101,7 +158,7 @@ namespace JJManager.Pages.ButtonBox
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in ProfileClass.GetProfilesList(_device.JJID))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.ProductId))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -114,82 +171,12 @@ namespace JJManager.Pages.ButtonBox
                 CmbBoxSelectProfile.SelectedIndex = 0;
             }
 
-            _device.UpdateActiveProfile(CmbBoxSelectProfile.SelectedItem.ToString());
-
+            _device.Profile = new ProfileClass(_device, CmbBoxSelectProfile.SelectedItem.ToString(), true);
+            ShowProfileConfigs();
         }
         #endregion
 
         #region Buttons
-        private void BtnInput01JJB01_Click(object sender, EventArgs e)
-        {
-            if (_IsInputSelected)
-                return;
-
-            _IsInputSelected = true;
-
-            Thread thr = new Thread(() => {
-                if (InvokeRequired)
-                {
-                    BeginInvoke((MethodInvoker)delegate
-                    {
-                        OpenInputModal(_device.ActiveProfile, 0);
-                    });
-                }
-                else
-                {
-                    OpenInputModal(_device.ActiveProfile, 0);
-                }
-            });
-            thr.Name = "JJB01_Input_01";
-            thr.Start();
-        }
-
-        private void BtnInput01JJB01_MouseEnter(object sender, EventArgs e)
-        {
-            if (!_IsInputSelected)
-                BtnInput01JJB01.Image = JJManager.Properties.Resources.JJB_01_input01_hover;
-        }
-
-        private void BtnInput01JJB01_MouseLeave(object sender, EventArgs e)
-        {
-            BtnInput01JJB01.Image = JJManager.Properties.Resources.JJB_01_input01;
-        }
-
-        private void BtnInput02JJB01_Click(object sender, EventArgs e)
-        {
-            if (_IsInputSelected)
-                return;
-
-            _IsInputSelected = true;
-
-            Thread thr = new Thread(() => {
-                if (InvokeRequired)
-                {
-                    BeginInvoke((MethodInvoker)delegate
-                    {
-                        OpenInputModal(_device.ActiveProfile, 1);
-                    });
-                }
-                else
-                {
-                    OpenInputModal(_device.ActiveProfile, 1);
-                }
-            });
-            thr.Name = "JJB01_Input_02";
-            thr.Start();
-        }
-
-        private void BtnInput02JJB01_MouseEnter(object sender, EventArgs e)
-        {
-            if (!_IsInputSelected)
-                BtnInput02JJB01.Image = JJManager.Properties.Resources.JJB_01_input02_hover;
-        }
-
-        private void BtnInput02JJB01_MouseLeave(object sender, EventArgs e)
-        {
-            BtnInput02JJB01.Image = JJManager.Properties.Resources.JJB_01_input02;
-        }
-
         private void BtnAddProfile_Click(object sender, EventArgs e)
         {
             Thread thr = new Thread(() => {
@@ -248,10 +235,66 @@ namespace JJManager.Pages.ButtonBox
                 string profileNameToActive = CmbBoxSelectProfile.Items[0].ToString();
                 CmbBoxSelectProfile.SelectedIndex = 0;
                 
-                _device.ActiveProfile.Delete(_device, profileNameToActive);
+                _device.Profile.Delete(_device, profileNameToActive);
 
                 MessageBox.Show("Perfil excluído com sucesso!");
             }
+        }
+
+        private void SaveConfig(bool closeWindow = false)
+        {
+            string btnText = btnSaveConfig.Text;
+            
+            btnSaveConfig.Enabled = false;
+            btnSaveAndCloseConfig.Enabled = false;
+            btnSaveConfig.Text = "Salvando";
+
+            JsonObject jsonData = new JsonObject{
+                { "led_mode", cmdBoxLedMode.SelectedIndex },
+                { "brightness", sldLedBrightness.Value}
+            };
+
+            _device.Profile.Update(new JsonObject { { "data", jsonData } });
+
+            if (closeWindow)
+            {
+                Close();
+            }
+            else
+            {
+                btnSaveConfig.Text = btnText;
+                btnSaveConfig.Enabled = true;
+                btnSaveAndCloseConfig.Enabled = true;
+            }
+        }
+
+        private void btnSaveConfig_Click(object sender, EventArgs e)
+        {
+            SaveConfig();
+        }
+
+        private void cmdBoxLedMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmdBoxLedMode.SelectedIndex == 0)
+            {
+                ImgJJBP06Off.Visible = true;
+                ImgJJBP06On.Visible = false;
+            }
+            else
+            {
+                ImgJJBP06Off.Visible = false;
+                ImgJJBP06On.Visible = true;
+            }
+        }
+
+        private void sldLedBrightness_onValueChanged(object sender, int newValue)
+        {
+
+        }
+
+        private void btnSaveAndCloseConfig_Click(object sender, EventArgs e)
+        {
+            SaveConfig(true);
         }
     }
 }

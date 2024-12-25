@@ -1,124 +1,70 @@
 ﻿using AudioSwitcher.AudioApi.CoreAudio;
-using HidSharp.Reports.Input;
-using HidSharp.Reports;
-using HidSharp;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using JJManager.Class.App.Input;
+using SharpDX.DirectInput;
+using JoystickClass = JJManager.Class.Devices.Connections.Joystick;
+using System.Text.Json.Nodes;
 
 namespace JJManager.Class.Devices
 {
-    internal class JJB01
+    public class JJB01 : JoystickClass
     {
-        public static JJManager.Class.Device _device = null;
-        private bool _ReceiveInProgress = false;
+        private CoreAudioController coreAudioController = new CoreAudioController();
 
-        public JJB01(JJManager.Class.Device device)
+        public JJB01(Joystick joystick) : base(joystick)
         {
-            _device = device;
+            _actionReceivingData = () => { ActionReceivingData(); };
         }
 
-        public String[] ReceiveMessage()
+        private void ActionReceivingData()
         {
-            if (_ReceiveInProgress)
-                return null;
-
-            _ReceiveInProgress = true;
-
-            HidStream hidStream;
-            String[] receivedMessage = null;
-            byte[] receivedeBytes = null;
-
-            try
+            while (_isConnected)
             {
-                if (_device == null)
-                    MessageBox.Show("Device Desconectado");
-
-                ReportDescriptor reportDescriptor = _device.HidDevice.GetReportDescriptor();
-
-                foreach (DeviceItem deviceItem in reportDescriptor.DeviceItems)
+                if (!ReceiveData())
                 {
-                    if (_device.HidDevice.TryOpen(out hidStream))
+                    Disconnect();
+                }
+            }
+        }
+
+        public bool ReceiveData()
+        {
+            var (success, currentStatus) = ReceiveJoystickData();
+
+            if (success)
+            {
+                if (_profile.Inputs[0].AudioController.AudioCoreNeedsRestart || _profile.Inputs[1].AudioController.AudioCoreNeedsRestart)
+                {
+                    //if (coreAudioController != null)
+                    //{
+                    //    coreAudioController.Dispose();
+                    //}
+
+                    coreAudioController = new CoreAudioController();
+
+                    for (int i = 0; i < _profile.Inputs.Count; i++)
                     {
-                        hidStream.ReadTimeout = 3000;
-
-                        using (hidStream)
+                        if (_profile.Inputs[i].AudioController.AudioCoreNeedsRestart)
                         {
-                            byte[] inputReportBuffer = new byte[_device.HidDevice.GetMaxInputReportLength()];
-                            HidDeviceInputReceiver inputReceiver = reportDescriptor.CreateHidDeviceInputReceiver();
-                            DeviceItemInputParser inputParser = deviceItem.CreateDeviceItemInputParser();
-
-                            IAsyncResult ar = null;
-
-                            while (true)
-                            {
-                                if (ar == null)
-                                {
-                                    ar = hidStream.BeginRead(inputReportBuffer, 0, inputReportBuffer.Length, null, null);
-                                }
-                                else
-                                {
-                                    if (ar.IsCompleted)
-                                    {
-                                        int byteCount = hidStream.EndRead(ar);
-                                        ar = null;
-
-                                        if (byteCount > 0)
-                                        {
-                                            byteCount -= 9;
-                                            receivedeBytes = inputReportBuffer.Skip(9).Take(byteCount).Where(x => x != 0x00).ToArray();
-                                            receivedMessage = Encoding.ASCII.GetString(receivedeBytes).Trim().Split('|').ToArray();
-
-                                            break;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        ar.AsyncWaitHandle.WaitOne(1000);
-                                    }
-                                }
-                            }
-                            hidStream.Close();
-                            //hidStream.Dispose();
-
+                            _profile.Inputs[i].AudioController.ResetCoreAudioController(coreAudioController);
+                            _profile.Inputs[i].AudioController.AudioCoreNeedsRestart = false;
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("JJB01", "Ocorreu um erro ao receber a informação via HID (ReceiveMessage): ", ex);
-            }
 
-            _ReceiveInProgress = false;
-
-            return receivedMessage;
-        }
-
-        public void ExecuteInputFunction(int id, String value)
-        {
-            Input inputInUse = _device.ActiveProfile.Inputs[id];
-
-            if (inputInUse.Mode == Input.InputMode.AudioController && inputInUse.AudioController != null)
-            {
-                inputInUse.AudioController.ChangeVolume(int.Parse(value));
-
-                if (inputInUse.AudioController.AudioCoreNeedsRestart)
+                if (currentStatus.X != -1)
                 {
-                    inputInUse.AudioController.AudioCoreNeedsRestart = false;
-                    CoreAudioController coreAudioController = new CoreAudioController();
+                    _profile.Inputs[0].Execute(new JsonObject { { "value", GetAxisPercent(currentStatus.X) } });                    
+                }
 
-                    foreach (Input input in _device.ActiveProfile.Inputs)
-                    {
-                        input.AudioController.ResetCoreAudioController(coreAudioController);
-                    }
+                if (currentStatus.Y != -1)
+                {
+                    _profile.Inputs[1].Execute(new JsonObject { { "value", GetAxisPercent(currentStatus.Y) } });
                 }
             }
+
+            return success;
         }
     }
 }

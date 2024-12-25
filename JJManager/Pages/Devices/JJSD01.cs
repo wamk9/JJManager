@@ -10,12 +10,13 @@ using System.Threading;
 using System.Windows.Forms;
 using ConfigClass = JJManager.Class.App.Config.Config;
 using ProfileClass = JJManager.Class.App.Profile.Profile;
+using JJDeviceClass = JJManager.Class.Devices.JJDevice;
 
-namespace JJManager.Pages.OtherDevices
+namespace JJManager.Pages.Devices
 {
     public partial class JJSD01 : MaterialForm
     {
-        private static Class.Device _device;
+        private JJDeviceClass _device;
         //private static AudioManager _audioManager = new AudioManager();
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
         private Thread thrTimers = null;
@@ -30,7 +31,7 @@ namespace JJManager.Pages.OtherDevices
         #endregion
 
         
-        public JJSD01(MaterialForm parent, JJManager.Class.Device device)
+        public JJSD01(MaterialForm parent, JJDeviceClass device)
         {
             InitializeComponent();
             components = new System.ComponentModel.Container();
@@ -46,7 +47,7 @@ namespace JJManager.Pages.OtherDevices
             _parent = parent;
 
             // Fill Forms
-            foreach (String Profile in ProfileClass.GetProfilesList(_device.JJID))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.ProductId))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             if (CmbBoxSelectProfile.Items.Count == 0)
@@ -56,7 +57,7 @@ namespace JJManager.Pages.OtherDevices
             }
             else
             {
-                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.ActiveProfile.Name); ;
+                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.Profile.Name); ;
             }
 
             // Events
@@ -106,7 +107,7 @@ namespace JJManager.Pages.OtherDevices
                 string profileNameToActive = CmbBoxSelectProfile.Items[0].ToString();
                 CmbBoxSelectProfile.SelectedIndex = 0;
 
-                _device.ActiveProfile.Delete(_device, profileNameToActive);
+                _device.Profile.Delete(_device, profileNameToActive);
 
                 MessageBox.Show("Perfil excluído com sucesso!");
             }
@@ -152,7 +153,7 @@ namespace JJManager.Pages.OtherDevices
                 return;
             }
 
-            switch (_device.ActiveProfile.Inputs[_lastInputSelected].Mode)
+            switch (_device.Profile.Inputs[_lastInputSelected].Mode)
             {
                 case Input.InputMode.MacroKey:
                     ((MaterialRadioButton)flpInput.Controls["rdbMacroKeyMode"]).Checked = true;
@@ -251,20 +252,20 @@ namespace JJManager.Pages.OtherDevices
 
             flpInput.Controls["btnEditInput"].Enabled = (radioButtonMode != "none");
 
-            if (radioButton.Checked && radioButtonMode == "none" && _device.ActiveProfile.Inputs[_lastInputSelected].Mode != Input.InputMode.None)
+            if (radioButton.Checked && radioButtonMode == "none" && _device.Profile.Inputs[_lastInputSelected].Mode != Input.InputMode.None)
             {
-                _device.ActiveProfile.Inputs[_lastInputSelected].RemoveFunction();
-                _device.ActiveProfile.Inputs[_lastInputSelected].Save();
+                _device.Profile.Inputs[_lastInputSelected].RemoveFunction();
+                _device.Profile.Inputs[_lastInputSelected].Save();
             }
-            else if (radioButton.Checked && radioButtonMode == "macrokey" && _device.ActiveProfile.Inputs[_lastInputSelected].Mode != Input.InputMode.MacroKey)
+            else if (radioButton.Checked && radioButtonMode == "macrokey" && _device.Profile.Inputs[_lastInputSelected].Mode != Input.InputMode.MacroKey)
             {
-                _device.ActiveProfile.Inputs[_lastInputSelected].SetToMacroKey();
-                _device.ActiveProfile.Inputs[_lastInputSelected].Save();
+                _device.Profile.Inputs[_lastInputSelected].SetToMacroKey();
+                _device.Profile.Inputs[_lastInputSelected].Save();
             }
-            else if (radioButton.Checked && radioButtonMode == "audioplayer" && _device.ActiveProfile.Inputs[_lastInputSelected].Mode != Input.InputMode.AudioPlayer)
+            else if (radioButton.Checked && radioButtonMode == "audioplayer" && _device.Profile.Inputs[_lastInputSelected].Mode != Input.InputMode.AudioPlayer)
             {
-                _device.ActiveProfile.Inputs[_lastInputSelected].SetToAudioPlayer();
-                _device.ActiveProfile.Inputs[_lastInputSelected].Save();
+                _device.Profile.Inputs[_lastInputSelected].SetToAudioPlayer();
+                _device.Profile.Inputs[_lastInputSelected].Save();
             }
         }
 
@@ -272,13 +273,13 @@ namespace JJManager.Pages.OtherDevices
         {
             if (((MaterialRadioButton) flpInput.Controls["rdbMacroKeyMode"]).Checked)
             {
-                MacroKeyMain macroKey = new MacroKeyMain(this, _device.ActiveProfile, (uint) _lastInputSelected);
+                MacroKeyMain macroKey = new MacroKeyMain(this, _device.Profile, (uint) _lastInputSelected);
                 Visible = false;
                 macroKey.ShowDialog();
             }
             else if (((MaterialRadioButton)flpInput.Controls["rdbAudioPlayerMode"]).Checked)
             {
-                AudioPlayer audioPlayer = new AudioPlayer(this, _device.ActiveProfile, _lastInputSelected);
+                AudioPlayer audioPlayer = new AudioPlayer(this, _device.Profile, _lastInputSelected);
                 Visible = false;
                 audioPlayer.ShowDialog();
             }
@@ -295,7 +296,7 @@ namespace JJManager.Pages.OtherDevices
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in ProfileClass.GetProfilesList(_device.JJID))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.ProductId))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -308,7 +309,7 @@ namespace JJManager.Pages.OtherDevices
                 CmbBoxSelectProfile.SelectedIndex = 0;
             }
 
-            _device.UpdateActiveProfile(CmbBoxSelectProfile.SelectedItem.ToString());
+            _device.Profile = new ProfileClass (_device, CmbBoxSelectProfile.SelectedItem.ToString(), true);
             //ShowProfileConfigs();
         }
 
@@ -377,7 +378,7 @@ namespace JJManager.Pages.OtherDevices
 
         private void OpenInputModal(uint idInput)
         {
-            MacroKeyMain macroKey = new MacroKeyMain(this, _device.ActiveProfile, idInput);
+            MacroKeyMain macroKey = new MacroKeyMain(this, _device.Profile, idInput);
             Visible = false;
             macroKey.ShowDialog();
             

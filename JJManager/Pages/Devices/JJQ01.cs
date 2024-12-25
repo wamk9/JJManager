@@ -7,12 +7,13 @@ using System.Threading;
 using System.Windows.Forms;
 using ConfigClass = JJManager.Class.App.Config.Config;
 using ProfileClass = JJManager.Class.App.Profile.Profile;
+using JJDeviceClass = JJManager.Class.Devices.JJDevice;
 
-namespace JJManager.Pages.OtherDevices
+namespace JJManager.Pages.Devices
 {
     public partial class JJQ01 : MaterialForm
     {
-        private static JJManager.Class.Device _device;
+        private JJDeviceClass _device;
         private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
         private static ProfileClass _profile = null;
         private Thread thr = null;
@@ -34,7 +35,7 @@ namespace JJManager.Pages.OtherDevices
         private AppModulesNotifyIcon notifyIcon = null;
         #endregion
 
-        public JJQ01(JJManager.Class.Device device)
+        public JJQ01(JJDeviceClass device)
         {
             InitializeComponent();
             components = new System.ComponentModel.Container();
@@ -45,11 +46,11 @@ namespace JJManager.Pages.OtherDevices
             materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
             _device = device;
-            _jjq01Class = new JJManager.Class.Devices.JJQ01(_device);
+            //_jjq01Class = new JJManager.Class.Devices.JJQ01(_device);
             createWriteableForm();
         }
 
-        public JJQ01(MaterialForm parent, JJManager.Class.Device device)
+        public JJQ01(MaterialForm parent, JJDeviceClass device)
         {
             InitializeComponent();
             components = new System.ComponentModel.Container();
@@ -61,7 +62,7 @@ namespace JJManager.Pages.OtherDevices
 
             _parent = parent;
             _device = device;
-            _jjq01Class = new JJManager.Class.Devices.JJQ01(_device);
+            //_jjq01Class = new JJManager.Class.Devices.JJQ01(_device);
             createWriteableForm();
         }
 
@@ -116,7 +117,7 @@ namespace JJManager.Pages.OtherDevices
             */
             frameToSend = string.Join("-", pixelEditor.GetPixelColors());
 
-            _jjq01Class.SaveFrame("0", "1000", frameToSend);
+            //_jjq01Class.SaveFrame("0", "1000", frameToSend);
             Close();
         }
     }

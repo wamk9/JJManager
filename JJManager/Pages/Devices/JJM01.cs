@@ -6,12 +6,13 @@ using System.Threading;
 using System.Windows.Forms;
 using ConfigClass = JJManager.Class.App.Config.Config;
 using ProfileClass = JJManager.Class.App.Profile.Profile;
+using JJDeviceClass = JJManager.Class.Devices.JJDevice;
 
-namespace JJManager.Pages.Mixers
+namespace JJManager.Pages.Devices
 {
-    public partial class JJM_01 : MaterialForm
+    public partial class JJM01 : MaterialForm
     {
-        private static JJManager.Class.Device _device;
+        private JJDeviceClass _device;
         //private static DatabaseConnection _DatabaseConnection = new DatabaseConnection();
         //private static ProfileClass _profile = null;
         private Thread thr = null;
@@ -29,7 +30,7 @@ namespace JJManager.Pages.Mixers
         #endregion
 
 
-        public JJM_01(MaterialForm parent, Class.Device device)
+        public JJM01(MaterialForm parent, JJDeviceClass device)
         {
             InitializeComponent();
             components = new System.ComponentModel.Container();
@@ -49,20 +50,20 @@ namespace JJManager.Pages.Mixers
             _parent = parent;
 
             // Fill Forms
-            foreach (String Profile in ProfileClass.GetProfilesList(_device.Id))
+            foreach (string profileName in ProfileClass.GetProfilesList(_device.ProductId))
             {
-                CmbBoxSelectProfile.Items.Add(Profile);
+                CmbBoxSelectProfile.Items.Add(profileName);
             }
 
             if (CmbBoxSelectProfile.Items.Count == 0)
             {
-                _device.ActiveProfile.CreateNewProfileIntoObject(_device, "Perfil Padrão", true);
-                CmbBoxSelectProfile.Items.Add(_device.ActiveProfile.Name);
+                _device.Profile.CreateNewProfileIntoObject(_device, "Perfil Padrão", true);
+                CmbBoxSelectProfile.Items.Add(_device.Profile.Name);
                 CmbBoxSelectProfile.SelectedIndex = 0;
             }
             else
             {
-                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.ActiveProfile.Name);
+                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.Profile.Name);
             }
 
             // Events
@@ -74,7 +75,7 @@ namespace JJManager.Pages.Mixers
 
         private void OpenInputModal(ProfileClass profile, int idInput)
         {
-            Pages.App.AudioController inputForm = new Pages.App.AudioController(this, _device.ActiveProfile, idInput);
+            Pages.App.AudioController inputForm = new Pages.App.AudioController(this, _device.Profile, idInput);
             Visible = false;
             inputForm.ShowDialog();
             //_device.ActiveProfile.UpdateAnalogInputs(idInput);
@@ -93,7 +94,7 @@ namespace JJManager.Pages.Mixers
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in ProfileClass.GetProfilesList(_device.JJID))
+            foreach (String Profile in ProfileClass.GetProfilesList(_device.ProductId))
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
@@ -105,8 +106,8 @@ namespace JJManager.Pages.Mixers
             {
                 CmbBoxSelectProfile.SelectedIndex = 0;
             }
-            
-            _device.UpdateActiveProfile(CmbBoxSelectProfile.SelectedItem.ToString());
+
+            _device.Profile = new ProfileClass(_device, CmbBoxSelectProfile.SelectedItem.ToString());
         }
         #endregion
 
@@ -123,12 +124,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 0);
+                        OpenInputModal(_device.Profile, 0);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 0);
+                    OpenInputModal(_device.Profile, 0);
                 }
             });
             thr.Name = "JJM01_Input_01";
@@ -158,12 +159,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 1);
+                        OpenInputModal(_device.Profile, 1);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 1);
+                    OpenInputModal(_device.Profile, 1);
                 }
             });
             thr.Name = "JJM01_Input_02";
@@ -193,12 +194,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 2);
+                        OpenInputModal(_device.Profile, 2);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 2);
+                    OpenInputModal(_device.Profile, 2);
                 }
             });
             thr.Name = "JJM01_Input_03";
@@ -228,12 +229,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 3);
+                        OpenInputModal(_device.Profile, 3);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 3);
+                    OpenInputModal(_device.Profile, 3);
                 }
             });
             thr.Name = "JJM01_Input_04";
@@ -263,12 +264,12 @@ namespace JJManager.Pages.Mixers
                 {
                     BeginInvoke((MethodInvoker)delegate
                     {
-                        OpenInputModal(_device.ActiveProfile, 4);
+                        OpenInputModal(_device.Profile, 4);
                     });
                 }
                 else
                 {
-                    OpenInputModal(_device.ActiveProfile, 4);
+                    OpenInputModal(_device.Profile, 4);
                 }
             });
             thr.Name = "JJM01_Input_05";
@@ -343,7 +344,7 @@ namespace JJManager.Pages.Mixers
                 string profileNameToActive = CmbBoxSelectProfile.Items[0].ToString();
                 CmbBoxSelectProfile.SelectedIndex = 0;
 
-                _device.ActiveProfile.Delete(_device, profileNameToActive);
+                _device.Profile.Delete(_device, profileNameToActive);
 
                 MessageBox.Show("Perfil excluído com sucesso!");
             }

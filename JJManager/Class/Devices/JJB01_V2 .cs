@@ -4,140 +4,117 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 using System.Text.Json;
 using JJManager.Class.App;
+using HIDClass = JJManager.Class.Devices.Connections.HID;
+using AudioSwitcher.AudioApi.CoreAudio;
+using JJManager.Class.App.Input;
+using System.Text.Json.Nodes;
 
 namespace JJManager.Class.Devices
 {
-    internal class JJB01_V2
+    internal class JJB01_V2 : HIDClass, IDisposable
     {
-        private SimHubWebsocket _SimHubSync = null;
-        private Device _Device = null;
+        private SimHubWebsocket _simHubSync = null;
 
-        public JJB01_V2 (Device device)
+        public JJB01_V2(HidDevice hidDevice) : base(hidDevice)
         {
-            _Device = device;
+            _actionSendingData = () => { ActionSendingData(); };
         }
 
-        public void Dispose()
+        private void ActionSendingData()
         {
-            if (_SimHubSync != null)
+            bool acceptOldVersionPlugin = false;
+
+            while (_isConnected)
             {
-                 _SimHubSync.StopCommunication();
-                _SimHubSync = null;
-            }
-        }
+                var (success, responseAboutOldVersionPlugin) = SendData(acceptOldVersionPlugin);
+                acceptOldVersionPlugin = responseAboutOldVersionPlugin;
 
-        public (bool,bool,bool) SendConfigs(JJManager.Class.Device device, bool acceptedOldVersionFirmware, bool acceptedOldVersionPlugin)
-        {
-            HidStream hidStream;
-            String MessageToSend = "";
-            const uint attemptsLimit = 5;
-            bool hidInfoSended = false;
-
-            ReportDescriptor reportDescriptor = device.HidDevice.GetReportDescriptor();
-
-            if (device.HidDevice.TryOpen(out hidStream))
-            {
-                hidStream.WriteTimeout = 3000;
-                hidStream.ReadTimeout = 3000;
-
-                using (hidStream)
+                if (!success)
                 {
-                    int led_mode_value = (_Device.ActiveProfile.Data.ContainsKey("led_mode") ? _Device.ActiveProfile.Data["led_mode"].GetValue<int>() : 0);
-                    int brightness_limit_value = (_Device.ActiveProfile.Data.ContainsKey("brightness") ? _Device.ActiveProfile.Data["brightness"].GetValue<int>() : 0);
+                    Disconnect();
+                }
+            }
 
-                    // 4 = it's SimHub Sync!
-                    if (led_mode_value == 4)
-                    {
-                        if (_SimHubSync == null)
+            Dispose();
+        }
+
+        public (bool, bool) SendData(bool acceptedOldVersionPlugin)
+        {
+            bool result = false;
+            string messageToSend = null;
+
+            if (_profile.NeedsUpdate)
+            {
+                _profile.Restart();
+                _profile.NeedsUpdate = false;
+            }
+
+            int led_mode_value = (_profile.Data.ContainsKey("led_mode") ? _profile.Data["led_mode"].GetValue<int>() : 0);
+            int brightness_limit_value = (_profile.Data.ContainsKey("brightness") ? _profile.Data["brightness"].GetValue<int>() : 0);
+
+            // 4 = it's SimHub Sync!
+            if (led_mode_value == 4)
+            {
+                if (_simHubSync == null)
+                {
+                    _simHubSync = new SimHubWebsocket(2920, "JJB01V2_" + _connId);
+                }
+
+                if (!_simHubSync.IsConnected)
+                {
+                    _simHubSync.StartCommunication();
+                }
+
+
+                var (success, message) = _simHubSync.RequestMessage(
+                    new JsonObject {
                         {
-                            _SimHubSync = new SimHubWebsocket(2920, "JJB01_V2_" + _Device.ConnId);
-                        }
-
-                        if (!_SimHubSync.IsConnected)
-                        {
-                            _SimHubSync.StartCommunication();
-                        }
-
-
-                        var (success, message) = _SimHubSync.RequestMessage("{ \"request\": [\"SimHubLastData\"]}");
-
-                        if (!success)
-                        {
-                            return (false, acceptedOldVersionFirmware, acceptedOldVersionPlugin);
-                        }
-                        else
-                        {
-                            _SimHubSync.TranslateToButtonBoxHID(message, out MessageToSend, ref acceptedOldVersionPlugin, brightness_limit_value);
-                        }
-                    }
-                    else
-                    {
-                        if (_SimHubSync != null)
-                        {
-                            _SimHubSync.StopCommunication();
-                            _SimHubSync = null;
-                        }
-
-                        var data = new Dictionary<string, object>
-                        {
-                            { "data", _Device.ActiveProfile.Data }
-                        };
-
-                        MessageToSend = JsonSerializer.Serialize(data);
-                    }
-
-                    if (MessageToSend.Length > 63)
-                        throw new ArgumentOutOfRangeException();
-
-                    byte[] messageInBytes = Encoding.ASCII.GetBytes(MessageToSend);
-                    byte[] bytesToSend = new byte[(messageInBytes.Length + 1)];
-
-                    for (int i = 0; i < bytesToSend.Length; i++)
-                    {
-                        bytesToSend[i] = (byte)(i == 0 ? 0x00 : messageInBytes[(i - 1)]);
-                    }
-
-                    if (hidStream.CanWrite && MessageToSend.Length > 0)
-                    {
-                        Exception senderEx = null;
-
-                        for (uint i = 0; i < attemptsLimit; i++)
-                        {
-                            try
-                            {
-                                Thread.Sleep(100);
-
-                                hidStream.Write(bytesToSend, 0, bytesToSend.Length);
-                                hidInfoSended = true;
-                            }
-                            catch (Exception ex)
-                            {
-                                Thread.Sleep(300);
-                                senderEx = ex;
-                            }
-
-                            if (hidInfoSended)
-                            {
-                                break;
+                            "request", new JsonArray {
+                                { "SimHubLastData" }
                             }
                         }
+                    }.ToJsonString()
+                );
 
-                        if (!hidInfoSended)
-                        {
-                            Log.Insert("JJB01V2", "Ocorreu um problema ao enviar os dados: " + MessageToSend, senderEx);
-                            return (false, acceptedOldVersionFirmware, acceptedOldVersionPlugin);
-                        }
-                    }
+                if (!success)
+                {
+                    return (false, acceptedOldVersionPlugin);
+                }
+                else
+                {
+                    _simHubSync.TranslateToButtonBoxHID(message, out messageToSend, "jjb01v2", ref acceptedOldVersionPlugin, brightness_limit_value);
                 }
             }
             else
             {
-                return (false, acceptedOldVersionFirmware, acceptedOldVersionPlugin);
+                if (_simHubSync != null)
+                {
+                    _simHubSync.StopCommunication();
+                    _simHubSync = null;
+                }
+
+                var data = new Dictionary<string, object>
+                {
+                    { "jjb01v2_data", _profile.Data }
+                };
+                messageToSend = JsonSerializer.Serialize(data);
             }
 
-            return (true, acceptedOldVersionFirmware, acceptedOldVersionPlugin);
+            result = SendHIDData(messageToSend, false, 200).Result;
+
+            return (result, acceptedOldVersionPlugin);
+        }
+
+        public void Dispose()
+        {
+            if (_simHubSync != null)
+            {
+                _simHubSync.StopCommunication();
+                _simHubSync = null;
+            }
         }
     }
 }

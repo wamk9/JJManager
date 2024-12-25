@@ -6,7 +6,7 @@ using HidSharp;
 using HidSharp.Reports;
 using JJManager.Class;
 using JJManager.Pages;
-using JJManager.Pages.ButtonBox;
+using JJManager.Pages.Devices;
 using MaterialSkin;
 using MaterialSkin.Controls;
 using SharpDX.DirectInput;

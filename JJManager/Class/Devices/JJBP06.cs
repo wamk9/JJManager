@@ -11,69 +11,44 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Text.Json;
+using JJManager.Class.App.Profile;
+using JJManager.Class.App;
+using System.Text.Json.Nodes;
+using HIDClass = JJManager.Class.Devices.Connections.HID;
 
 namespace JJManager.Class.Devices
 {
-    internal class JJBP06
+    public class JJBP06 : HIDClass
     {
-        public static bool SendConfigs(JJManager.Class.Device device)
+        public JJBP06(HidDevice hidDevice) : base(hidDevice)
         {
-            HidStream hidStream;
-            String MessageToSend = "";
+            _actionSendingData = () => { ActionSendingData(); };
+        }
 
-            try
+        private void ActionSendingData()
+        {
+            while (_isConnected)
             {
-                if (device == null)
-                    MessageBox.Show("Device Desconectado");
-
-                ReportDescriptor reportDescriptor = device.HidDevice.GetReportDescriptor();
-
-                if (device.HidDevice.TryOpen(out hidStream))
+                if (!SendData())
                 {
-                    hidStream.WriteTimeout = 3000;
-                    hidStream.ReadTimeout = 3000;
-
-                    using (hidStream)
-                    {
-
-                        if (device.ActiveProfileNeedsUpdated)
-                        {
-                            device.ActiveProfile.Restart();
-                            device.ActiveProfileNeedsUpdated = false;
-                        }
-
-                        MessageToSend = device.ActiveProfile.Data.ToJsonString();
-
-                        if (MessageToSend.Length > 254)
-                            throw new ArgumentOutOfRangeException();
-
-                        byte[] messageInBytes = Encoding.ASCII.GetBytes(MessageToSend);
-                        byte[] bytesToSend = new byte[(messageInBytes.Length + 1)];
-
-                        for (int i = 0; i < bytesToSend.Length; i++)
-                        {
-                            bytesToSend[i] = (byte)(i == 0 ? 0x00 : messageInBytes[(i - 1)]);
-                        }
-
-                        if (hidStream.CanWrite && MessageToSend.Length > 0)
-                        {
-                            hidStream.WriteAsync(bytesToSend, 0, bytesToSend.Length);
-                            Thread.Sleep(1000);
-                        }
-                    }
-                }
-                else
-                {
-                    return false;
+                    Disconnect();
                 }
             }
-            catch (Exception ex)
+        }
+
+        public bool SendData()
+        {
+            bool result = false;
+
+            if (_profile.NeedsUpdate)
             {
-                Log.Insert("JJBP06", "Ocorreu um problema ao enviar os dados: " + MessageToSend, ex);
-                return false;
+                _profile.Restart();
+                _profile.NeedsUpdate = false;
             }
 
-            return true;
+            result = SendHIDData(_profile.Data.ToJsonString()).Result;
+
+            return result;
         }
     }
 }

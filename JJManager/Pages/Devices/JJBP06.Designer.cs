@@ -1,4 +1,4 @@
-﻿namespace JJManager.Pages.ButtonBox
+﻿namespace JJManager.Pages.Devices
 {
     partial class JJBP06
     {

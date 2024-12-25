@@ -16,20 +16,21 @@ using System.Threading;
 using System.Windows.Forms;
 using JJManager.Class.App;
 using JJManager.Pages.App.Updater;
+using JJManager.Class.Devices;
 
 namespace JJManager.Class.App
 {
     public class DeviceUpdater : Updater
     {
-        private String _ComPort = "";
-        private Device _device = null;
+        private List<string> _comPort = null;
+        private JJDevice _device = null;
 
-        public String ComPort
+        public List<string> ComPort
         {
-            get => _ComPort;
+            get => _comPort;
         }
 
-        public Device Device
+        public JJDevice Device
         {
             get => _device;
         }
@@ -39,7 +40,7 @@ namespace JJManager.Class.App
             _MainForm = mainForm;
         }
 
-        public void CheckUpdate(JJManager.Class.Device device)
+        public void CheckUpdate(JJDevice device)
         {
             try
             {
@@ -78,7 +79,7 @@ namespace JJManager.Class.App
         {
             _ConnId = _device.ConnId;
             _Name = _device.ProductName;
-            _ComPort = _device.ConnPort;
+            _comPort = _device.ConnPort;
             _Type = UpdaterType.Device;
             _ActualVersion = _device.Version;
         }
@@ -98,71 +99,5 @@ namespace JJManager.Class.App
                 });
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        public static void GetDevicesCanUpdated(ref List<Device> devices)
-        {
-            List<HidDevice> hidDevicesList = DeviceList.Local.GetHidDevices(0x2341).ToList();
-            List<JJManager.Class.Device> jjDevicesList = new List<JJManager.Class.Device>();
-            List<JJManager.Class.Device> actualDevices = devices;
-            JJManager.Class.Device deviceTmp = null;
-
-            String[] jjHidNames =
-            {
-                "Streamdeck JJSD-01",
-                "Mixer de Áudio JJM-01",
-                "ButtonBox JJB-01 V2", // Gerenciamento de Leds
-                "ButtonBox JJBP-06", // Gerenciamento de Leds
-                "ButtonBox JJB-999" // Gerenciamento de Leds
-            };
-
-            hidDevicesList.RemoveAll(deviceFound => !jjHidNames.Any(hidName => deviceFound.GetProductName() == hidName));
-            hidDevicesList.RemoveAll(deviceFound => deviceFound.GetReportDescriptor().Reports[0].ReportID == (byte)0xFF);
-
-            bool onDevicesList = false;
-
-            hidDevicesList.ForEach(hidDevice =>
-            {
-                onDevicesList = false;
-                deviceTmp = null;
-
-                actualDevices.ForEach(device =>
-                {
-                    if (hidDevice.DevicePath == device.HidDevice.DevicePath)
-                    {
-                        deviceTmp = device;
-                        onDevicesList = true;
-                    }
-                });
-
-                if (!onDevicesList)
-                {
-                    jjDevicesList.Add(new JJManager.Class.Device(hidDevice));
-                }
-                else
-                {
-                    jjDevicesList.Add(deviceTmp);
-
-                }
-            });
-
-            devices = jjDevicesList;
-        }
     }
-
 }

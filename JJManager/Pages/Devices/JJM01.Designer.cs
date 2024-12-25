@@ -1,6 +1,6 @@
-﻿namespace JJManager.Pages.Mixers
+﻿namespace JJManager.Pages.Devices
 {
-    partial class JJM_01
+    partial class JJM01
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJM_01));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJM01));
             this.BtnInput01JJM01 = new System.Windows.Forms.PictureBox();
             this.ImgJJM01 = new System.Windows.Forms.PictureBox();
             this.BtnInput02JJM01 = new System.Windows.Forms.PictureBox();
@@ -63,8 +63,8 @@
             // 
             // ImgJJM01
             // 
-            this.ImgJJM01.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.ImgJJM01.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.ImgJJM01.BackColor = System.Drawing.Color.Transparent;
             this.ImgJJM01.BackgroundImage = global::JJManager.Properties.Resources.JJM_01;

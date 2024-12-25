@@ -8,6 +8,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using InputClass = JJManager.Class.App.Input.Input;
+using JJDeviceClass = JJManager.Class.Devices.JJDevice;
 
 namespace JJManager.Class.App.Profile
 {
@@ -21,8 +22,15 @@ namespace JJManager.Class.App.Profile
         private JsonObject _data = null;
         private ObservableCollection<InputClass> _inputs = null;
         private DatabaseConnection _dbConnection = null;
-
+        private bool _needsUpdate = false;
         public event NotifyCollectionChangedEventHandler CollectionChanged;
+
+        public bool NeedsUpdate
+        {
+            get => _needsUpdate;
+            set => _needsUpdate = value;
+        }
+
         public String Id
         {
             get => _id;
@@ -65,7 +73,7 @@ namespace JJManager.Class.App.Profile
         /// <param name="device">JJManager device object.</param>
         /// <param name="name">New profile's name.</param>
         /// <param name="activeProfile">Bool, True if it's the active profile, false if not.</param>
-        public Profile(Device device, string profileName, bool setToActiveProfile = false)
+        public Profile(JJDeviceClass device, string profileName, bool setToActiveProfile = false)
         {
             CreateNewProfileIntoObject(device, profileName, setToActiveProfile);
         }
@@ -74,40 +82,62 @@ namespace JJManager.Class.App.Profile
         /// Get device's active profile
         /// </summary>
         /// <param name="device"></param>
-        public Profile(Device device)
+        public Profile(JJDeviceClass device)
         {
             try
             {
-                _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
+                if (device == null)
+                {
+                    throw new ArgumentNullException(nameof(device), "O objeto dispositivo não pode ser nulo.");
+                }
+
+                if (string.IsNullOrEmpty(device.ConnId) || string.IsNullOrEmpty(device.ProductId))
+                {
+                    throw new ArgumentException("O dispositivo não possui ConnId ou ProductId válido.");
+                }
+
+                // Inicializa conexão com o banco de dados
+                _dbConnection = _dbConnection ?? new DatabaseConnection();
+
+                // Tenta buscar perfil ativo
                 GetActiveProfileIntoObject(device.ConnId);
 
-                // If not found a ID...
+                // Insere um novo perfil se nenhum for encontrado
                 if (string.IsNullOrEmpty(_id))
                 {
-                    string sql = $"INSERT INTO profiles (name, id_product) VALUES ('Perfil Padrão', '{device.JJID}');";
+                    string insertSql = $"INSERT INTO profiles (name, id_product) VALUES ('Perfil Padrão', '{device.ProductId}');";
 
-                    if (!_dbConnection.RunSQL(sql))
+                    if (!_dbConnection.RunSQL(insertSql))
                     {
-                        // TODO: Create LOGFILE
+                        Log.Insert("Profile", "Erro ao inserir perfil no banco de dados");
+                        throw new InvalidOperationException("Falha ao inserir perfil no banco de dados.");
                     }
 
-                    sql = "SELECT IDENT_CURRENT('dbo.profiles') AS last_inserted_id";
+                    string selectSql = "SELECT IDENT_CURRENT('dbo.profiles') AS last_inserted_id";
+                    var results = _dbConnection.RunSQLWithResults(selectSql);
 
-                    using (JsonDocument json = _dbConnection.RunSQLWithResults(sql))
+                    if (results.Count == 0)
                     {
-                        if (json != null)
+                        throw new InvalidOperationException("Falha ao recuperar o ID do último perfil inserido.");
+                    }
+
+                    foreach (JsonObject obj in results)
+                    {
+                        if (obj.ContainsKey("last_inserted_id"))
                         {
-                            GetProfileIntoObject(json.RootElement[0].GetProperty("last_inserted_id").GetString());
+                            _id = obj["last_inserted_id"].GetValue<string>();
+                            GetProfileIntoObject(_id);
                         }
                     }
                 }
 
-                // If not found a ID yet...
+                // Verifica se o perfil foi encontrado ou criado
                 if (string.IsNullOrEmpty(_id))
                 {
-                    throw new NullReferenceException();
+                    throw new NullReferenceException("O ID do perfil não foi encontrado ou criado.");
                 }
 
+                // Converte o ID do perfil para inteiro e inicializa entradas
                 uint uid = uint.Parse(_id);
                 _inputs = new ObservableCollection<InputClass>();
 
@@ -116,9 +146,25 @@ namespace JJManager.Class.App.Profile
                     _inputs.Add(new InputClass(uid, j));
                 }
             }
+            catch (ArgumentNullException ex)
+            {
+                Log.Insert("Profile", "Erro ao criar o perfil: parâmetro nulo.", ex);
+            }
+            catch (ArgumentException ex)
+            {
+                Log.Insert("Profile", "Erro ao criar o perfil: parâmetro inválido.", ex);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Log.Insert("Profile", "Erro ao criar o perfil: operação inválida.", ex);
+            }
             catch (NullReferenceException ex)
             {
-                Log.Insert("Profile", "Erro ao buscar o perfil atrelado ao dispositivo", ex);
+                Log.Insert("Profile", "Erro ao buscar o perfil atrelado ao dispositivo.", ex);
+            }
+            catch (Exception ex)
+            {
+                Log.Insert("Profile", "Erro inesperado ao criar o perfil.", ex);
             }
         }
         #endregion
@@ -139,6 +185,7 @@ namespace JJManager.Class.App.Profile
         private void GetProfileIntoObject(string id)
         {
             _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
+
             String sql = $@"SELECT 
                             p.name, 
                             p.id_product,
@@ -149,32 +196,21 @@ namespace JJManager.Class.App.Profile
                         LEFT JOIN jj_products AS jjp ON (p.id_product = jjp.id) 
                         WHERE p.id = '{id}';";
 
-            using (JsonDocument json = _dbConnection.RunSQLWithResults(sql))
+            foreach (JsonObject obj in _dbConnection.RunSQLWithResults(sql))
             {
-                if (json != null)
+                _id = id;
+                _name = obj.ContainsKey("name") ? obj["name"].GetValue<string>() : string.Empty;
+                _idProduct = obj.ContainsKey("id_product") ? obj["id_product"].GetValue<string>() : string.Empty;
+                _analogInputsQtd = obj.ContainsKey("analog_inputs_qtd") ? Int32.Parse(obj["analog_inputs_qtd"].GetValue<string>()) : 0;
+                _digitalInputsQtd = obj.ContainsKey("digital_inputs_qtd") ? Int32.Parse(obj["digital_inputs_qtd"].GetValue<string>()) : 0;
+                _data = obj.ContainsKey("configs") ? (JsonObject)JsonObject.Parse(obj["configs"].GetValue<string>()) : new JsonObject();
+
+                uint uid = uint.Parse(_id);
+                _inputs = new ObservableCollection<InputClass>();
+
+                for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
                 {
-                    _id = id;
-                    _name = json.RootElement[0].GetProperty("name").GetString();
-                    _idProduct = json.RootElement[0].GetProperty("id_product").GetString();
-                    _analogInputsQtd = Int32.Parse(json.RootElement[0].GetProperty("analog_inputs_qtd").GetString());
-                    _digitalInputsQtd = Int32.Parse(json.RootElement[0].GetProperty("digital_inputs_qtd").GetString());
-
-                    if (json.RootElement[0].TryGetProperty("configs", out JsonElement config))
-                    {
-                        _data = (JsonObject)JsonObject.Parse(config.GetString());
-                    }
-                    else
-                    {
-                        _data = new JsonObject();
-                    }
-
-                    uint uid = uint.Parse(_id);
-                    _inputs = new ObservableCollection<InputClass>();
-
-                    for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
-                    {
-                        _inputs.Add(new InputClass(uid, j));
-                    }
+                    _inputs.Add(new InputClass(uid, j));
                 }
             }
         }
@@ -194,32 +230,21 @@ namespace JJManager.Class.App.Profile
                         LEFT JOIN user_products AS up ON (p.id = up.id_profile) 
                         WHERE up.conn_id = '{connId}';";
 
-            using (JsonDocument json = _dbConnection.RunSQLWithResults(sql))
+            foreach (JsonObject obj in _dbConnection.RunSQLWithResults(sql))
             {
-                if (json != null)
+                _id = obj.ContainsKey("id") ? obj["id"].GetValue<string>() : string.Empty;
+                _name = obj.ContainsKey("name") ? obj["name"].GetValue<string>() : string.Empty;
+                _idProduct = obj.ContainsKey("id_product") ? obj["id_product"].GetValue<string>() : string.Empty;
+                _analogInputsQtd = obj.ContainsKey("analog_inputs_qtd") ? Int32.Parse(obj["analog_inputs_qtd"].GetValue<string>()) : 0;
+                _digitalInputsQtd = obj.ContainsKey("digital_inputs_qtd") ? Int32.Parse(obj["digital_inputs_qtd"].GetValue<string>()) : 0;
+                _data = obj.ContainsKey("configs") ? (JsonObject)JsonObject.Parse(obj["configs"].GetValue<string>()) : new JsonObject();
+
+                uint uid = uint.Parse(_id);
+                _inputs = new ObservableCollection<InputClass>();
+
+                for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
                 {
-                    _id = json.RootElement[0].GetProperty("id").GetString();
-                    _name = json.RootElement[0].GetProperty("name").GetString();
-                    _idProduct = json.RootElement[0].GetProperty("id_product").GetString();
-                    _analogInputsQtd = Int32.Parse(json.RootElement[0].GetProperty("analog_inputs_qtd").GetString());
-                    _digitalInputsQtd = Int32.Parse(json.RootElement[0].GetProperty("digital_inputs_qtd").GetString());
-
-                    if (json.RootElement[0].TryGetProperty("configs", out JsonElement config))
-                    {
-                        _data = (JsonObject)JsonObject.Parse(config.GetString());
-                    }
-                    else
-                    {
-                        _data = new JsonObject();
-                    }
-
-                    uint uid = uint.Parse(_id);
-                    _inputs = new ObservableCollection<InputClass>();
-
-                    for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
-                    {
-                        _inputs.Add(new InputClass(uid, j));
-                    }
+                    _inputs.Add(new InputClass(uid, j));
                 }
             }
         }
@@ -229,7 +254,6 @@ namespace JJManager.Class.App.Profile
             _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
             string sql = $@"SELECT
                             p.id,
-                            p.name,
                             p.configs,
                             jjp.analog_inputs_qtd,
                             jjp.digital_inputs_qtd
@@ -237,31 +261,21 @@ namespace JJManager.Class.App.Profile
                         LEFT JOIN jj_products AS jjp ON (p.id_product = jjp.id) 
                         WHERE name = '{name}' AND id_product = '{idProduct}';";
 
-            using (JsonDocument json = _dbConnection.RunSQLWithResults(sql))
+            foreach (JsonObject obj in _dbConnection.RunSQLWithResults(sql))
             {
-                if (json != null)
+                _id = obj.ContainsKey("id") ? obj["id"].GetValue<string>() : string.Empty;
+                _name = name;
+                _idProduct = idProduct;
+                _analogInputsQtd = obj.ContainsKey("analog_inputs_qtd") ? Int32.Parse(obj["analog_inputs_qtd"].GetValue<string>()) : 0;
+                _digitalInputsQtd = obj.ContainsKey("digital_inputs_qtd") ? Int32.Parse(obj["digital_inputs_qtd"].GetValue<string>()) : 0;
+                _data = obj.ContainsKey("configs") ? (JsonObject)JsonObject.Parse(obj["configs"].GetValue<string>()) : new JsonObject();
+
+                uint uid = uint.Parse(_id);
+                _inputs = new ObservableCollection<InputClass>();
+
+                for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
                 {
-                    _id = json.RootElement[0].GetProperty("id").ToString();
-                    _name = json.RootElement[0].GetProperty("name").GetString();
-                    _idProduct = idProduct;
-                    _analogInputsQtd = Int32.Parse(json.RootElement[0].GetProperty("analog_inputs_qtd").GetString());
-                    _digitalInputsQtd = Int32.Parse(json.RootElement[0].GetProperty("digital_inputs_qtd").GetString());
-                    if (json.RootElement[0].TryGetProperty("configs", out JsonElement config))
-                    {
-                        _data = (JsonObject)JsonObject.Parse(config.GetString());
-                    }
-                    else
-                    {
-                        _data = new JsonObject();
-                    }
-
-                    uint uid = uint.Parse(_id);
-                    _inputs = new ObservableCollection<InputClass>();
-
-                    for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
-                    {
-                        _inputs.Add(new InputClass(uid, j));
-                    }
+                    _inputs.Add(new InputClass(uid, j));
                 }
             }
         }
@@ -280,12 +294,12 @@ namespace JJManager.Class.App.Profile
         #endregion
 
         #region PublicFunctions
-        public void Delete(Device device, string profileNameToActive)
+        public void Delete(JJDeviceClass device, string profileNameToActive)
         {
             _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
             SetToActiveProfile(profileNameToActive);
 
-            string sql = $"DELETE FROM dbo.profiles WHERE name = '{_name}' AND id_product = '{device.JJID}';";
+            string sql = $"DELETE FROM dbo.profiles WHERE name = '{_name}' AND id_product = '{device.ProductId}';";
 
             if (!_dbConnection.RunSQL(sql))
             {
@@ -337,17 +351,17 @@ namespace JJManager.Class.App.Profile
             CreateRestartAllProfileFile();
         }
 
-        public void CreateNewProfileIntoObject(Device device, string profileName, bool setToActiveProfile = false)
+        public void CreateNewProfileIntoObject(JJDeviceClass device, string profileName, bool setToActiveProfile = false)
         {
             try
             {
                 _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
-                GetProfileIntoObject(profileName, device.JJID);
+                GetProfileIntoObject(profileName, device.ProductId);
 
                 // If not found a ID...
                 if (string.IsNullOrEmpty(_id))
                 {
-                    string sql = $"INSERT INTO profiles (name, id_product) VALUES ('{profileName}', '{device.JJID}');";
+                    string sql = $"INSERT INTO profiles (name, id_product) VALUES ('{profileName}', '{device.ProductId}');";
 
                     if (!_dbConnection.RunSQL(sql))
                     {
@@ -356,11 +370,11 @@ namespace JJManager.Class.App.Profile
 
                     sql = "SELECT IDENT_CURRENT('dbo.profiles') AS last_inserted_id";
 
-                    using (JsonDocument json = _dbConnection.RunSQLWithResults(sql))
+                    foreach (JsonObject obj in _dbConnection.RunSQLWithResults(sql))
                     {
-                        if (json != null)
+                        if (obj.ContainsKey("last_inserted_id"))
                         {
-                            GetProfileIntoObject(json.RootElement[0].GetProperty("last_inserted_id").GetString());
+                            GetProfileIntoObject(obj["last_inserted_id"].GetValue<string>());
                         }
                     }
                 }
@@ -395,15 +409,15 @@ namespace JJManager.Class.App.Profile
         public static List<String> GetProfilesList(String productId)
         {
             DatabaseConnection database = new DatabaseConnection();
+
             List<String> list = new List<String>();
             String sql = "SELECT name FROM profiles WHERE id_product = " + productId + " ORDER BY id ASC;";
 
-            using (JsonDocument json = database.RunSQLWithResults(sql))
+            foreach (JsonObject obj in database.RunSQLWithResults(sql))
             {
-                if (json != null)
+                if (obj.ContainsKey("name"))
                 {
-                    for (int i = 0; i < json.RootElement.GetArrayLength(); i++)
-                        list.Add(json.RootElement[i].GetProperty("name").ToString());
+                    list.Add(obj["name"].GetValue<string>());
                 }
             }
 

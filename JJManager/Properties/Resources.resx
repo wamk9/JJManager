@@ -217,4 +217,7 @@
   <data name="SQL_1_2_4" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\1_2_4 .sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="SQL_1_2_5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\1_2_5.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
 </root>
