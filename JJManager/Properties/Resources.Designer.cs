@@ -311,24 +311,23 @@ namespace JJManager.Properties {
         }
         
         /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
-        ///set xact_abort on
-        ///SET ANSI_WARNINGS off
+        ///   Consulta uma cadeia de caracteres localizada semelhante a SET XACT_ABORT ON; -- Automatic rollback on error
+        ///SET ANSI_WARNINGS OFF;
         ///GO
         ///
-        ///--BEGIN TRANSACTION _1_1_14
+        ///DECLARE @schema_name NVARCHAR(256);
+        ///DECLARE @table_name NVARCHAR(256);
+        ///DECLARE @col_name NVARCHAR(256);
+        ///DECLARE @Command NVARCHAR(MAX);
         ///
-        ///declare @schema_name nvarchar(256)
-        ///declare @table_name nvarchar(256)
-        ///declare @col_name nvarchar(256)
-        ///declare @Command  nvarchar(1000)
+        ///-- Step 1: Set schema, table, and column names
+        ///SET @schema_name = N&apos;dbo&apos;;
+        ///SET @table_name = N&apos;analog_inputs&apos;;
+        ///SET @col_name = N&apos;axis_orientation&apos;;
         ///
-        ///set @schema_name = N&apos;dbo&apos;
-        ///set @table_name = N&apos;analog_inputs&apos;
-        ///set @col_name = N&apos;axis_orientation&apos;
-        ///
-        ///select @Command = &apos;ALTER TABLE &apos; + @schema_name + &apos;.[&apos; + @table_name + &apos;] DROP CONSTRAINT &apos; + d.name
-        /// from sys.tables  [o restante da cadeia de caracteres foi truncado]&quot;;.
+        ///-- Step 2: Dynamically drop default constraint for the column (original name)
+        ///SELECT TOP 1 @Command = 
+        ///    &apos;ALTER TABLE &apos; + @schema_na [o restante da cadeia de caracteres foi truncado]&quot;;.
         /// </summary>
         internal static string SQL_1_1_14 {
             get {
@@ -492,12 +491,49 @@ namespace JJManager.Properties {
         ///    class_name VARCHAR (10) NULL;
         ///GO
         ///
-        ///UPDATE dbo.jj_products SET conn_type = &apos;HID&apos;, class_name = &apos;JJM01&apos; WHERE product_name = &apos;Mixer de �udio JJM-01&apos;;
-        ///UPDATE dbo.jj_products SET conn_type = &apos;Joystick&apos;, class_name = &apos;JJ [o restante da cadeia de caracteres foi truncado]&quot;;.
+        ///UPDATE dbo.jj_products SET conn_type = &apos;HID&apos;, class_name = &apos;JJM01&apos; WHERE id = 1; -- product_name = &apos;Mixer de �udio JJM-01&apos;;
+        ///GO
+        ///UPDATE dbo.jj_products SET conn_type = &apos;Joystick&apos;, c [o restante da cadeia de caracteres foi truncado]&quot;;.
         /// </summary>
         internal static string SQL_1_2_5 {
             get {
                 return ResourceManager.GetString("SQL_1_2_5", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///UPDATE dbo.configs SET software_version = &apos;1.2.6&apos;;
+        ///GO
+        ///
+        ///SET ANSI_WARNINGS on
+        ///GO.
+        /// </summary>
+        internal static string SQL_1_2_6 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_6", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///UPDATE dbo.configs SET software_version = &apos;1.2.6.1&apos;;
+        ///GO
+        ///
+        ///SET ANSI_WARNINGS on
+        ///GO.
+        /// </summary>
+        internal static string SQL_1_2_6_1 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_6_1", resourceCulture);
             }
         }
     }

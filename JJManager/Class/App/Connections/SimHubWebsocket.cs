@@ -146,7 +146,7 @@ namespace JJManager.Class.App
         }
 
 
-        public bool TranslateToButtonBoxHID(JsonObject messageReceived, out string translatedMessage, string deviceTag, ref bool acceptedOldVersionPlugin, int brightness_limit = 100)
+        public bool TranslateToButtonBoxHID(JsonObject messageReceived, out string translatedMessage, string deviceTag, int brightness_limit = 100)
         {
             JsonObject jsonResult = messageReceived;
             JsonObject jsonValues = new JsonObject();
@@ -222,18 +222,18 @@ namespace JJManager.Class.App
             return true;
         }
 
-        public bool TranslateToDashboardHID(JsonObject messageReceived, out JsonObject translatedMessage)
+        public bool TranslateToDashboardHID(JsonObject messageReceived, out List<JsonObject> translatedMessage, int limitChars = 64 * 10)
         {
             JsonObject jsonResult = messageReceived;
-            JsonObject jsonDashValues = new JsonObject();
+            JsonObject jsonDashValues = new JsonObject( );
             JsonObject jsonLedValues = new JsonObject();
+            JsonObject jsonCounter = new JsonObject();
+            List<JsonObject> listJsonValues = new List<JsonObject>();
             string propName = "";
             string[] toLed = {
                 "RpmPercent",
                 "PSL"
             };
-
-            Console.WriteLine(messageReceived.ToJsonString());
 
             try
             {
@@ -253,19 +253,52 @@ namespace JJManager.Class.App
                             {
                                 jsonLedValues.Add(propName, data.Value?.ToString() ?? null);
                             }
+
+                            jsonCounter.Add("dash_data", jsonDashValues);
+                            jsonCounter.Add("led_data", jsonLedValues);
+
+                            if ((jsonCounter.ToJsonString()).Length > (limitChars - 1))
+                            {
+                                jsonDashValues.Clear();
+                                jsonLedValues.Clear();
+                                jsonCounter.Clear();
+
+                                jsonDashValues.Add(propName, data.Value?.ToString() ?? null);
+
+                                if (toLed.Contains(propName))
+                                {
+                                    jsonLedValues.Add(propName, data.Value?.ToString() ?? null);
+                                }
+
+                                jsonCounter.Add("dash_data", jsonDashValues);
+                                jsonCounter.Add("led_data", jsonLedValues);
+
+                                listJsonValues.Add(jsonCounter.DeepClone().AsObject());
+                            }
+                            else
+                            {
+                                if (listJsonValues.Count > 0)
+                                {
+                                    listJsonValues.RemoveAt((listJsonValues.Count - 1));
+                                }
+
+                                listJsonValues.Add(jsonCounter.DeepClone().AsObject());
+                            }
+
+                            jsonCounter.Clear();
                         }
                     }
                 }
                 else if (jsonResult.ContainsKey("status") && jsonResult["status"].ToString() == "offline")
                 {
                     MessageBox.Show("Não foi possível se conectar ao SimHub, verifique se você está com o plugin de sincronismo instalado e com o SimHub em execução.");
-                    translatedMessage = new JsonObject();
+                    translatedMessage = null;
                     return false;
                 }
                 else if (jsonResult.ContainsKey("status") && jsonResult["status"].ToString() == "app_error")
                 {
                     MessageBox.Show("Ocorreu um erro ao sincronizar com o SimHub, contate o suporte para avaliar o acontecimento.");
-                    translatedMessage = new JsonObject();
+                    translatedMessage = null;
                     return false;
                 }
             }
@@ -273,13 +306,11 @@ namespace JJManager.Class.App
             {
                 jsonDashValues.Clear();
                 jsonLedValues.Clear();
+                translatedMessage = null;
+                return false;
             }
 
-            translatedMessage = (new JsonObject
-            {
-                { "dash_data", jsonDashValues },
-                { "led_data", jsonLedValues }
-            });
+            translatedMessage = listJsonValues;
             return true;
         }
 

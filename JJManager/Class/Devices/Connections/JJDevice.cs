@@ -185,7 +185,7 @@ namespace JJManager.Class.Devices
             parent.Visible = true;
         }
 
-        public bool Connect()
+        public virtual bool Connect()
         {
             if (!CheckDeviceVersionCompatibility())
             {
@@ -221,11 +221,13 @@ namespace JJManager.Class.Devices
             return _isConnected;
         }
 
-        public bool Disconnect()
+        public virtual bool Disconnect()
         {
             _threadReceivingData = null;
             _threadSendingData = null;
             _isConnected = false;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
             OnPropertyChanged("IsConnected");
 
             return true;

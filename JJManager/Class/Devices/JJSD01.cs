@@ -1,107 +1,96 @@
-﻿using HidSharp.Reports;
-using HidSharp;
-using JJManager.Class.App;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
+﻿using HidSharp;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using HidSharp.Reports.Input;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.IO;
 using System.Text.Json.Nodes;
-using AudioSwitcher.AudioApi.CoreAudio;
-using JJManager.Class.App.Input;
-using JJManager.Class.App.Profile;
 using HIDClass = JJManager.Class.Devices.Connections.HID;
+using System.Net.WebSockets;
+using System;
 
 namespace JJManager.Class.Devices
 {
     internal class JJSD01 : HIDClass
     {
+        private bool _requesting = false;
+
         public JJSD01(HidDevice hidDevice) : base(hidDevice)
         {
-            _actionReceivingData = () => { ActionReceivingData(); };
-            _actionSendingData = () => { ActionSendingData(); };
+            _actionReceivingData = () => { Task.Run(async () => await ActionReceivingData()); };
         }
 
-        private void ActionReceivingData()
+        private async Task ActionReceivingData()
         {
             while (_isConnected)
             {
-                if (!ReceiveData())
-                {
-                    Disconnect();
-                }
+                await RequestData();
             }
         }
 
-        private void ActionSendingData()
+        private async Task RequestData()
         {
-            while (_isConnected)
+            if (_requesting)
             {
-                if (!SendData())
+                return;
+            }
+
+            bool forceDisconnection = false;
+
+            try
+            {
+                _requesting = true;
+
+                if (_profile.NeedsUpdate)
                 {
-                    Disconnect();
+                    _profile.Restart();
+                    _profile.NeedsUpdate = false;
                 }
-            }
-        }
 
-        private bool SendData()
-        {
-            bool result = false;
+                JsonArray jsonArray = new JsonArray();
 
-            if (_profile.NeedsUpdate)
-            {
-                _profile.Restart();
-                _profile.NeedsUpdate = false;
-            }
+                for (int i = 0; i < _profile.Inputs.Count; i++)
+                {
+                    string messageToSend = new JsonObject
+                        {
+                            { "data", new JsonObject
+                                {
+                                    { "connection", "ok" },
+                                }
+                            }
+                        }.ToJsonString();
 
-            JsonArray jsonArray = new JsonArray();
-
-            for (int i = 0; i < _profile.Inputs.Count; i++)
-            {
-                string messageToSend = new JsonObject
+                    await RequestHIDData(messageToSend, false, 100).ContinueWith((result) =>
                     {
-                        { "data", new JsonObject
+                        if (!string.IsNullOrEmpty(result.Result))
+                        {
+                            JsonObject json = JsonObject.Parse(result.Result).AsObject();
+
+                            if (json.ContainsKey("data") && json["data"] is JsonObject dataObject)
                             {
-                                { "connection", "ok" },
+                                if (dataObject.ContainsKey("key_pressed"))
+                                {
+                                    _profile.Inputs[dataObject["key_pressed"].GetValue<int>()].Execute();
+                                }
+                                else if (dataObject.ContainsKey("key_released"))
+                                {
+
+                                }
                             }
                         }
-                    }.ToJsonString();
-
-                result = SendHIDData(messageToSend).Result;
-            }
-
-            return result;
-        }
-
-        private bool ReceiveData()
-        {
-            var (success, jsonString) = ReceiveHIDData();
-
-            if (success && !string.IsNullOrEmpty(jsonString))
-            {
-                JsonObject json = JsonObject.Parse(jsonString).AsObject();
-
-                if (json.ContainsKey("data") && json["data"] is JsonObject dataObject)
-                {
-                    if (dataObject.ContainsKey("key_pressed"))
-                    {
-                        _profile.Inputs[dataObject["key_pressed"].GetValue<int>()].Execute();
-                    }
-                    else if (dataObject.ContainsKey("key_released"))
-                    {
-
-                    }
+                    });
                 }
             }
+            catch (Exception ex)
+            {
+                Log.Insert("JJSD01", "Ocorreu um problema ao enviar dados para a sua streamdeck", ex);
+                forceDisconnection = true;
+            }
+            finally
+            {
+                if (forceDisconnection)
+                {
+                    Disconnect();
+                }
 
-            return success;
+                _requesting = false;
+            }
         }
     }
 }

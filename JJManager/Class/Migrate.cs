@@ -58,7 +58,9 @@ namespace JJManager.Class
             _versions.Add(new Version(1, 2, 3));
             _versions.Add(new Version(1, 2, 3, 1));
             _versions.Add(new Version(1, 2, 4));
-            _versions.Add(new Version(1, 2, 5)); // Last Version
+            _versions.Add(new Version(1, 2, 5));
+            _versions.Add(new Version(1, 2, 6));
+            _versions.Add(new Version(1, 2, 6, 1)); // Last Version
         }
 
         private void ExecuteMigration (Version actual_version)

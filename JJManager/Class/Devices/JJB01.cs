@@ -1,7 +1,5 @@
 ﻿using AudioSwitcher.AudioApi.CoreAudio;
 using System;
-using System.Threading;
-using JJManager.Class.App.Input;
 using SharpDX.DirectInput;
 using JoystickClass = JJManager.Class.Devices.Connections.Joystick;
 using System.Text.Json.Nodes;
@@ -36,18 +34,15 @@ namespace JJManager.Class.Devices
             {
                 if (_profile.Inputs[0].AudioController.AudioCoreNeedsRestart || _profile.Inputs[1].AudioController.AudioCoreNeedsRestart)
                 {
-                    //if (coreAudioController != null)
-                    //{
-                    //    coreAudioController.Dispose();
-                    //}
-
                     coreAudioController = new CoreAudioController();
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
 
                     for (int i = 0; i < _profile.Inputs.Count; i++)
                     {
                         if (_profile.Inputs[i].AudioController.AudioCoreNeedsRestart)
                         {
-                            _profile.Inputs[i].AudioController.ResetCoreAudioController(coreAudioController);
+                            _profile.Inputs[i].AudioController.ResetCoreAudioController(coreAudioController).Wait();
                             _profile.Inputs[i].AudioController.AudioCoreNeedsRestart = false;
                         }
                     }

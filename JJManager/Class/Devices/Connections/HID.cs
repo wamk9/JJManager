@@ -1,4 +1,7 @@
 ﻿using AudioSwitcher.AudioApi.CoreAudio;
+using Device.Net;
+using Usb.Net.Windows;
+using Hid.Net.Windows;
 using DeviceProgramming.Memory;
 using HidSharp;
 using HidSharp.Reports;
@@ -24,24 +27,75 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using ProfileClass = JJManager.Class.App.Profile.Profile;
+using Device.Net.Exceptions;
 
 namespace JJManager.Class.Devices.Connections
 {
     public class HID : JJDevice
     {
-        private HidDevice _hidDevice = null;
+        private HidDevice _hidSharpDevice = null;
+        private IDevice _hidDeviceDotNetDevice = null;
+        private HidStream _hidStream = null;
+        private string _devicePath = null;
+        private static readonly SemaphoreSlim _semaphoreHID = new SemaphoreSlim(1, 1);
 
-        public HID(HidDevice hidDevice) : base()
+        public HID(HidDevice hidSharpDevice) : base()
         {
-            _hidDevice = hidDevice;
-            _productName = hidDevice.GetProductName();
+            _hidSharpDevice = hidSharpDevice;
+            _productName = _hidSharpDevice.GetProductName();
             _type = Type.HID;
-            _connId = hidDevice.DevicePath.GetHashCode().ToString();
+            _devicePath = _hidSharpDevice.DevicePath;
+            _connId = _devicePath.GetHashCode().ToString();
             GetProductID();
-            GetFirmwareVersion();
             GetHIDConnPort();
             _profile = new ProfileClass(this);
             GetUserProductID();
+            GetDeviceDotNetInstance();
+        }
+
+        private void GetDeviceDotNetInstance()
+        {
+            var hidFactory = new FilterDeviceDefinition()
+                .CreateWindowsHidDeviceFactory();
+
+            // Register the factory for creating Usb devices.
+            var usbFactory = new FilterDeviceDefinition()
+                .CreateWindowsUsbDeviceFactory();
+
+
+            //----------------------
+
+            // Join the factories together so that it picks up either the Hid or USB device
+            var factories = hidFactory.Aggregate(usbFactory);
+
+            // Get connected device definitions
+            var deviceDefinitions = (factories.GetConnectedDeviceDefinitionsAsync().ConfigureAwait(false).GetAwaiter().GetResult()).ToList();
+
+            if (deviceDefinitions.Count == 0)
+            {
+                // No devices were found
+                Console.WriteLine("No devices found.");
+                return;
+            }
+
+            // Get the device from its definition by matching product name
+
+            for (int i = 0; i < deviceDefinitions.Count; i++)
+            {
+                try
+                {
+                    var trezorDevice = hidFactory.GetDeviceAsync(deviceDefinitions[i]).ConfigureAwait(false).GetAwaiter().GetResult();
+                    if (trezorDevice.DeviceId == _devicePath)
+                    {
+                        _hidDeviceDotNetDevice = trezorDevice;
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Insert("HID", "Ocorreu um erro ao construir o objeto do Device.net", ex);
+                }
+            }
         }
 
         /// <summary>
@@ -49,7 +103,7 @@ namespace JJManager.Class.Devices.Connections
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public async Task<bool> SendHIDData(string data, bool forceConnection = false, int timeToSend = 1500)
+        public async Task<bool> SendHIDData(string data, bool forceConnection = false, int delay = 1500, int timeout = 2000)
         {
             bool result = false;
 
@@ -57,99 +111,86 @@ namespace JJManager.Class.Devices.Connections
             {
                 if (!_isConnected && !forceConnection)
                 {
-                    throw DeviceException.CreateIOException(_hidDevice, "Device isn't connected on JJManager");
+                    throw HidSharp.DeviceException.CreateIOException(_hidSharpDevice, "Device isn't connected on JJManager");
                 }
 
-                if (_sendInProgress)
-                {
-                    throw DeviceException.CreateIOException(_hidDevice, "Device is already sending data, so it is busy.");
-                }
+                //if (_sendInProgress)
+                //{
+                //    throw DeviceException.CreateIOException(_hidSharpDevice, "Device is already sending data, so it is busy.");
+                //}
 
                 if (string.IsNullOrEmpty(data))
                 {
                     throw new ArgumentNullException("data", "Necessary data to send to device");
                 }
 
-                // Report Descriptor
-                ReportDescriptor reportDescriptor = _hidDevice.GetReportDescriptor();
-                HidStream hidStream = null;
+                await Task.Delay(delay);
 
-                if (_hidDevice.TryOpen(out hidStream))
+                
+                await _hidDeviceDotNetDevice.InitializeAsync().ConfigureAwait(false);
+                int writeSize = _hidDeviceDotNetDevice.ConnectedDeviceDefinition.WriteBufferSize.Value;
+                _hidDeviceDotNetDevice.Close();
+
+                int count = 0;
+                byte[] bytesToSend = new byte[writeSize];
+//                byte[] buffer = new byte[writeSize];
+                byte[] messageInBytes = Encoding.ASCII.GetBytes(data.Replace('\n', ' ').Trim() + '\n');
+                int messageSize = messageInBytes.Length;
+
+
+                while (messageSize > 0)
                 {
-                    hidStream.WriteTimeout = 10000;
-                    hidStream.ReadTimeout = 10000;
+                    Array.Clear(bytesToSend, 0, bytesToSend.Length);
+                    int chunkSize = Math.Min(messageSize, writeSize - 1);
+                    
+                    // Set the report ID as the first byte (if required by your HID device)
+                    bytesToSend[0] = 0x00;
 
-                    using (hidStream)
+                    Array.Copy(messageInBytes, count, bytesToSend, 1, chunkSize);
+                    
+                    // Update the counters
+                    count += chunkSize;
+                    messageSize -= chunkSize;
+                    
+                    await Task.Delay(10);
+                    try
                     {
-                        byte[] messageInBytes = Encoding.ASCII.GetBytes(data.Replace('\n', ' ').Trim() + '\n');
-                        byte[] bytesToSend = new byte[(messageInBytes.Length + 1)];
-
-                        // Prepare the message with the first byte as report ID
-                        for (int i = 0; i < bytesToSend.Length; i++)
+                        await _hidDeviceDotNetDevice.InitializeAsync().ConfigureAwait(false);
+                        await _hidDeviceDotNetDevice.WriteAsync(bytesToSend, (new CancellationTokenSource(TimeSpan.FromMilliseconds(timeout))).Token).ContinueWith(async task =>
                         {
-                            bytesToSend[i] = (byte)(i == 0 ? 0x00 : messageInBytes[(i - 1)]);
-                        }
+                        }).ConfigureAwait(false);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Do Nothing...
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Insert("HID", "Ocorreu um problema na escrita dos dados (SendHIDData)", ex);
+                    }
+                    finally
+                    {
+                        _hidDeviceDotNetDevice.Close();
+                    }
 
-                        if (hidStream.CanRead && hidStream.CanWrite)
-                        {
-                            int reportSize = reportDescriptor.MaxOutputReportLength; // Common HID report size
-                            byte[] buffer = new byte[reportSize];
-
-                            int bytesSent = 0;
-                            while (bytesSent < messageInBytes.Length)
-                            {
-                                int chunkSize = Math.Min(reportSize - 1, messageInBytes.Length - bytesSent);
-                                Array.Clear(buffer, 0, buffer.Length); // Clear buffer to avoid residual data
-                                buffer[0] = 0x00; // Report ID or padding
-                                Array.Copy(messageInBytes, bytesSent, buffer, 1, chunkSize);
-
-                                // Wait until the stream is ready for writing
-                                while (!hidStream.CanWrite)
-                                {
-                                    await Task.Delay(10); // Wait until the stream is ready
-                                }
-
-                                // Wait before sending data
-                                await Task.Delay(timeToSend);
-
-                                bool sended = false;
-                                int waitingTime = 10;
-                                int retries = 0;
-                                int retriesLimit = 4000 / waitingTime;
-
-                                while (!sended)
-                                {
-                                    try
-                                    {
-                                        hidStream.Write(buffer, 0, buffer.Length); // Write the data
-                                        sended = true; // Mark as sent
-                                    }
-                                    catch
-                                    {
-                                        if (retries >= retriesLimit) throw; // Only rethrow after max retries
-                                        retries++;
-                                        await Task.Delay(waitingTime); // Wait before retrying
-                                    }
-                                }
-
-                                bytesSent += chunkSize;
-                            }
-
-                            result = true;
-                        }
-                        else
-                        {
-                            throw DeviceException.CreateIOException(_hidDevice, "Device isn't ready to read or write data");
-                        }
+                    if (messageSize == 0)
+                    {
+                        break;
                     }
                 }
+
+                result = true;
+            }
+            catch (TaskCanceledException)
+            {
+                // Do Nothing...
             }
             catch (Exception ex)
             {
                 Log.Insert("HID", "Ocorreu um problema com o dispositivo ao realizar o envio de dados", ex);
                 result = false;
             }
-
+            
             return result;
         }
 
@@ -158,226 +199,209 @@ namespace JJManager.Class.Devices.Connections
         /// Used to receive a data, this will continue executing until receive anything or connection dropped
         /// </summary>
         /// <returns>A boolean saying if process execute with success and a string with the data</returns>
-        public (bool, string) ReceiveHIDData(bool forceConnection = false)
+        public async Task<string> ReceiveHIDData(bool forceConnection = false, int timeout = 2000)
         {
+            string receivedMessage = null;
             bool result = false;
+
+            try
+            {
+                if (!_isConnected && !forceConnection)
+                {
+                    throw HidSharp.DeviceException.CreateIOException(_hidSharpDevice, "Device isn't connected on JJManager");
+                }
+
+                //if (_receiveInProgress)
+                //{
+                //    throw DeviceException.CreateIOException(_hidSharpDevice, "JJManager already is trying receive data.");
+                //}
+
+                
+                try
+                {
+                    await _hidDeviceDotNetDevice.InitializeAsync().ConfigureAwait(false);
+                    var readBuffer = await _hidDeviceDotNetDevice.ReadAsync((new CancellationTokenSource(TimeSpan.FromMilliseconds(timeout))).Token).ConfigureAwait(false);
+                    receivedMessage = Encoding.ASCII.GetString(readBuffer.Data.Where(x => x != 0x00).ToArray());
+                }
+                catch (TaskCanceledException)
+                {
+                    // Do Nothing...
+                }
+                catch (Exception ex)
+                {
+                    Log.Insert("HID", "Ocorreu um problema na leitura dos dados (RequestHIDData)", ex);
+                }
+                finally
+                {
+                    _hidDeviceDotNetDevice.Close();
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Do Nothing...
+            }
+            catch (Exception ex)
+            {
+                Log.Insert("HID", "Ocorreu um problema com o dispositivo ao realizar o recebimento de dados", ex);
+            }
+            finally
+            {
+
+            }
+
+            return receivedMessage;
+        }
+
+
+        public override bool Connect()
+        {
+            try
+            {
+                return base.Connect();
+            }
+            catch (Exception ex)
+            {
+                Log.Insert("HID", $"Não foi possível realizar a conexão com {_productName} de ID {_connId}", ex);
+                return false;
+            }
+        }
+
+        public override bool Disconnect()
+        {
+            try
+            {
+                return base.Disconnect();
+            }
+            catch (Exception ex)
+            {
+                Log.Insert("HID", $"Ocorreu um problema ao desconectar {_productName} de ID {_connId}", ex);
+                return false;
+            }
+        }
+
+        public async Task<string> RequestHIDData(string data, bool forceConnection = false, int delay = 100, int timeout = 2000)
+        {
             string receivedMessage = null;
 
             try
             {
                 if (!_isConnected && !forceConnection)
                 {
-                    throw DeviceException.CreateIOException(_hidDevice, "Device isn't connected on JJManager");
+                    throw HidSharp.DeviceException.CreateIOException(_hidSharpDevice, "Device isn't connected on JJManager");
                 }
 
                 if (_receiveInProgress)
                 {
-                    throw DeviceException.CreateIOException(_hidDevice, "JJManager already is trying receive data.");
+                    throw   HidSharp.DeviceException.CreateIOException(_hidSharpDevice, "JJManager already is trying receive data.");
                 }
+                await _hidDeviceDotNetDevice.InitializeAsync().ConfigureAwait(false);
+                byte[] buffer = new byte[_hidDeviceDotNetDevice.ConnectedDeviceDefinition.WriteBufferSize.Value];
+                byte[] messageInBytes = Encoding.ASCII.GetBytes(data.Replace('\n', ' ').Trim() + '\n');
+                byte[] bytesToSend = new byte[_hidDeviceDotNetDevice.ConnectedDeviceDefinition.WriteBufferSize.Value];
+                _hidDeviceDotNetDevice.Close();
 
-                HidStream hidStream = null;
-                ReportDescriptor reportDescriptor = _hidDevice.GetReportDescriptor();
-
-                foreach (DeviceItem deviceItem in reportDescriptor.DeviceItems)
+                // Prepare the message with the first byte as report ID
+                for (int j = 0; j < messageInBytes.Length + 1; j++)
                 {
-                    if (_hidDevice.TryOpen(out hidStream))
-                    {
-                        hidStream.ReadTimeout = Timeout.Infinite;
-
-                        using (hidStream)
-                        {
-                            byte[] inputReportBuffer = new byte[_hidDevice.GetMaxInputReportLength()];
-                            HidDeviceInputReceiver inputReceiver = reportDescriptor.CreateHidDeviceInputReceiver();
-                            DeviceItemInputParser inputParser = deviceItem.CreateDeviceItemInputParser();
-
-                            IAsyncResult ar = hidStream.BeginRead(inputReportBuffer, 0, inputReportBuffer.Length, null, null);
-
-                            while (ar != null)
-                            {
-
-                                if (ar.IsCompleted)
-                                {
-                                    int byteCount = hidStream.EndRead(ar);
-
-                                    if (byteCount > 0)
-                                    {
-                                        byte[] receivedeBytes = inputReportBuffer.Take(byteCount).Where(x => x != 0x00).ToArray();
-                                        receivedMessage = Encoding.ASCII.GetString(receivedeBytes).Trim();
-                                        ar = null;
-                                    }
-                                }
-                                else
-                                {
-                                    ar.AsyncWaitHandle.WaitOne(300);
-                                }
-                            }
-                        }
-                    }
-
-                    result = true;
+                    bytesToSend[j] = (byte)(j == 0 ? 0x00 : messageInBytes[j - 1]);
                 }
+
+                await Task.Delay(delay);
+
+                try
+                {
+                    await _hidDeviceDotNetDevice.InitializeAsync().ConfigureAwait(false);
+                    await _hidDeviceDotNetDevice.WriteAsync(bytesToSend, (new CancellationTokenSource(TimeSpan.FromMilliseconds(timeout))).Token).ConfigureAwait(false);
+                }
+                catch (TaskCanceledException)
+                {
+                    // Do Nothing...
+                }
+                catch (Exception ex)
+                {
+                    Log.Insert("HID", "Ocorreu um problema na escrita dos dados (RequestHIDData)", ex);
+                }
+                finally
+                {
+                    _hidDeviceDotNetDevice.Close();
+                }
+
+                try
+                {
+                    await _hidDeviceDotNetDevice.InitializeAsync().ConfigureAwait(false);
+                    var readBuffer = await _hidDeviceDotNetDevice.ReadAsync((new CancellationTokenSource(TimeSpan.FromMilliseconds(timeout))).Token).ConfigureAwait(false);
+                    receivedMessage = Encoding.ASCII.GetString(readBuffer.Data.Where(x => x != 0x00).ToArray());
+                }
+                catch (TaskCanceledException)
+                {
+                    // Do Nothing...
+                }
+                catch (Exception ex)
+                {
+                    Log.Insert("HID", "Ocorreu um problema na leitura dos dados (RequestHIDData)", ex);
+                }
+                finally
+                {
+                    _hidDeviceDotNetDevice.Close();
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Do Nothing...
+            }
+            catch (ApiException ex)
+            {
+                Log.Insert("HID", "Ocorreu um problema com o dispositivo ao realizar o envio/recebimento de dados", ex);
+                Disconnect();
             }
             catch (Exception ex)
             {
-                Log.Insert("HID", "Ocorreu um problema com o dispositivo ao realizar o recebimento de dados", ex);
-                result = false;
+                Log.Insert("HID", "Ocorreu um problema com o dispositivo ao realizar o envio/recebimento de dados", ex);
+                
+            }
+            finally
+            {
+                // Release the semaphore
             }
 
-            return (result, receivedMessage);
+            return receivedMessage;
         }
 
-        public (bool, string) RequestHIDData(string data, bool forceConnection = false)
+        public async Task GetFirmwareVersion()
         {
-            bool result = false;
-            string receivedMessage = null;
-
-            try
+            for (int i = 0; i < 5; i++)
             {
-                if (!_isConnected && !forceConnection)
-                {
-                    throw DeviceException.CreateIOException(_hidDevice, "Device isn't connected on JJManager");
-                }
+                string jsonString = await RequestHIDData(new JsonObject { { "request", new JsonArray { { "firmware_version" } } } }.ToJsonString(), true);
 
-                if (_receiveInProgress)
+                if (!string.IsNullOrEmpty(jsonString))
                 {
-                    throw DeviceException.CreateIOException(_hidDevice, "JJManager already is trying receive data.");
-                }
+                    JsonObject json = JsonObject.Parse(jsonString).AsObject();
 
-                HidStream hidStream = null;
-                ReportDescriptor reportDescriptor = _hidDevice.GetReportDescriptor();
-
-                foreach (DeviceItem deviceItem in reportDescriptor.DeviceItems)
-                {
-                    if (_hidDevice.TryOpen(out hidStream))
+                    if (json != null && json.ContainsKey("firmware_version"))
                     {
-                        hidStream.WriteTimeout = 3000;
-                        hidStream.ReadTimeout = 3000;
+                        string[] versionSplitted = json["firmware_version"].GetValue<string>().Split('.');
 
-                        using (hidStream)
+                        switch (versionSplitted.Length)
                         {
-                            byte[] messageInBytes = Encoding.ASCII.GetBytes(data.Replace('\n', ' ').Trim() + '\n');
-                            byte[] bytesToSend = new byte[(messageInBytes.Length + 1)];
-
-                            if (hidStream.CanRead && hidStream.CanWrite)
-                            {
-                                int reportSize = reportDescriptor.MaxOutputReportLength; // Common HID report size
-                                byte[] buffer = new byte[reportSize];
-
-                                int bytesSent = 0;
-                                while (bytesSent < messageInBytes.Length)
-                                {
-                                    int chunkSize = Math.Min(reportSize - 1, messageInBytes.Length - bytesSent);
-                                    Array.Clear(buffer, 0, buffer.Length); // Clear buffer to avoid residual data
-                                    buffer[0] = 0x00; // Report ID or padding
-                                    Array.Copy(messageInBytes, bytesSent, buffer, 1, chunkSize);
-
-
-
-                                    while (!hidStream.CanWrite)
-                                    {
-                                        Thread.Sleep(10); // Wait until the stream is ready
-                                    }
-
-                                    bool sended = false;
-                                    int waitingTime = 10;
-                                    int retries = 0;
-                                    int retriesLimit = 4000 / waitingTime;
-
-                                    while (!sended)
-                                    {
-                                        try
-                                        {
-                                            hidStream.Write(buffer, 0, buffer.Length);
-                                            break; // Exit loop if successful
-                                        }
-                                        catch
-                                        {
-                                            if (retries >= retriesLimit) throw; // Only rethrow after max retries
-                                            retries++;
-                                            Thread.Sleep(waitingTime); // Wait before retrying
-                                        }
-                                    }
-                                    //hidStream.Write(buffer, 0, buffer.Length); // Write full report size
-                                    bytesSent += chunkSize;
-                                }
-
-                                result = true;
-                            }
-                            else
-                            {
-                                throw DeviceException.CreateIOException(_hidDevice, "Device isn't ready to read any data");
-                            }
-
-                            byte[] inputReportBuffer = new byte[_hidDevice.GetMaxInputReportLength()];
-                            HidDeviceInputReceiver inputReceiver = reportDescriptor.CreateHidDeviceInputReceiver();
-                            DeviceItemInputParser inputParser = deviceItem.CreateDeviceItemInputParser();
-
-                            IAsyncResult ar = hidStream.BeginRead(inputReportBuffer, 0, inputReportBuffer.Length, null, null);
-
-                            while (ar != null)
-                            {
-
-                                if (ar.IsCompleted)
-                                {
-                                    int byteCount = hidStream.EndRead(ar);
-
-                                    if (byteCount > 0)
-                                    {
-                                        byte[] receivedeBytes = inputReportBuffer.Take(byteCount).Where(x => x != 0x00).ToArray();
-                                        receivedMessage = Encoding.ASCII.GetString(receivedeBytes).Trim();
-                                        result = true;
-                                    }
-
-                                    ar = null;
-                                }
-                                else
-                                {
-                                    ar.AsyncWaitHandle.WaitOne(1000);
-                                }
-                            }
+                            case 1:
+                                _version = new Version(int.Parse(versionSplitted[0]), 0);
+                                break;
+                            case 2:
+                                _version = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]));
+                                break;
+                            case 3:
+                                _version = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]), int.Parse(versionSplitted[2]));
+                                break;
+                            case 4:
+                                _version = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]), int.Parse(versionSplitted[2]), int.Parse(versionSplitted[3]));
+                                break;
+                            default:
+                                _version = null;
+                                break;
                         }
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("HID", "Ocorreu um problema com o dispositivo ao realizar o recebimento de dados", ex);
-                result = false;
-            }
 
-            return (result, receivedMessage);
-        }
-
-        private void GetFirmwareVersion()
-        {
-            var (success, jsonString) = RequestHIDData(new JsonObject { { "request", new JsonArray { { "firmware_version" } } } }.ToJsonString(), true);
-
-            if (success)
-            {
-                JsonObject json = !string.IsNullOrEmpty(jsonString) ? JsonObject.Parse(jsonString).AsObject() : null;
-
-                if (json != null && json.ContainsKey("firmware_version"))
-                {
-                    string[] versionSplitted = json["firmware_version"].GetValue<string>().Split('.');
-
-                    switch (versionSplitted.Length)
-                    {
-                        case 1:
-                            _version = new Version(int.Parse(versionSplitted[0]), 0);
-                            break;
-                        case 2:
-                            _version = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]));
-                            break;
-                        case 3:
-                            _version = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]), int.Parse(versionSplitted[2]));
-                            break;
-                        case 4:
-                            _version = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]), int.Parse(versionSplitted[2]), int.Parse(versionSplitted[3]));
-                            break;
-                        default:
-                            _version = null;
-                            break;
-                    }
+                    break;
                 }
             }
         }
@@ -388,10 +412,10 @@ namespace JJManager.Class.Devices.Connections
 
             try
             {
-                ReportDescriptor reportDescriptor = _hidDevice.GetReportDescriptor();
+                ReportDescriptor reportDescriptor = _hidSharpDevice.GetReportDescriptor();
                 HidStream hidStream = null;
 
-                if (_hidDevice.TryOpen(out hidStream))
+                if (_hidSharpDevice.TryOpen(out hidStream))
                 {
                     hidStream.WriteTimeout = 3000;
                     hidStream.ReadTimeout = 3000;
@@ -437,8 +461,8 @@ namespace JJManager.Class.Devices.Connections
         private void GetConnPortByVidPidAndProductName()
         {
             // Extract VID and PID from DevicePath
-            string vid = "VID_" + ExtractFromDevicePath(_hidDevice.DevicePath, "vid_");
-            string pid = "PID_" + ExtractFromDevicePath(_hidDevice.DevicePath, "pid_");
+            string vid = "VID_" + ExtractFromDevicePath(_hidSharpDevice.DevicePath, "vid_");
+            string pid = "PID_" + ExtractFromDevicePath(_hidSharpDevice.DevicePath, "pid_");
 
             // Query the WIN32_SerialPort WMI class
             using (var serialPortSearcher = new ManagementObjectSearcher("SELECT * FROM WIN32_SerialPort"))

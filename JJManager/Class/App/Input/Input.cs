@@ -254,7 +254,7 @@ namespace JJManager.Class.App.Input
                         AudioController.SettedVolume = jsonData["value"].GetValue<int>();
                     }
 
-                    AudioController.ChangeVolume();
+                    Task.Run (async () => await AudioController.ChangeVolume()).Wait(1000);
                     break;
                 case InputMode.AudioPlayer:
                     _audioPlayer.PlayAudio();

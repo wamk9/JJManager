@@ -16,6 +16,7 @@ using ConfigClass = JJManager.Class.App.Config.Config;
 using JJManager.Class.App.Fonts;
 using System.Drawing.Drawing2D;
 using JJDeviceClass = JJManager.Class.Devices.JJDevice;
+using JJManager.Pages.Devices;
 
 namespace JJManager
 {
@@ -68,6 +69,9 @@ namespace JJManager
             _UpdaterList.CollectionChanged += _UpdaterList_CollectionChanged;
 
             LoadLogData();
+
+            //JJLC01 teste = new JJLC01(this, null);
+            //teste.ShowDialog();
         }
         #endregion
 

@@ -17,6 +17,7 @@ using System.Windows.Forms;
 using JJManager.Class.App;
 using JJManager.Pages.App.Updater;
 using JJManager.Class.Devices;
+using JJManager.Class.Devices.Connections;
 
 namespace JJManager.Class.App
 {
@@ -45,7 +46,7 @@ namespace JJManager.Class.App
             try
             {
                 _device = device;
-
+                
                 SetDeviceInfo();
 
                 using (WebClient wc = new WebClient())
@@ -77,11 +78,19 @@ namespace JJManager.Class.App
 
         private void SetDeviceInfo()
         {
-            _ConnId = _device.ConnId;
-            _Name = _device.ProductName;
-            _comPort = _device.ConnPort;
-            _Type = UpdaterType.Device;
-            _ActualVersion = _device.Version;
+            Task.Run(async () =>
+            {
+                if (_device is HID)
+                {
+                    await ((HID)_device).GetFirmwareVersion();
+                }
+
+                _ConnId = _device.ConnId;
+                _Name = _device.ProductName;
+                _comPort = _device.ConnPort;
+                _Type = UpdaterType.Device;
+                _ActualVersion = _device.Version;
+            }).Wait(10000);
         }
 
         private void SetUpdaterInfo(JsonElement json)

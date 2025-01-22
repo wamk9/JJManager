@@ -5,7 +5,10 @@ using AudioSwitcher.AudioApi.Session;
 using JJManager.Class.App.Input.MacroKey.Keyboard;
 using JJManager.Class.App.Input.MacroKey.Mouse;
 using Microsoft.SqlServer.Management.XEvent;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -35,10 +38,18 @@ namespace JJManager.Class.App.Input.AudioController
         private bool _invertedAxis = false;
         private CoreAudioController _coreAudioController = null;
         private bool _audioCoreNeedsRestart = true;
-        private List<IDisposable> _subscriptionSession = new List<IDisposable>();
-        private List<IDisposable> _subscriptionDevice = new List<IDisposable>();
+        private ConcurrentBag<IDisposable> _subscriptionSession = new ConcurrentBag<IDisposable>();
+        private ConcurrentBag<IDisposable> _subscriptionDevice = new ConcurrentBag<IDisposable>();
         private CancellationTokenSource _currentCtsDevice = new CancellationTokenSource();
         private CancellationTokenSource _currentCtsSession = new CancellationTokenSource();
+        private List<IAudioSession> _sessionsGetted = new List<IAudioSession>();
+        private List<CoreAudioDevice> _devicesToControl = new List<CoreAudioDevice>();
+        private List<AudioSession> _sessionsToControl = new List<AudioSession>();
+        private readonly SemaphoreSlim _volumeSemaphoreDevice = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _volumeSemaphoreApp = new SemaphoreSlim(1, 1);
+        private readonly object _lock = new object();
+        private bool _changingVolume = false;
+        private bool _resetingCore = false;
         public bool AudioCoreNeedsRestart 
         {
             get => _audioCoreNeedsRestart; 
@@ -127,15 +138,102 @@ namespace JJManager.Class.App.Input.AudioController
 
             return AudioMode.None;
         }
-        public void ResetCoreAudioController(CoreAudioController coreAudioController)
+        public async Task ResetCoreAudioController(CoreAudioController coreAudioController)
         {
-            _coreAudioController = coreAudioController;
-            _coreAudioController.AudioDeviceChanged.Subscribe<DeviceChangedArgs>(x => {
-                _audioCoreNeedsRestart = true;
-                //Debug.WriteLine("Device Changed...");
-            });
-        }
+            while (_changingVolume)
+            {
+                await Task.Delay(10); // do nothing, wait...
+            }
 
+            _resetingCore = true;
+            
+            try
+            {
+                _coreAudioController = null;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                _coreAudioController = coreAudioController;
+                _coreAudioController.AudioDeviceChanged.Subscribe<DeviceChangedArgs>(x => {
+                    _audioCoreNeedsRestart = true;
+                    //Console.WriteLine("Device Changed...");
+                });
+
+                _devicesToControl.Clear();
+                _sessionsGetted.Clear();
+                _sessionsToControl.Clear();
+
+                await _coreAudioController.GetPlaybackDevicesAsync(DeviceState.All).ContinueWith(async devices =>
+                {
+                    foreach (CoreAudioDevice device in devices.Result)
+                    {
+                        device.GetCapability<IAudioSessionController>()?.SessionCreated.Subscribe<IAudioSession>(session =>
+                        {
+                            _audioCoreNeedsRestart = true;
+                        });
+
+                        device.GetCapability<IAudioSessionController>()?.SessionDisconnected.Subscribe<string>(session =>
+                        {
+                            _audioCoreNeedsRestart = true;
+                        });
+
+                        await device.GetCapability<IAudioSessionController>()?.AllAsync().ContinueWith(sessions =>
+                        {
+                            foreach (IAudioSession session in sessions.Result)
+                            {
+                                _sessionsGetted.Add(session);
+                            }
+                        });
+
+                        device.DefaultChanged.Subscribe<DeviceChangedArgs>(x =>
+                        {
+                            _audioCoreNeedsRestart = true;
+                        });
+
+                        device.GetCapability<IAudioSessionController>()?.SessionCreated.Subscribe<IAudioSession>(session =>
+                        {
+                            _audioCoreNeedsRestart = true;
+                        });
+
+                        device.GetCapability<IAudioSessionController>()?.SessionDisconnected.Subscribe<string>(session =>
+                        {
+                            _audioCoreNeedsRestart = true;
+                        });
+
+                        _devicesToControl.Add(device);
+                    }
+                });
+
+                await _coreAudioController.GetCaptureDevicesAsync(DeviceState.All).ContinueWith( devices => {
+                    foreach (CoreAudioDevice device in devices.Result)
+                    {
+                        device.DefaultChanged.Subscribe<DeviceChangedArgs>(x =>
+                        {
+                            _audioCoreNeedsRestart = true;
+                        });
+
+                        device.GetCapability<IAudioSessionController>()?.SessionCreated.Subscribe<IAudioSession>(session =>
+                        {
+                            _audioCoreNeedsRestart = true;
+                        });
+
+                        device.GetCapability<IAudioSessionController>()?.SessionDisconnected.Subscribe<string>(session =>
+                        {
+                            _audioCoreNeedsRestart = true;
+                        });
+
+                        _devicesToControl.Add(device);
+                    }
+                });
+            }
+            catch(Exception ex)
+            {
+                Log.Insert("AudioController", "Ocorreu um problema ao resetar o CoreAudioController", ex);
+            }
+            finally
+            {
+                _resetingCore = false;
+            }
+        }
 
         public List<string[]> GetSessions(AudioSwitcher.AudioApi.Session.AudioSessionState audioSessionState = AudioSwitcher.AudioApi.Session.AudioSessionState.Active)
         {
@@ -191,89 +289,108 @@ namespace JJManager.Class.App.Input.AudioController
 
         private bool CheckProcessInfo(int pid, String info)
         {
-            var wmiQueryString = $"SELECT * FROM Win32_Process WHERE ProcessId = {pid}";
-            using (var searcher = new ManagementObjectSearcher(wmiQueryString))
-            using (var results = searcher.Get())
+            try
             {
-                foreach (var mo in results.Cast<ManagementObject>())
+                var wmiQueryString = $"SELECT * FROM Win32_Process WHERE ProcessId = {pid}";
+                using (var searcher = new ManagementObjectSearcher(wmiQueryString))
+                using (var results = searcher.Get())
                 {
-                    string path = (string)mo["ExecutablePath"];
-                    string name = (string)mo["Name"];
-
-                    if ((!string.IsNullOrEmpty(path) && path.Contains(info)) || (!string.IsNullOrEmpty(name) && name.Contains(info)))
+                    foreach (var mo in results.Cast<ManagementObject>())
                     {
-                        return true;
+                        string path = (string)mo["ExecutablePath"];
+                        string name = (string)mo["Name"];
+
+                        if ((!string.IsNullOrEmpty(path) && path.Contains(info)) || (!string.IsNullOrEmpty(name) && name.Contains(info)))
+                        {
+                            return true;
+                        }
                     }
                 }
-            }
 
-            return false;
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
 
-        private async void ChangeAppVolume(String AppExecutable, int SettedVolume)
+        private async Task ChangeAppVolume(String AppExecutable, int SettedVolume)
         {
             try
             {
-                Task<IEnumerable<CoreAudioDevice>> devices = _coreAudioController.GetPlaybackDevicesAsync();
-                devices.Wait();
-
-                var token = _currentCtsSession.Token;
-
-                foreach (CoreAudioDevice device in devices.Result)
+                //lock (_lock)
+                //{
+                if (_sessionsToControl != null && !_sessionsToControl.Exists( x => x.Executable == AppExecutable))
                 {
-                    _subscriptionSession.Add(device.GetCapability<IAudioSessionController>().SessionCreated.Subscribe<IAudioSession>(session =>
+                    AudioSession audioSession = new AudioSession(AppExecutable);
+
+                    for (int i = 0; i < _sessionsGetted.Count; i++)
                     {
-                        if (token.IsCancellationRequested)
+                        if (_sessionsGetted[i] == null)
                         {
-                            return;
+                            continue;
                         }
 
-                        if (CheckProcessInfo(session.ProcessId, AppExecutable))
+                        if (CheckProcessInfo(_sessionsGetted[i].ProcessId, AppExecutable))
                         {
-                            SetVolumeAndMuteAsync(session, SettedVolume).Wait();
-
-                            _subscriptionSession.Add(session.VolumeChanged.Subscribe<SessionVolumeChangedArgs>(result =>
+                            _sessionsGetted[i].StateChanged.Subscribe<SessionStateChangedArgs>(state =>
                             {
-                                if (token.IsCancellationRequested)
+                                _audioCoreNeedsRestart = true;
+                            });
+
+                            _sessionsGetted[i].Disconnected.Subscribe<SessionDisconnectedArgs>(item =>
+                            {
+                                _audioCoreNeedsRestart = true;
+                            });
+
+                            audioSession.Add(_sessionsGetted[i]);
+                        }
+                    }
+
+                    _sessionsToControl.Add(audioSession);
+                }
+
+                int index = _sessionsToControl.FindIndex(session => session.Executable == AppExecutable);
+
+                if (index > -1)
+                {
+                    int numberSessionsToControl = _sessionsToControl[index].Sessions?.Count ?? 0;
+                    
+                    if (numberSessionsToControl > 0)
+                    {
+                        for (int i = 0; i < numberSessionsToControl; i++)
+                        {
+                            IAudioSession audioSession = _sessionsToControl[index]?.Sessions[i] ?? null;
+                            
+                            if (audioSession == null)
+                            {
+                                continue;
+                            }
+
+                            await SetVolumeAndMuteAsync(audioSession, SettedVolume);
+
+                            _subscriptionSession.Add(audioSession.VolumeChanged.Subscribe<SessionVolumeChangedArgs>(async result =>
+                            {
+                                if (_currentCtsSession.Token.IsCancellationRequested)
                                 {
                                     return;
                                 }
 
                                 if (result.Session.Volume != SettedVolume)
                                 {
-                                    SetVolumeAndMuteAsync(session, SettedVolume).Wait();
+                                    await SetVolumeAndMuteAsync(audioSession, SettedVolume);
                                 }
-                            })
-                            );
-                        }
-                    }));
-
-                    Task<IEnumerable<IAudioSession>> sessions = device.GetCapability<IAudioSessionController>().AllAsync();
-                    sessions.Wait();
-
-                    foreach (IAudioSession session in sessions.Result)
-                    {
-                        if (CheckProcessInfo(session.ProcessId, AppExecutable))
-                        {
-                            await SetVolumeAndMuteAsync(session, SettedVolume);
-
-                            _subscriptionSession.Add(session.VolumeChanged.Subscribe<SessionVolumeChangedArgs>(result =>
-                            {
-                                if (token.IsCancellationRequested)
-                                {
-                                    return;
-                                }
-
-                                if (result.Session.Volume != SettedVolume)
-                                {
-                                    SetVolumeAndMuteAsync(session, SettedVolume).Wait();
-                                }
-                            })
-                            );
+                            }));
                         }
                     }
                 }
+                //}
+            }
+            catch (OperationCanceledException)
+            {
+                // do nothing...
             }
             catch (Exception ex)
             {
@@ -281,31 +398,26 @@ namespace JJManager.Class.App.Input.AudioController
             }
         }
 
-        private async void ChangeDeviceVolume(String DeviceId, int SettedVolume)
+        private async Task ChangeDeviceVolume(String deviceId, int SettedVolume)
         {
             try
             {
-                Task<CoreAudioDevice> device = _coreAudioController.GetDeviceAsync(Guid.Parse(DeviceId));
-
-                device.Wait();
-
-
-                if (device.Result != null && Math.Round(device.Result.Volume) != SettedVolume)
+                if (_coreAudioController == null)
                 {
-                    var token = _currentCtsDevice.Token;
+                    return;
+                }
 
-                    await SetVolumeAndMuteAsync(device.Result, SettedVolume);
+                CoreAudioDevice device = await _coreAudioController.GetDeviceAsync(Guid.Parse(deviceId), DeviceState.Active);
 
-                    _subscriptionDevice.Add(device.Result.VolumeChanged.Subscribe<DeviceVolumeChangedArgs>(result =>
+                if (device != null && Math.Round(device.Volume) != SettedVolume)
+                {
+                    await SetVolumeAndMuteAsync(device, SettedVolume);
+
+                    _subscriptionDevice.Add(device.VolumeChanged.Subscribe<DeviceVolumeChangedArgs>(async result =>
                     {
                         if (result.Device.Volume != SettedVolume)
                         {
-                            if (token.IsCancellationRequested)
-                            {
-                                return;
-                            }
-
-                            SetVolumeAndMuteAsync(device.Result, SettedVolume).Wait();
+                            await SetVolumeAndMuteAsync(device, SettedVolume);
                         }
                     })
                     );
@@ -315,6 +427,7 @@ namespace JJManager.Class.App.Input.AudioController
             {
                 Log.Insert("AudioController", "Problema ocorrido ao buscar sessão de áudio.", ex);
             }
+            
 }
 
         private async Task SetVolumeAndMuteAsync(CoreAudioDevice device, int SettedVolume)
@@ -329,8 +442,28 @@ namespace JJManager.Class.App.Input.AudioController
             await session.SetMuteAsync(SettedVolume > 0 ? false : true);
         }
 
-        public void ChangeVolume()
+        public void RemoveSubscriptions()
         {
+            while (_subscriptionSession.TryTake(out var subscription))
+            {
+                subscription.Dispose();
+            }
+
+            while (_subscriptionDevice.TryTake(out var subscription))
+            {
+                subscription.Dispose();
+            }
+        }
+
+        public async Task ChangeVolume()
+        {
+            while (_resetingCore)
+            {
+                await Task.Delay(10); // do nothing, wait...
+            }
+
+            _changingVolume = true;
+
             try
             {
                 if (_audioMode == AudioMode.None || _toManage.Count == 0)
@@ -340,68 +473,36 @@ namespace JJManager.Class.App.Input.AudioController
 
                 if (_coreAudioController == null)
                 {
-                    ResetCoreAudioController(new CoreAudioController());
+                    await ResetCoreAudioController(new CoreAudioController());
                 }
 
                 switch (_audioMode)
                 {
                     case AudioMode.Application:
-                        if (_subscriptionSession.Count > 0)
+                        _currentCtsSession.Cancel();
+
+                        while (_subscriptionSession.TryTake(out var subscription))
                         {
-                            //for (int i = 0; i < _subscriptionSession.Count; i++)
-                            //{
-                            //    if (_subscriptionSession[i] != null)
-                            //    {
-
-                            //        //_subscriptionSession[i].Dispose();
-                            //    }
-                            //}
-
-                            _currentCtsSession?.Cancel();
-
-                            // Dispose the token source
-                            _currentCtsSession?.Dispose();
-                            _currentCtsSession = null;
-                            _currentCtsSession = new CancellationTokenSource();
-
-                            _subscriptionSession.Clear();
+                            subscription.Dispose();
                         }
+
+                        _currentCtsSession.Dispose();
+                        _currentCtsSession = new CancellationTokenSource();
 
                         foreach (string app in _toManage)
                         {
-                            Task.Run(() =>
-                            {
-                                ChangeAppVolume(app, SettedVolume);
-                            }).Wait();
+                            await ChangeAppVolume(app, SettedVolume);
                         }
                         break;
                     case AudioMode.DevicePlayback:
-                        if (_subscriptionDevice.Count > 0)
+                        while (_subscriptionDevice.TryTake(out var subscription))
                         {
-                            //for (int i = 0; i < _subscriptionDevice.Count; i++)
-                            //{
-                            //    if (_subscriptionDevice[i] != null)
-                            //    {
-                            //        _subscriptionDevice[i].Dispose();
-                            //    }
-                            //}
-
-                            _currentCtsDevice?.Cancel();
-
-                            // Dispose the token source
-                            _currentCtsDevice?.Dispose();
-                            _currentCtsDevice = null;
-                            _currentCtsDevice = new CancellationTokenSource();
-
-                            _subscriptionDevice.Clear();
+                            subscription.Dispose();
                         }
 
                         foreach (string device in _toManage)
                         {
-                            Task.Run(() =>
-                            {
-                                ChangeDeviceVolume(device, SettedVolume);
-                            }).Wait();
+                            await ChangeDeviceVolume(device, SettedVolume);
                         }
 
                         break;
@@ -410,6 +511,10 @@ namespace JJManager.Class.App.Input.AudioController
             catch (Exception ex)
             {
                 Log.Insert("AudioController", "Ocorreu um problema ao realizar a alteração de volume", ex);
+            }
+            finally
+            {
+                _changingVolume = false;
             }
         }
 

@@ -336,6 +336,14 @@ namespace JJManager.Class.App.Profile
         {
             _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
 
+            foreach (InputClass input in _inputs)
+            {
+                if (input.Mode == InputClass.InputMode.AudioController && input.AudioController != null)
+                {
+                    input.AudioController.RemoveSubscriptions();
+                }
+            }
+
             GetProfileIntoObject(_id);
         }
 
