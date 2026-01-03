@@ -1,6 +1,7 @@
 ﻿using ArduinoUploader.Hardware;
 using ArduinoUploader;
 using JJManager.Class;
+using JJManager.Class.Devices.Connections;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -76,7 +77,7 @@ namespace JJManager.Class.App
             get => (_LastVersion > _ActualVersion ? true : false);
         }
 
-        public static async Task<List<string>> GetUnavailableListEnties(ObservableCollection<Updater> updates)
+        public static async Task<List<string>> GetUnavailableListEnties(ObservableCollection<Updater> updates, ObservableCollection<Devices.JJDevice> devicesList = null)
         {
             List<Updater> pluginUpdaters = await GetPluginsUpdaterList();
             List<Updater> programUpdaters = await GetProgramUpdaterList();
@@ -95,6 +96,23 @@ namespace JJManager.Class.App
                 if (!programUpdaters.Any(program => program.ConnId == updater.ConnId))
                 {
                     listToReturn.Add(updater.ConnId);
+                }
+            }
+
+            // Check for devices that are no longer available (disconnected from computer)
+            if (devicesList != null)
+            {
+                foreach (Updater updater in updates.Where(updater => updater.Type == UpdaterType.Device))
+                {
+                    DeviceUpdater deviceUpdater = updater as DeviceUpdater;
+                    if (deviceUpdater != null)
+                    {
+                        // Remove from updater list if device is no longer in the devices list
+                        if (!devicesList.Any(device => device.ConnId == deviceUpdater.ConnId))
+                        {
+                            listToReturn.Add(updater.ConnId);
+                        }
+                    }
                 }
             }
 
@@ -210,20 +228,55 @@ namespace JJManager.Class.App
                 if (!Directory.Exists(_DownloadPath))
                     Directory.CreateDirectory(_DownloadPath);
 
+                wc.DownloadProgressChanged += new DownloadProgressChangedEventHandler(DownloadProgressChanged);
                 wc.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadFileCompleted);
+
+                // Mostrar barra de progresso
+                _MainForm.Invoke((MethodInvoker)delegate
+                {
+                    _MainForm.progressBarDownload.Visible = true;
+                    _MainForm.progressBarDownload.Value = 0;
+                });
+
                 wc.DownloadFileAsync(new Uri(_DownloadURL), Path.Combine(_DownloadPath, _DownloadFileName));
             }
         }
 
+        private void DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        {
+            _MainForm.Invoke((MethodInvoker)delegate
+            {
+                _MainForm.progressBarDownload.Value = e.ProgressPercentage;
+                _MainForm.txtStatusUpdate.Text = $"Baixando '{_Name}'... {e.ProgressPercentage}%";
+            });
+        }
+
         private void DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
+            // Esconder barra de progresso
+            _MainForm.Invoke((MethodInvoker)delegate
+            {
+                _MainForm.progressBarDownload.Visible = false;
+                _MainForm.progressBarDownload.Value = 0;
+            });
+
             if (e.Error != null)
             {
-                MessageBox.Show(e.Error.ToString());
+                Pages.App.MessageBox.Show(_MainForm, "Erro no Download", $"Ocorreu um erro durante o download: {e.Error.Message}");
+                _MainForm.Invoke((MethodInvoker)delegate
+                {
+                    _MainForm.txtStatusUpdate.Text = "";
+                });
+                return;
             }
             else if (e.Cancelled)
             {
-                MessageBox.Show("Download do firmware cancelado.");
+                Pages.App.MessageBox.Show(_MainForm, "Download Cancelado", "Download do firmware cancelado.");
+                _MainForm.Invoke((MethodInvoker)delegate
+                {
+                    _MainForm.txtStatusUpdate.Text = "";
+                });
+                return;
             }
             else
             {
@@ -272,13 +325,38 @@ namespace JJManager.Class.App
                             options.PortName = selectedComPort;
                             options.ArduinoModel = ArduinoModel.Micro;
 
-                            ArduinoSketchUploader uploader = new ArduinoSketchUploader(options);
+                            // Mostrar barra de progresso
+                            _MainForm.Invoke((MethodInvoker)delegate
+                            {
+                                _MainForm.progressBarDownload.Visible = true;
+                                _MainForm.progressBarDownload.Value = 0;
+                            });
+
+                            // Criar Progress para acompanhar o upload
+                            var progress = new Progress<double>(p =>
+                            {
+                                int percentage = (int)(p * 100);
+                                _MainForm.Invoke((MethodInvoker)delegate
+                                {
+                                    _MainForm.progressBarDownload.Value = percentage;
+                                    _MainForm.txtStatusUpdate.Text = $"Atualizando firmware de '{_Name}'... {percentage}%";
+                                });
+                            });
+
+                            ArduinoSketchUploader uploader = new ArduinoSketchUploader(options, null, progress);
 
                             uploader.UploadSketch();
 
+                            // Esconder barra de progresso
                             _MainForm.Invoke((MethodInvoker)delegate
                             {
-                                MessageBox.Show("Atualização de '" + _Name + "' realizada com sucesso!");
+                                _MainForm.progressBarDownload.Visible = false;
+                                _MainForm.progressBarDownload.Value = 0;
+                            });
+
+                            _MainForm.Invoke((MethodInvoker)delegate
+                            {
+                                Pages.App.MessageBox.Show(_MainForm, "Atualização Concluída", "Atualização de '" + _Name + "' realizada com sucesso!");
                                 _MainForm.Invoke((MethodInvoker)delegate
                                 {
                                     _MainForm.EnableAllForms();
@@ -302,10 +380,12 @@ namespace JJManager.Class.App
                 catch (UnauthorizedAccessException ex)
                 {
                     Log.Insert("Firmware", "Ocorreu um problema ao atualizar " + _Name + ".", ex);
-                    MessageBox.Show("Ocorreu um problema ao atualizar " + _Name + ", verifique se nenhum dispositivo está utilizando as portas COM no seu computador.");
-                    
+                    Pages.App.MessageBox.Show(_MainForm, "Erro na Atualização", "Ocorreu um problema ao atualizar " + _Name + ", verifique se nenhum dispositivo está utilizando as portas COM no seu computador.");
+
                     _MainForm.Invoke((MethodInvoker)delegate
                     {
+                        _MainForm.progressBarDownload.Visible = false;
+                        _MainForm.progressBarDownload.Value = 0;
                         _MainForm.EnableAllForms();
                         _MainForm.UpdateUpdaterList();
                         _MainForm.txtStatusUpdate.Text = "";
@@ -314,10 +394,12 @@ namespace JJManager.Class.App
                 catch (Exception ex)
                 {
                     Log.Insert("Firmware", "Ocorreu um problema ao atualizar " + _Name + ".", ex);
-                    MessageBox.Show("Ocorreu um problema ao atualizar " + _Name + ", verifique se nenhum dispositivo está utilizando as portas COM no seu computador.");
+                    Pages.App.MessageBox.Show(_MainForm, "Erro na Atualização", "Ocorreu um problema ao atualizar " + _Name + ", verifique se nenhum dispositivo está utilizando as portas COM no seu computador.");
 
                     _MainForm.Invoke((MethodInvoker)delegate
                     {
+                        _MainForm.progressBarDownload.Visible = false;
+                        _MainForm.progressBarDownload.Value = 0;
                         _MainForm.EnableAllForms();
                         _MainForm.UpdateUpdaterList();
                         _MainForm.txtStatusUpdate.Text = "";

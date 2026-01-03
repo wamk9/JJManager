@@ -101,7 +101,7 @@ namespace JJManager.Pages.App
                 {
                     e.Effect = DragDropEffects.None;
                     // Provide feedback to the user
-                    MessageBox.Show("O JJManager aceita apenas arquivos no formato '.mp3' para execução de áudio.");
+                    Pages.App.MessageBox.Show(this, "Formato Inválido", "O JJManager aceita apenas arquivos no formato '.mp3' para execução de áudio.");
                 }
             }
             else
@@ -200,7 +200,7 @@ namespace JJManager.Pages.App
 
         private void btnRemoveActualAudio_Click(object sender, EventArgs e)
         {
-            DialogResult dialogResult = MessageBox.Show("Ao realizar a exclusão do áudio e salvar as informações, o mesmo não poderá ser recuperado, tem certeza que deseja continuar?", "Deletar Áudio Atual", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = Pages.App.MessageBox.Show(this, "Deletar Áudio Atual", "Ao realizar a exclusão do áudio e salvar as informações, o mesmo não poderá ser recuperado, tem certeza que deseja continuar?", MessageBoxButtons.YesNo);
 
             if (dialogResult == DialogResult.Yes && _profile.Inputs[_IdInput].AudioPlayer != null)
             {

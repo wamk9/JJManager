@@ -8,7 +8,11 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using InputClass = JJManager.Class.App.Input.Input;
+using OutputClass = JJManager.Class.App.Output.Output;
 using JJDeviceClass = JJManager.Class.Devices.JJDevice;
+using System.Linq;
+using static JJManager.Class.App.Output.Output;
+using System.Windows.Media.Animation;
 
 namespace JJManager.Class.App.Profile
 {
@@ -19,8 +23,11 @@ namespace JJManager.Class.App.Profile
         private String _idProduct = "";
         private int _analogInputsQtd = 0;
         private int _digitalInputsQtd = 0;
+        private int _analogOutputsQtd = 0;
+        private int _digitalOutputsQtd = 0;
         private JsonObject _data = null;
         private ObservableCollection<InputClass> _inputs = null;
+        private ObservableCollection<OutputClass> _outputs = null;
         private DatabaseConnection _dbConnection = null;
         private bool _needsUpdate = false;
         public event NotifyCollectionChangedEventHandler CollectionChanged;
@@ -49,6 +56,10 @@ namespace JJManager.Class.App.Profile
         public ObservableCollection<InputClass> Inputs
         {
             get => _inputs;
+        }
+        public ObservableCollection<OutputClass> Outputs
+        {
+            get => _outputs;
         }
 
         public JsonObject Data
@@ -102,31 +113,59 @@ namespace JJManager.Class.App.Profile
                 // Tenta buscar perfil ativo
                 GetActiveProfileIntoObject(device.ConnId);
 
-                // Insere um novo perfil se nenhum for encontrado
+                // Se nenhum perfil ativo foi encontrado
                 if (string.IsNullOrEmpty(_id))
                 {
-                    string insertSql = $"INSERT INTO profiles (name, id_product) VALUES ('Perfil Padrão', '{device.ProductId}');";
+                    // Primeiro, verifica se já existe um perfil padrão para este modelo de dispositivo
+                    string checkDefaultProfileSql = $"SELECT TOP 1 id FROM profiles WHERE id_product = '{device.ProductId}' AND name = 'Perfil Padrão' ORDER BY id ASC;";
+                    var existingDefaultProfile = _dbConnection.RunSQLWithResults(checkDefaultProfileSql);
 
-                    if (!_dbConnection.RunSQL(insertSql))
+                    if (existingDefaultProfile.Count > 0)
                     {
-                        Log.Insert("Profile", "Erro ao inserir perfil no banco de dados");
-                        throw new InvalidOperationException("Falha ao inserir perfil no banco de dados.");
-                    }
-
-                    string selectSql = "SELECT IDENT_CURRENT('dbo.profiles') AS last_inserted_id";
-                    var results = _dbConnection.RunSQLWithResults(selectSql);
-
-                    if (results.Count == 0)
-                    {
-                        throw new InvalidOperationException("Falha ao recuperar o ID do último perfil inserido.");
-                    }
-
-                    foreach (JsonObject obj in results)
-                    {
-                        if (obj.ContainsKey("last_inserted_id"))
+                        JsonObject firstResult = (JsonObject)existingDefaultProfile[0];
+                        if (firstResult.ContainsKey("id"))
                         {
-                            _id = obj["last_inserted_id"].GetValue<string>();
+                            // Usa o perfil padrão existente
+                            _id = firstResult["id"].GetValue<string>();
                             GetProfileIntoObject(_id);
+
+                            // Associa este perfil ao dispositivo atual
+                            SetToActiveProfile(device.ConnId);
+
+                            Log.Insert("Profile", $"Usando perfil padrão existente (ID: {_id}) para o dispositivo {device.ProductId}");
+                        }
+                    }
+                    else
+                    {
+                        // Cria um novo perfil padrão se não existir
+                        string insertSql = $"INSERT INTO profiles (name, id_product) VALUES ('Perfil Padrão', '{device.ProductId}');";
+
+                        if (!_dbConnection.RunSQL(insertSql))
+                        {
+                            Log.Insert("Profile", "Erro ao inserir perfil no banco de dados");
+                            throw new InvalidOperationException("Falha ao inserir perfil no banco de dados.");
+                        }
+
+                        string selectSql = "SELECT IDENT_CURRENT('dbo.profiles') AS last_inserted_id";
+                        var results = _dbConnection.RunSQLWithResults(selectSql);
+
+                        if (results.Count == 0)
+                        {
+                            throw new InvalidOperationException("Falha ao recuperar o ID do último perfil inserido.");
+                        }
+
+                        foreach (JsonObject obj in results)
+                        {
+                            if (obj.ContainsKey("last_inserted_id"))
+                            {
+                                _id = obj["last_inserted_id"].GetValue<string>();
+                                GetProfileIntoObject(_id);
+
+                                // Associa este novo perfil ao dispositivo
+                                SetToActiveProfile(device.ConnId);
+
+                                Log.Insert("Profile", $"Criado novo perfil padrão (ID: {_id}) para o dispositivo {device.ProductId}");
+                            }
                         }
                     }
                 }
@@ -191,7 +230,9 @@ namespace JJManager.Class.App.Profile
                             p.id_product,
                             p.configs, 
                             jjp.analog_inputs_qtd,
-                            jjp.digital_inputs_qtd 
+                            jjp.digital_inputs_qtd, 
+                            jjp.analog_outputs_qtd,
+                            jjp.digital_outputs_qtd 
                         FROM profiles AS p 
                         LEFT JOIN jj_products AS jjp ON (p.id_product = jjp.id) 
                         WHERE p.id = '{id}';";
@@ -203,6 +244,8 @@ namespace JJManager.Class.App.Profile
                 _idProduct = obj.ContainsKey("id_product") ? obj["id_product"].GetValue<string>() : string.Empty;
                 _analogInputsQtd = obj.ContainsKey("analog_inputs_qtd") ? Int32.Parse(obj["analog_inputs_qtd"].GetValue<string>()) : 0;
                 _digitalInputsQtd = obj.ContainsKey("digital_inputs_qtd") ? Int32.Parse(obj["digital_inputs_qtd"].GetValue<string>()) : 0;
+                _analogOutputsQtd = obj.ContainsKey("analog_outputs_qtd") ? Int32.Parse(obj["analog_outputs_qtd"].GetValue<string>()) : 0;
+                _digitalOutputsQtd = obj.ContainsKey("digital_outputs_qtd") ? Int32.Parse(obj["digital_outputs_qtd"].GetValue<string>()) : 0;
                 _data = obj.ContainsKey("configs") ? (JsonObject)JsonObject.Parse(obj["configs"].GetValue<string>()) : new JsonObject();
 
                 uint uid = uint.Parse(_id);
@@ -211,6 +254,13 @@ namespace JJManager.Class.App.Profile
                 for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
                 {
                     _inputs.Add(new InputClass(uid, j));
+                }
+
+                _outputs = new ObservableCollection<OutputClass>();
+
+                for (uint j = 0; j < (_analogOutputsQtd + _digitalOutputsQtd); j++)
+                {
+                    _outputs.Add(new OutputClass(uid, j));
                 }
             }
         }
@@ -224,7 +274,9 @@ namespace JJManager.Class.App.Profile
                             p.id_product,
                             p.configs, 
                             jjp.analog_inputs_qtd,
-                            jjp.digital_inputs_qtd 
+                            jjp.digital_inputs_qtd, 
+                            jjp.analog_outputs_qtd,
+                            jjp.digital_outputs_qtd 
                         FROM profiles AS p 
                         LEFT JOIN jj_products AS jjp ON (p.id_product = jjp.id) 
                         LEFT JOIN user_products AS up ON (p.id = up.id_profile) 
@@ -237,6 +289,8 @@ namespace JJManager.Class.App.Profile
                 _idProduct = obj.ContainsKey("id_product") ? obj["id_product"].GetValue<string>() : string.Empty;
                 _analogInputsQtd = obj.ContainsKey("analog_inputs_qtd") ? Int32.Parse(obj["analog_inputs_qtd"].GetValue<string>()) : 0;
                 _digitalInputsQtd = obj.ContainsKey("digital_inputs_qtd") ? Int32.Parse(obj["digital_inputs_qtd"].GetValue<string>()) : 0;
+                _analogOutputsQtd = obj.ContainsKey("analog_outputs_qtd") ? Int32.Parse(obj["analog_outputs_qtd"].GetValue<string>()) : 0;
+                _digitalOutputsQtd = obj.ContainsKey("digital_outputs_qtd") ? Int32.Parse(obj["digital_outputs_qtd"].GetValue<string>()) : 0;
                 _data = obj.ContainsKey("configs") ? (JsonObject)JsonObject.Parse(obj["configs"].GetValue<string>()) : new JsonObject();
 
                 uint uid = uint.Parse(_id);
@@ -245,6 +299,13 @@ namespace JJManager.Class.App.Profile
                 for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
                 {
                     _inputs.Add(new InputClass(uid, j));
+                }
+
+                _outputs = new ObservableCollection<OutputClass>();
+
+                for (uint j = 0; j < (_analogOutputsQtd + _digitalOutputsQtd); j++)
+                {
+                    _outputs.Add(new OutputClass(uid, j));
                 }
             }
         }
@@ -256,7 +317,9 @@ namespace JJManager.Class.App.Profile
                             p.id,
                             p.configs,
                             jjp.analog_inputs_qtd,
-                            jjp.digital_inputs_qtd
+                            jjp.digital_inputs_qtd, 
+                            jjp.analog_outputs_qtd,
+                            jjp.digital_outputs_qtd 
                         FROM profiles AS p 
                         LEFT JOIN jj_products AS jjp ON (p.id_product = jjp.id) 
                         WHERE name = '{name}' AND id_product = '{idProduct}';";
@@ -268,6 +331,8 @@ namespace JJManager.Class.App.Profile
                 _idProduct = idProduct;
                 _analogInputsQtd = obj.ContainsKey("analog_inputs_qtd") ? Int32.Parse(obj["analog_inputs_qtd"].GetValue<string>()) : 0;
                 _digitalInputsQtd = obj.ContainsKey("digital_inputs_qtd") ? Int32.Parse(obj["digital_inputs_qtd"].GetValue<string>()) : 0;
+                _analogOutputsQtd = obj.ContainsKey("analog_outputs_qtd") ? Int32.Parse(obj["analog_outputs_qtd"].GetValue<string>()) : 0;
+                _digitalOutputsQtd = obj.ContainsKey("digital_outputs_qtd") ? Int32.Parse(obj["digital_outputs_qtd"].GetValue<string>()) : 0;
                 _data = obj.ContainsKey("configs") ? (JsonObject)JsonObject.Parse(obj["configs"].GetValue<string>()) : new JsonObject();
 
                 uint uid = uint.Parse(_id);
@@ -276,6 +341,13 @@ namespace JJManager.Class.App.Profile
                 for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
                 {
                     _inputs.Add(new InputClass(uid, j));
+                }
+
+                _outputs = new ObservableCollection<OutputClass>();
+
+                for (uint j = 0; j < (_analogOutputsQtd + _digitalOutputsQtd); j++)
+                {
+                    _outputs.Add(new OutputClass(uid, j));
                 }
             }
         }
@@ -294,18 +366,34 @@ namespace JJManager.Class.App.Profile
         #endregion
 
         #region PublicFunctions
-        public void Delete(JJDeviceClass device, string profileNameToActive)
+        //public void Delete(JJDeviceClass device, string profileNameToActive)
+        //{
+        //    _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
+
+        //    string sql = $"DELETE FROM dbo.profiles WHERE name = '{device.Profile.Name}' AND id_product = '{device.ProductId}';";
+
+        //    SetToActiveProfile(profileNameToActive);
+
+        //    if (!_dbConnection.RunSQL(sql))
+        //    {
+        //        // TODO: Create LOGFILE
+        //    }
+        //}
+
+        public static void Delete(string profileNameToExclude, string productId)
         {
-            _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
-            SetToActiveProfile(profileNameToActive);
+            DatabaseConnection dbConnection = new DatabaseConnection();
+            
+            string sql = $"DELETE FROM dbo.profiles WHERE name = '{profileNameToExclude}' AND id_product = '{productId}';";
 
-            string sql = $"DELETE FROM dbo.profiles WHERE name = '{_name}' AND id_product = '{device.ProductId}';";
+            //SetToActiveProfile(profileNameToActive);
 
-            if (!_dbConnection.RunSQL(sql))
+            if (!dbConnection.RunSQL(sql))
             {
                 // TODO: Create LOGFILE
             }
         }
+
 
         public void Update(JsonObject dataToUpdate)
         {
@@ -335,16 +423,8 @@ namespace JJManager.Class.App.Profile
         public void Restart()
         {
             _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
-
-            foreach (InputClass input in _inputs)
-            {
-                if (input.Mode == InputClass.InputMode.AudioController && input.AudioController != null)
-                {
-                    input.AudioController.RemoveSubscriptions();
-                }
-            }
-
             GetProfileIntoObject(_id);
+            CreateRestartAllProfileFile();
         }
 
         public void UpdateInput(InputClass input)
@@ -356,6 +436,157 @@ namespace JJManager.Class.App.Profile
 
             input.Save();
             _inputs[(int)input.Id] = input;
+            CreateRestartAllProfileFile();
+        }
+
+        public void UpdateOutput(OutputClass output)
+        {
+            if (output == null)
+            {
+                return;
+            }
+
+            output.Save();
+            _outputs[(int)output.Id] = output;
+            CreateRestartAllProfileFile();
+        }
+
+        public void OrderOutputsBy(OutputClass.OutputMode mode, int ledSelected = -1)
+        {
+            if (mode == OutputClass.OutputMode.Leds)
+            {
+                // Sort directly within the existing collection
+                var sortedList = _outputs.Where(x => x.Led != null && (ledSelected > -1 ? x.Led?.LedsGrouped?.Contains(ledSelected) ?? false : true)).OrderBy(x => x.Led?.Order ?? int.MaxValue)
+                                         .ToList();
+
+                int newPos = 0;
+
+                foreach (var output in sortedList)
+                {
+                    int index = _outputs.IndexOf(output);
+                    _outputs[index].Led.Order = newPos++;
+                    _outputs[index].Changed = true;
+
+                }
+
+                for (int i = 0; i < _outputs.Count; i++)
+                {
+                    
+                }
+            }
+        }
+
+        public void MoveOutput(uint id, int positionToMove, int positionsAvailableOnGrid, OutputClass.OutputMode mode)
+        {
+            if (positionToMove < 0 || positionToMove > positionsAvailableOnGrid)
+            {
+                return;
+            }
+
+            if (mode == OutputClass.OutputMode.Leds)
+            {
+                var movingOutput = _outputs.FirstOrDefault(o => o.Mode == mode && o.Id == id);
+                if (movingOutput == null || movingOutput.Led == null) return;
+
+                foreach (int ledPos in movingOutput.Led.LedsGrouped)
+                {
+                    OrderOutputsBy(mode, ledPos);
+                }
+
+                int actualPosition = movingOutput.Led.Order;
+
+                // No movement needed
+                if (actualPosition == positionToMove) return;
+
+                // Moving Down (i.e., increasing order)
+                if (positionToMove > actualPosition)
+                {
+                    foreach (var output in _outputs.Where(o =>
+                        o.Mode == mode &&
+                        o.Led != null &&
+                        o.Led.Order > actualPosition &&
+                        o.Led.Order <= positionToMove &&
+                        o.Led.LedsGrouped.Any(x => movingOutput.Led.LedsGrouped.Contains(x))))
+                    {
+                        output.Led.Order--;
+                        output.Changed = true;
+                    }
+                }
+                // Moving Up (i.e., decreasing order)
+                else if (positionToMove < actualPosition)
+                {
+                    foreach (var output in _outputs.Where(o =>
+                        o.Mode == mode &&
+                        o.Led != null &&
+                        o.Led.Order >= positionToMove &&
+                        o.Led.Order < actualPosition &&
+                        o.Led.LedsGrouped.Any(x => movingOutput.Led.LedsGrouped.Contains(x))))
+                    {
+                        output.Led.Order++;
+                        output.Changed = true;
+                    }
+                }
+
+                // Set new order for the moving output
+                movingOutput.Led.Order = positionToMove;
+                movingOutput.Changed = true;
+
+                foreach (int ledPos in movingOutput.Led.LedsGrouped)
+                {
+                    OrderOutputsBy(mode, ledPos);
+                }
+
+                for (int i = 0; i < _outputs.Count; i++) 
+                {
+                    if (!_outputs[i].Changed)
+                    {
+                        continue;
+                    }
+
+                    _outputs[i].Save();
+                    _outputs[i].Changed = false;
+                }
+            }
+        }
+
+
+        public void ExcludeOutput(int id, OutputClass.OutputMode mode)
+        {
+            if (id < 0 || id > _analogOutputsQtd + _digitalOutputsQtd)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _outputs.Count; i++)
+            {
+                if (_outputs[i].Id == id)
+                {
+                    if (_outputs[i].Mode == OutputMode.Leds)
+                    {
+                        List<int> ledsToReorder = _outputs[i].Led.LedsGrouped;
+                        _outputs[i].RemoveFunction();
+                        _outputs[i].Changed = true; // Mark as changed to trigger Save
+
+                        foreach (int ledPos in ledsToReorder)
+                        {
+                            OrderOutputsBy(mode, ledPos);
+                        }
+                    }
+                    break;
+                }
+            }
+
+            for (int i = 0; i < _outputs.Count; i++)
+            {
+                if (!_outputs[i].Changed)
+                {
+                    continue;
+                }
+
+                _outputs[i].Save();
+                _outputs[i].Changed = false;
+            }
+
             CreateRestartAllProfileFile();
         }
 
@@ -399,6 +630,13 @@ namespace JJManager.Class.App.Profile
                 for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
                 {
                     _inputs.Add(new InputClass(uid, j));
+                }
+
+                _outputs = new ObservableCollection<OutputClass>();
+
+                for (uint j = 0; j < (_analogOutputsQtd + _digitalOutputsQtd); j++)
+                {
+                    _outputs.Add(new OutputClass(uid, j));
                 }
 
                 if (setToActiveProfile)

@@ -73,9 +73,9 @@ namespace JJManager.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Byte[].
         /// </summary>
-        internal static byte[] Font_Awesome_6_Brands_Regular_400 {
+        internal static byte[] fa_brands_400 {
             get {
-                object obj = ResourceManager.GetObject("Font_Awesome_6_Brands_Regular_400", resourceCulture);
+                object obj = ResourceManager.GetObject("fa_brands_400", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -83,9 +83,9 @@ namespace JJManager.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Byte[].
         /// </summary>
-        internal static byte[] Font_Awesome_6_Free_Regular_400 {
+        internal static byte[] fa_regular_400 {
             get {
-                object obj = ResourceManager.GetObject("Font_Awesome_6_Free_Regular_400", resourceCulture);
+                object obj = ResourceManager.GetObject("fa_regular_400", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -93,9 +93,9 @@ namespace JJManager.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Byte[].
         /// </summary>
-        internal static byte[] Font_Awesome_6_Free_Solid_900 {
+        internal static byte[] fa_solid_900 {
             get {
-                object obj = ResourceManager.GetObject("Font_Awesome_6_Free_Solid_900", resourceCulture);
+                object obj = ResourceManager.GetObject("fa_solid_900", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -193,6 +193,36 @@ namespace JJManager.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap JJB_Slim_A {
+            get {
+                object obj = ResourceManager.GetObject("JJB_Slim_A", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJB_Slim_A_active {
+            get {
+                object obj = ResourceManager.GetObject("JJB_Slim_A_active", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJB_Slim_A_hover {
+            get {
+                object obj = ResourceManager.GetObject("JJB_Slim_A_hover", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap JJBP_06_off {
             get {
                 object obj = ResourceManager.GetObject("JJBP-06_off", resourceCulture);
@@ -206,6 +236,46 @@ namespace JJManager.Properties {
         internal static System.Drawing.Bitmap JJBP_06_on {
             get {
                 object obj = ResourceManager.GetObject("JJBP-06_on", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJDB01_base {
+            get {
+                object obj = ResourceManager.GetObject("JJDB01_base", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Byte[].
+        /// </summary>
+        internal static byte[] JJDB01_dashboard_vars {
+            get {
+                object obj = ResourceManager.GetObject("JJDB01_dashboard_vars", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJDB01_led {
+            get {
+                object obj = ResourceManager.GetObject("JJDB01_led", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JJDB01_led_hover {
+            get {
+                object obj = ResourceManager.GetObject("JJDB01_led_hover", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -247,6 +317,16 @@ namespace JJManager.Properties {
             get {
                 object obj = ResourceManager.GetObject("JJManagerIcon_256", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Byte[].
+        /// </summary>
+        internal static byte[] JJPropertyDictionary {
+            get {
+                object obj = ResourceManager.GetObject("JJPropertyDictionary", resourceCulture);
+                return ((byte[])(obj));
             }
         }
         
@@ -534,6 +614,85 @@ namespace JJManager.Properties {
         internal static string SQL_1_2_6_1 {
             get {
                 return ResourceManager.GetString("SQL_1_2_6_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///UPDATE dbo.configs SET software_version = &apos;1.2.7&apos;;
+        ///GO
+        ///
+        ///SET IDENTITY_INSERT dbo.jj_products ON;
+        ///GO
+        ///
+        ///INSERT INTO dbo.jj_products (id, product_name, analog_inputs_qtd, digital_inputs_qtd, analog_outputs_qtd, digital_outputs_qtd, conn_type, class_name) VALUES 
+        ///(14, &apos;LoadCell JJLC-01&apos;, 0, 0, 0, 0, &apos;HID&apos;, &apos;JJLC01&apos;);
+        ///GO
+        ///
+        ///UPDATE dbo.jj_products set digital_outputs_qtd = 255 WHERE product [o restante da cadeia de caracteres foi truncado]&quot;;.
+        /// </summary>
+        internal static string SQL_1_2_7 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_7", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///UPDATE dbo.configs SET software_version = &apos;1.2.8&apos;;
+        ///GO
+        ///
+        ///IF NOT EXISTS (
+        ///    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+        ///    WHERE TABLE_NAME = &apos;simhub_properties&apos; AND COLUMN_NAME = &apos;activate_on&apos;
+        ///)
+        ///BEGIN
+        ///    ALTER TABLE simhub_properties 
+        ///    ADD activate_on NVARCHAR(MAX) 
+        ///        CONSTRAINT DF_SIMHUB_PROPERTIES_ACTIVATE_ON DEFAULT &apos;{}&apos; 
+        ///        CHECK (ISJSON(activate_on) &gt; 0);
+        ///END [o restante da cadeia de caracteres foi truncado]&quot;;.
+        /// </summary>
+        internal static string SQL_1_2_8 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_8", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a -- Automaticamente da Rollback quando acontece um erro na transaction.
+        ///set xact_abort on
+        ///SET ANSI_WARNINGS off
+        ///GO
+        ///
+        ///ALTER TABLE simhub_properties
+        ///ALTER COLUMN simhub_prop VARCHAR(255) NULL;
+        ///GO
+        ///
+        ///IF EXISTS (
+        ///    SELECT 1
+        ///    FROM INFORMATION_SCHEMA.COLUMNS
+        ///    WHERE TABLE_NAME = &apos;simhub_properties&apos;
+        ///      AND COLUMN_NAME = &apos;activated_on&apos;
+        ///)
+        ///BEGIN
+        ///    ALTER TABLE simhub_properties
+        ///    DROP CONSTRAINT DF_SIMHUB_PROPERTIES_ACTIVATED_ON;
+        ///
+        ///    ALTER TABLE simhub_properties
+        ///    DROP CONSTRAINT CK__ [o restante da cadeia de caracteres foi truncado]&quot;;.
+        /// </summary>
+        internal static string SQL_1_2_9 {
+            get {
+                return ResourceManager.GetString("SQL_1_2_9", resourceCulture);
             }
         }
     }

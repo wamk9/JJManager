@@ -33,22 +33,29 @@
             this.imageList = new System.Windows.Forms.ImageList(this.components);
             this.tabMain = new MaterialSkin.Controls.MaterialTabControl();
             this.tabConnect = new System.Windows.Forms.TabPage();
+            this.DgvDevices = new System.Windows.Forms.DataGridView();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.txtStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.btnConnChanger = new MaterialSkin.Controls.MaterialButton();
             this.btnEditDevice = new MaterialSkin.Controls.MaterialButton();
             this.btnSearchBluetooth = new MaterialSkin.Controls.MaterialButton();
-            this.lvDevices = new MaterialSkin.Controls.MaterialListView();
-            this.lvhDeviceId = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.lvhDeviceName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.lvhConnType = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.lvhConnStatus = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tabOptions = new System.Windows.Forms.TabPage();
+            this.flpOptions = new System.Windows.Forms.FlowLayoutPanel();
             this.LblThemeColor = new MaterialSkin.Controls.MaterialLabel();
             this.SwtThemeColor = new MaterialSkin.Controls.MaterialSwitch();
+            this.txtStartOnBoot = new MaterialSkin.Controls.MaterialLabel();
+            this.swtStartOnBoot = new MaterialSkin.Controls.MaterialSwitch();
+            this.txtLog = new MaterialSkin.Controls.MaterialLabel();
+            this.dgvLog = new System.Windows.Forms.DataGridView();
+            this.colModule = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dgvLogSize = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dgvLogOpen = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.dgvLogRemove = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.btnRemoveAllLogs = new MaterialSkin.Controls.MaterialButton();
             this.tabUpdate = new System.Windows.Forms.TabPage();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.txtStatusUpdate = new System.Windows.Forms.ToolStripStatusLabel();
+            this.progressBarDownload = new System.Windows.Forms.ToolStripProgressBar();
             this.lvDevicesToUpdate = new MaterialSkin.Controls.MaterialListView();
             this.DeviceId = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.DeviceName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -60,26 +67,17 @@
             this.lblAboutVersion = new MaterialSkin.Controls.MaterialLabel();
             this.ImgAbout = new System.Windows.Forms.PictureBox();
             this.tbsMainMenu = new MaterialSkin.Controls.MaterialTabSelector();
-            this.flpOptions = new System.Windows.Forms.FlowLayoutPanel();
-            this.txtStartOnBoot = new MaterialSkin.Controls.MaterialLabel();
-            this.swtStartOnBoot = new MaterialSkin.Controls.MaterialSwitch();
-            this.dgvLog = new System.Windows.Forms.DataGridView();
-            this.colModule = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dgvLogSize = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dgvLogOpen = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.dgvLogRemove = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.txtLog = new MaterialSkin.Controls.MaterialLabel();
-            this.btnRemoveAllLogs = new MaterialSkin.Controls.MaterialButton();
             this.tabMain.SuspendLayout();
             this.tabConnect.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.DgvDevices)).BeginInit();
             this.statusStrip.SuspendLayout();
             this.tabOptions.SuspendLayout();
+            this.flpOptions.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvLog)).BeginInit();
             this.tabUpdate.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.tabAbout.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ImgAbout)).BeginInit();
-            this.flpOptions.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvLog)).BeginInit();
             this.SuspendLayout();
             // 
             // imageList
@@ -111,11 +109,11 @@
             // 
             // tabConnect
             // 
+            this.tabConnect.Controls.Add(this.DgvDevices);
             this.tabConnect.Controls.Add(this.statusStrip);
             this.tabConnect.Controls.Add(this.btnConnChanger);
             this.tabConnect.Controls.Add(this.btnEditDevice);
             this.tabConnect.Controls.Add(this.btnSearchBluetooth);
-            this.tabConnect.Controls.Add(this.lvDevices);
             this.tabConnect.ImageKey = "JJManager_icones_connect.png";
             this.tabConnect.Location = new System.Drawing.Point(4, 23);
             this.tabConnect.Name = "tabConnect";
@@ -124,6 +122,26 @@
             this.tabConnect.TabIndex = 0;
             this.tabConnect.Text = "Gerenciar Dispositivos";
             this.tabConnect.UseVisualStyleBackColor = true;
+            // 
+            // DgvDevices
+            // 
+            this.DgvDevices.AllowUserToAddRows = false;
+            this.DgvDevices.AllowUserToDeleteRows = false;
+            this.DgvDevices.AllowUserToResizeColumns = false;
+            this.DgvDevices.AllowUserToResizeRows = false;
+            this.DgvDevices.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.DgvDevices.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.DgvDevices.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.DgvDevices.Location = new System.Drawing.Point(9, 7);
+            this.DgvDevices.MultiSelect = false;
+            this.DgvDevices.Name = "DgvDevices";
+            this.DgvDevices.ReadOnly = true;
+            this.DgvDevices.RowHeadersVisible = false;
+            this.DgvDevices.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.DgvDevices.Size = new System.Drawing.Size(689, 293);
+            this.DgvDevices.TabIndex = 7;
             // 
             // statusStrip
             // 
@@ -213,58 +231,6 @@
             this.btnSearchBluetooth.UseVisualStyleBackColor = true;
             this.btnSearchBluetooth.Click += new System.EventHandler(this.btnSearchBluetooth_Click);
             // 
-            // lvDevices
-            // 
-            this.lvDevices.Alignment = System.Windows.Forms.ListViewAlignment.SnapToGrid;
-            this.lvDevices.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.lvDevices.AutoArrange = false;
-            this.lvDevices.AutoSizeTable = false;
-            this.lvDevices.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.lvDevices.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.lvDevices.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.lvhDeviceId,
-            this.lvhDeviceName,
-            this.lvhConnType,
-            this.lvhConnStatus});
-            this.lvDevices.Depth = 0;
-            this.lvDevices.FullRowSelect = true;
-            this.lvDevices.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-            this.lvDevices.HideSelection = false;
-            this.lvDevices.Location = new System.Drawing.Point(6, 6);
-            this.lvDevices.MinimumSize = new System.Drawing.Size(200, 100);
-            this.lvDevices.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.lvDevices.MouseState = MaterialSkin.MouseState.OUT;
-            this.lvDevices.MultiSelect = false;
-            this.lvDevices.Name = "lvDevices";
-            this.lvDevices.OwnerDraw = true;
-            this.lvDevices.Size = new System.Drawing.Size(692, 289);
-            this.lvDevices.TabIndex = 1;
-            this.lvDevices.UseCompatibleStateImageBehavior = false;
-            this.lvDevices.View = System.Windows.Forms.View.Details;
-            this.lvDevices.SelectedIndexChanged += new System.EventHandler(this.lvDevices_SelectedIndexChanged);
-            // 
-            // lvhDeviceId
-            // 
-            this.lvhDeviceId.Text = "ID";
-            this.lvhDeviceId.Width = 100;
-            // 
-            // lvhDeviceName
-            // 
-            this.lvhDeviceName.Text = "Dispositivo";
-            this.lvhDeviceName.Width = 350;
-            // 
-            // lvhConnType
-            // 
-            this.lvhConnType.Text = "Conexão";
-            this.lvhConnType.Width = 100;
-            // 
-            // lvhConnStatus
-            // 
-            this.lvhConnStatus.Text = "Status";
-            this.lvhConnStatus.Width = 150;
-            // 
             // tabOptions
             // 
             this.tabOptions.Controls.Add(this.flpOptions);
@@ -276,6 +242,23 @@
             this.tabOptions.TabIndex = 1;
             this.tabOptions.Text = "Opções";
             this.tabOptions.UseVisualStyleBackColor = true;
+            // 
+            // flpOptions
+            // 
+            this.flpOptions.Controls.Add(this.LblThemeColor);
+            this.flpOptions.Controls.Add(this.SwtThemeColor);
+            this.flpOptions.Controls.Add(this.txtStartOnBoot);
+            this.flpOptions.Controls.Add(this.swtStartOnBoot);
+            this.flpOptions.Controls.Add(this.txtLog);
+            this.flpOptions.Controls.Add(this.dgvLog);
+            this.flpOptions.Controls.Add(this.btnRemoveAllLogs);
+            this.flpOptions.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flpOptions.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flpOptions.Location = new System.Drawing.Point(3, 3);
+            this.flpOptions.Name = "flpOptions";
+            this.flpOptions.Size = new System.Drawing.Size(698, 367);
+            this.flpOptions.TabIndex = 2;
+            this.flpOptions.WrapContents = false;
             // 
             // LblThemeColor
             // 
@@ -307,6 +290,121 @@
             this.SwtThemeColor.UseVisualStyleBackColor = true;
             this.SwtThemeColor.CheckedChanged += new System.EventHandler(this.SwtThemeColor_CheckedChanged);
             // 
+            // txtStartOnBoot
+            // 
+            this.txtStartOnBoot.AutoSize = true;
+            this.txtStartOnBoot.Depth = 0;
+            this.txtStartOnBoot.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.txtStartOnBoot.Location = new System.Drawing.Point(3, 56);
+            this.txtStartOnBoot.MouseState = MaterialSkin.MouseState.HOVER;
+            this.txtStartOnBoot.Name = "txtStartOnBoot";
+            this.txtStartOnBoot.Size = new System.Drawing.Size(161, 19);
+            this.txtStartOnBoot.TabIndex = 3;
+            this.txtStartOnBoot.Text = "Iniciar com o Windows";
+            // 
+            // swtStartOnBoot
+            // 
+            this.swtStartOnBoot.AutoSize = true;
+            this.swtStartOnBoot.Depth = 0;
+            this.swtStartOnBoot.Location = new System.Drawing.Point(0, 75);
+            this.swtStartOnBoot.Margin = new System.Windows.Forms.Padding(0);
+            this.swtStartOnBoot.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.swtStartOnBoot.MouseState = MaterialSkin.MouseState.HOVER;
+            this.swtStartOnBoot.Name = "swtStartOnBoot";
+            this.swtStartOnBoot.Ripple = true;
+            this.swtStartOnBoot.Size = new System.Drawing.Size(87, 37);
+            this.swtStartOnBoot.TabIndex = 2;
+            this.swtStartOnBoot.Text = "Não";
+            this.swtStartOnBoot.UseVisualStyleBackColor = true;
+            this.swtStartOnBoot.CheckedChanged += new System.EventHandler(this.swtStartOnBoot_CheckedChanged);
+            // 
+            // txtLog
+            // 
+            this.txtLog.AutoSize = true;
+            this.txtLog.Depth = 0;
+            this.txtLog.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.txtLog.Location = new System.Drawing.Point(3, 112);
+            this.txtLog.MouseState = MaterialSkin.MouseState.HOVER;
+            this.txtLog.Name = "txtLog";
+            this.txtLog.Size = new System.Drawing.Size(204, 19);
+            this.txtLog.TabIndex = 5;
+            this.txtLog.Text = "Logs gerados no JJManager";
+            // 
+            // dgvLog
+            // 
+            this.dgvLog.AllowUserToAddRows = false;
+            this.dgvLog.AllowUserToDeleteRows = false;
+            this.dgvLog.AllowUserToResizeColumns = false;
+            this.dgvLog.AllowUserToResizeRows = false;
+            this.dgvLog.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvLog.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colModule,
+            this.dgvLogSize,
+            this.dgvLogOpen,
+            this.dgvLogRemove});
+            this.dgvLog.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
+            this.dgvLog.EnableHeadersVisualStyles = false;
+            this.dgvLog.Location = new System.Drawing.Point(3, 134);
+            this.dgvLog.MultiSelect = false;
+            this.dgvLog.Name = "dgvLog";
+            this.dgvLog.ReadOnly = true;
+            this.dgvLog.RowHeadersVisible = false;
+            this.dgvLog.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvLog.Size = new System.Drawing.Size(692, 183);
+            this.dgvLog.TabIndex = 4;
+            // 
+            // colModule
+            // 
+            this.colModule.FillWeight = 525F;
+            this.colModule.HeaderText = "Módulo";
+            this.colModule.Name = "colModule";
+            this.colModule.ReadOnly = true;
+            this.colModule.Width = 525;
+            // 
+            // dgvLogSize
+            // 
+            this.dgvLogSize.HeaderText = "Tamanho";
+            this.dgvLogSize.Name = "dgvLogSize";
+            this.dgvLogSize.ReadOnly = true;
+            // 
+            // dgvLogOpen
+            // 
+            this.dgvLogOpen.FillWeight = 32F;
+            this.dgvLogOpen.HeaderText = "";
+            this.dgvLogOpen.Name = "dgvLogOpen";
+            this.dgvLogOpen.ReadOnly = true;
+            this.dgvLogOpen.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvLogOpen.Width = 32;
+            // 
+            // dgvLogRemove
+            // 
+            this.dgvLogRemove.FillWeight = 32F;
+            this.dgvLogRemove.HeaderText = "";
+            this.dgvLogRemove.Name = "dgvLogRemove";
+            this.dgvLogRemove.ReadOnly = true;
+            this.dgvLogRemove.Width = 32;
+            // 
+            // btnRemoveAllLogs
+            // 
+            this.btnRemoveAllLogs.AutoSize = false;
+            this.btnRemoveAllLogs.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnRemoveAllLogs.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnRemoveAllLogs.Depth = 0;
+            this.btnRemoveAllLogs.HighEmphasis = true;
+            this.btnRemoveAllLogs.Icon = null;
+            this.btnRemoveAllLogs.Location = new System.Drawing.Point(4, 326);
+            this.btnRemoveAllLogs.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnRemoveAllLogs.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnRemoveAllLogs.Name = "btnRemoveAllLogs";
+            this.btnRemoveAllLogs.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnRemoveAllLogs.Size = new System.Drawing.Size(691, 36);
+            this.btnRemoveAllLogs.TabIndex = 6;
+            this.btnRemoveAllLogs.Text = "Limpar  Logs";
+            this.btnRemoveAllLogs.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnRemoveAllLogs.UseAccentColor = false;
+            this.btnRemoveAllLogs.UseVisualStyleBackColor = true;
+            this.btnRemoveAllLogs.Click += new System.EventHandler(this.btnRemoveAllLogs_Click);
+            // 
             // tabUpdate
             // 
             this.tabUpdate.Controls.Add(this.statusStrip1);
@@ -323,7 +421,8 @@
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.txtStatusUpdate});
+            this.txtStatusUpdate,
+            this.progressBarDownload});
             this.statusStrip1.Location = new System.Drawing.Point(0, 351);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(704, 22);
@@ -333,8 +432,19 @@
             // 
             // txtStatusUpdate
             // 
+            this.txtStatusUpdate.AutoSize = false;
             this.txtStatusUpdate.Name = "txtStatusUpdate";
-            this.txtStatusUpdate.Size = new System.Drawing.Size(0, 17);
+            this.txtStatusUpdate.Size = new System.Drawing.Size(689, 17);
+            this.txtStatusUpdate.Spring = true;
+            this.txtStatusUpdate.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // progressBarDownload
+            // 
+            this.progressBarDownload.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.progressBarDownload.AutoSize = false;
+            this.progressBarDownload.Name = "progressBarDownload";
+            this.progressBarDownload.Size = new System.Drawing.Size(100, 16);
+            this.progressBarDownload.Visible = false;
             // 
             // lvDevicesToUpdate
             // 
@@ -480,138 +590,6 @@
             this.tbsMainMenu.TabIndex = 22;
             this.tbsMainMenu.Text = "materialTabSelector1";
             // 
-            // flpOptions
-            // 
-            this.flpOptions.Controls.Add(this.LblThemeColor);
-            this.flpOptions.Controls.Add(this.SwtThemeColor);
-            this.flpOptions.Controls.Add(this.txtStartOnBoot);
-            this.flpOptions.Controls.Add(this.swtStartOnBoot);
-            this.flpOptions.Controls.Add(this.txtLog);
-            this.flpOptions.Controls.Add(this.dgvLog);
-            this.flpOptions.Controls.Add(this.btnRemoveAllLogs);
-            this.flpOptions.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flpOptions.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flpOptions.Location = new System.Drawing.Point(3, 3);
-            this.flpOptions.Name = "flpOptions";
-            this.flpOptions.Size = new System.Drawing.Size(698, 367);
-            this.flpOptions.TabIndex = 2;
-            this.flpOptions.WrapContents = false;
-            // 
-            // txtStartOnBoot
-            // 
-            this.txtStartOnBoot.AutoSize = true;
-            this.txtStartOnBoot.Depth = 0;
-            this.txtStartOnBoot.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
-            this.txtStartOnBoot.Location = new System.Drawing.Point(3, 56);
-            this.txtStartOnBoot.MouseState = MaterialSkin.MouseState.HOVER;
-            this.txtStartOnBoot.Name = "txtStartOnBoot";
-            this.txtStartOnBoot.Size = new System.Drawing.Size(161, 19);
-            this.txtStartOnBoot.TabIndex = 3;
-            this.txtStartOnBoot.Text = "Iniciar com o Windows";
-            // 
-            // swtStartOnBoot
-            // 
-            this.swtStartOnBoot.AutoSize = true;
-            this.swtStartOnBoot.Depth = 0;
-            this.swtStartOnBoot.Location = new System.Drawing.Point(0, 75);
-            this.swtStartOnBoot.Margin = new System.Windows.Forms.Padding(0);
-            this.swtStartOnBoot.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.swtStartOnBoot.MouseState = MaterialSkin.MouseState.HOVER;
-            this.swtStartOnBoot.Name = "swtStartOnBoot";
-            this.swtStartOnBoot.Ripple = true;
-            this.swtStartOnBoot.Size = new System.Drawing.Size(87, 37);
-            this.swtStartOnBoot.TabIndex = 2;
-            this.swtStartOnBoot.Text = "Não";
-            this.swtStartOnBoot.UseVisualStyleBackColor = true;
-            this.swtStartOnBoot.CheckedChanged += new System.EventHandler(this.swtStartOnBoot_CheckedChanged);
-            // 
-            // dgvLog
-            // 
-            this.dgvLog.AllowUserToAddRows = false;
-            this.dgvLog.AllowUserToDeleteRows = false;
-            this.dgvLog.AllowUserToResizeColumns = false;
-            this.dgvLog.AllowUserToResizeRows = false;
-            this.dgvLog.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvLog.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colModule,
-            this.dgvLogSize,
-            this.dgvLogOpen,
-            this.dgvLogRemove});
-            this.dgvLog.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
-            this.dgvLog.EnableHeadersVisualStyles = false;
-            this.dgvLog.Location = new System.Drawing.Point(3, 134);
-            this.dgvLog.MultiSelect = false;
-            this.dgvLog.Name = "dgvLog";
-            this.dgvLog.ReadOnly = true;
-            this.dgvLog.RowHeadersVisible = false;
-            this.dgvLog.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvLog.Size = new System.Drawing.Size(692, 183);
-            this.dgvLog.TabIndex = 4;
-            // 
-            // colModule
-            // 
-            this.colModule.FillWeight = 525F;
-            this.colModule.HeaderText = "Módulo";
-            this.colModule.Name = "colModule";
-            this.colModule.ReadOnly = true;
-            this.colModule.Width = 525;
-            // 
-            // dgvLogSize
-            // 
-            this.dgvLogSize.HeaderText = "Tamanho";
-            this.dgvLogSize.Name = "dgvLogSize";
-            this.dgvLogSize.ReadOnly = true;
-            // 
-            // dgvLogOpen
-            // 
-            this.dgvLogOpen.FillWeight = 32F;
-            this.dgvLogOpen.HeaderText = "";
-            this.dgvLogOpen.Name = "dgvLogOpen";
-            this.dgvLogOpen.ReadOnly = true;
-            this.dgvLogOpen.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvLogOpen.Width = 32;
-            // 
-            // dgvLogRemove
-            // 
-            this.dgvLogRemove.FillWeight = 32F;
-            this.dgvLogRemove.HeaderText = "";
-            this.dgvLogRemove.Name = "dgvLogRemove";
-            this.dgvLogRemove.ReadOnly = true;
-            this.dgvLogRemove.Width = 32;
-            // 
-            // txtLog
-            // 
-            this.txtLog.AutoSize = true;
-            this.txtLog.Depth = 0;
-            this.txtLog.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
-            this.txtLog.Location = new System.Drawing.Point(3, 112);
-            this.txtLog.MouseState = MaterialSkin.MouseState.HOVER;
-            this.txtLog.Name = "txtLog";
-            this.txtLog.Size = new System.Drawing.Size(204, 19);
-            this.txtLog.TabIndex = 5;
-            this.txtLog.Text = "Logs gerados no JJManager";
-            // 
-            // btnRemoveAllLogs
-            // 
-            this.btnRemoveAllLogs.AutoSize = false;
-            this.btnRemoveAllLogs.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnRemoveAllLogs.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
-            this.btnRemoveAllLogs.Depth = 0;
-            this.btnRemoveAllLogs.HighEmphasis = true;
-            this.btnRemoveAllLogs.Icon = null;
-            this.btnRemoveAllLogs.Location = new System.Drawing.Point(4, 326);
-            this.btnRemoveAllLogs.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
-            this.btnRemoveAllLogs.MouseState = MaterialSkin.MouseState.HOVER;
-            this.btnRemoveAllLogs.Name = "btnRemoveAllLogs";
-            this.btnRemoveAllLogs.NoAccentTextColor = System.Drawing.Color.Empty;
-            this.btnRemoveAllLogs.Size = new System.Drawing.Size(691, 36);
-            this.btnRemoveAllLogs.TabIndex = 6;
-            this.btnRemoveAllLogs.Text = "Limpar  Logs";
-            this.btnRemoveAllLogs.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
-            this.btnRemoveAllLogs.UseAccentColor = false;
-            this.btnRemoveAllLogs.UseVisualStyleBackColor = true;
-            this.btnRemoveAllLogs.Click += new System.EventHandler(this.btnRemoveAllLogs_Click);
-            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -628,18 +606,19 @@
             this.tabMain.ResumeLayout(false);
             this.tabConnect.ResumeLayout(false);
             this.tabConnect.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.DgvDevices)).EndInit();
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();
             this.tabOptions.ResumeLayout(false);
+            this.flpOptions.ResumeLayout(false);
+            this.flpOptions.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvLog)).EndInit();
             this.tabUpdate.ResumeLayout(false);
             this.tabUpdate.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.tabAbout.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.ImgAbout)).EndInit();
-            this.flpOptions.ResumeLayout(false);
-            this.flpOptions.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvLog)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -648,7 +627,6 @@
         private System.Windows.Forms.ImageList imageList;
         private MaterialSkin.Controls.MaterialTabControl tabMain;
         private System.Windows.Forms.TabPage tabConnect;
-        private MaterialSkin.Controls.MaterialListView lvDevices;
         private System.Windows.Forms.TabPage tabOptions;
         private MaterialSkin.Controls.MaterialLabel LblThemeColor;
         private MaterialSkin.Controls.MaterialSwitch SwtThemeColor;
@@ -659,13 +637,9 @@
         private MaterialSkin.Controls.MaterialLabel lblAboutVersion;
         private System.Windows.Forms.PictureBox ImgAbout;
         private MaterialSkin.Controls.MaterialTabSelector tbsMainMenu;
-        private System.Windows.Forms.ColumnHeader lvhDeviceName;
-        private System.Windows.Forms.ColumnHeader lvhConnType;
         private MaterialSkin.Controls.MaterialButton btnSearchBluetooth;
         private MaterialSkin.Controls.MaterialButton btnEditDevice;
         private MaterialSkin.Controls.MaterialButton btnConnChanger;
-        public System.Windows.Forms.ColumnHeader lvhDeviceId;
-        public System.Windows.Forms.ColumnHeader lvhConnStatus;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel txtStatus;
         private MaterialSkin.Controls.MaterialListView lvDevicesToUpdate;
@@ -675,6 +649,7 @@
         private System.Windows.Forms.ColumnHeader DeviceLastVersion;
         private System.Windows.Forms.StatusStrip statusStrip1;
         public System.Windows.Forms.ToolStripStatusLabel txtStatusUpdate;
+        public System.Windows.Forms.ToolStripProgressBar progressBarDownload;
         private System.Windows.Forms.FlowLayoutPanel flpOptions;
         private MaterialSkin.Controls.MaterialLabel txtStartOnBoot;
         private MaterialSkin.Controls.MaterialSwitch swtStartOnBoot;
@@ -685,6 +660,7 @@
         private System.Windows.Forms.DataGridViewButtonColumn dgvLogRemove;
         private MaterialSkin.Controls.MaterialLabel txtLog;
         private MaterialSkin.Controls.MaterialButton btnRemoveAllLogs;
+        private System.Windows.Forms.DataGridView DgvDevices;
     }
 }
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -17,6 +18,7 @@ using JJManager.Class.App.Fonts;
 using System.Drawing.Drawing2D;
 using JJDeviceClass = JJManager.Class.Devices.JJDevice;
 using JJManager.Pages.Devices;
+using JJManager.Pages.App;
 
 namespace JJManager
 {
@@ -35,6 +37,7 @@ namespace JJManager
 
         private AppModulesNotifyIcon notifyIcon = null;
         private AppModulesTimer fillListsTimer = null;
+        private AppModulesTimer AutoConnectTimer = null;
 
         #region Constructors
         public Main()
@@ -53,8 +56,6 @@ namespace JJManager
 
             Migrate migrate = new Migrate();
 
-            lvDevices.FullRowSelect = true;
-
             // Events
             FormClosing += new FormClosingEventHandler(Main_FormClosing);
             FormClosed += new FormClosedEventHandler(Main_FormClosed);
@@ -62,18 +63,187 @@ namespace JJManager
             // Start NotifyIcon
             notifyIcon = new AppModulesNotifyIcon(components, "Você continua com dispositivos conectados ao JJManager, para encerrar o programa você deve desconectar todos os dispositivos.", NotifyIcon_Click);
             fillListsTimer = new AppModulesTimer(components, 2000, FillListsTimer_tick);
+            AutoConnectTimer = new AppModulesTimer(components, 2000, AutoConnectTimer_tick);
 
             Shown += Main_Shown;
+            
+            InitializeDeviceGrid();
 
             _DevicesList.CollectionChanged += _DevicesList_CollectionChanged;
             _UpdaterList.CollectionChanged += _UpdaterList_CollectionChanged;
 
             LoadLogData();
-
-            //JJLC01 teste = new JJLC01(this, null);
-            //teste.ShowDialog();
         }
         #endregion
+
+        private void InitializeDeviceGrid()
+        {
+            // Double buffer, to not flick buttons on hover
+            typeof(DataGridView).InvokeMember("DoubleBuffered",
+                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
+                null, DgvDevices, new object[] { true });
+
+            DgvDevices.AutoGenerateColumns = false;
+            DgvDevices.DataSource = null;
+            DgvDevices.EnableHeadersVisualStyles = false;
+
+            DgvDevices.BackgroundColor = MaterialSkinManager.Instance.BackgroundColor;
+            //DgvDevices.ForeColor = MaterialSkinManager.Instance.TextMediumEmphasisColor;
+            //DgvDevices.GridColor = MaterialSkinManager.Instance.BackgroundColor;
+
+            DgvDevices.RowsDefaultCellStyle.SelectionBackColor = materialSkinManager.Theme == MaterialSkinManager.Themes.DARK ? MaterialSkinManager.Instance.BackgroundColor.Lighten((float)0.2) : MaterialSkinManager.Instance.BackgroundColor.Darken((float)0.2);
+            DgvDevices.RowsDefaultCellStyle.SelectionForeColor = MaterialSkinManager.Instance.TextMediumEmphasisColor;
+
+            DgvDevices.RowsDefaultCellStyle.BackColor = MaterialSkinManager.Instance.BackgroundColor;
+            DgvDevices.RowsDefaultCellStyle.ForeColor = MaterialSkinManager.Instance.TextMediumEmphasisColor;
+
+            DgvDevices.ColumnHeadersDefaultCellStyle.SelectionBackColor = MaterialSkinManager.Instance.BackgroundColor;
+            DgvDevices.ColumnHeadersDefaultCellStyle.SelectionForeColor = MaterialSkinManager.Instance.TextMediumEmphasisColor;
+
+
+            DgvDevices.ColumnHeadersDefaultCellStyle.BackColor = MaterialSkinManager.Instance.BackgroundColor;
+            DgvDevices.ColumnHeadersDefaultCellStyle.ForeColor = MaterialSkinManager.Instance.BackgroundAlternativeColor;
+
+            DgvDevices.ColumnHeadersDefaultCellStyle.Font = new Font(DgvDevices.ColumnHeadersDefaultCellStyle.Font, FontStyle.Bold);
+            DgvDevices.ColumnHeadersDefaultCellStyle.Padding = new Padding(0, 5, 0, 5);
+            DgvDevices.AdvancedColumnHeadersBorderStyle.Right = DataGridViewAdvancedCellBorderStyle.None;
+            DgvDevices.AdvancedColumnHeadersBorderStyle.Left = DataGridViewAdvancedCellBorderStyle.None;
+            DgvDevices.AdvancedColumnHeadersBorderStyle.Top = DataGridViewAdvancedCellBorderStyle.None;
+
+            DgvDevices.Columns.Add("ConnId", "ID");
+            DgvDevices.Columns.Add("ProductName", "Dispositivo");
+            DgvDevices.Columns.Add("DeviceType", "Conexão");
+            DgvDevices.Columns.Add("IsConnected", "Status");
+
+            DgvDevices.Columns["ConnId"].MinimumWidth = 100;
+            DgvDevices.Columns["ProductName"].MinimumWidth = 200;
+            DgvDevices.Columns["DeviceType"].MinimumWidth = 75;
+            DgvDevices.Columns["IsConnected"].MinimumWidth = 100;
+
+            // Add checkbox column
+            DataGridViewCheckBoxColumn chkColumn = new DataGridViewCheckBoxColumn();
+            chkColumn.HeaderText = "Auto Conectar";
+            chkColumn.Name = "AutoConnect";
+            DgvDevices.Columns.Add(chkColumn);
+            DgvDevices.Columns["AutoConnect"].MinimumWidth = 110;
+
+            DgvDevices.CellClick += DgvDevices_CellClick;
+            DgvDevices.CellMouseEnter += DgvDevices_CellMouseEnter;
+            DgvDevices.CellMouseLeave += DgvDevices_CellMouseLeave;
+            DgvDevices.CellPainting += DgvDevices_CellPainting;
+            DgvDevices.MouseMove += DgvDevices_MouseMove;
+            DgvDevices.SelectionChanged += DgvDevices_SelectionChanged;
+        }
+
+        private void DgvDevices_SelectionChanged(object sender, EventArgs e)
+        {
+            if (DgvDevices.SelectedRows.Count == 0)
+            {
+                btnConnChanger.Enabled = false;
+                btnEditDevice.Enabled = false;
+                btnConnChanger.Text = "Conectar/Desconectar";
+                return;
+            }
+
+            if ((bool)DgvDevices.SelectedRows[0].Cells[4].Value)
+            {
+                btnConnChanger.Enabled = false;
+                btnEditDevice.Enabled = true;
+                btnConnChanger.Text = "Auto Conectar Habilitada";
+                return;
+            }
+
+            JJDeviceClass deviceSelected = null;
+            string id = DgvDevices.SelectedRows[0].Cells[0].Value.ToString();
+
+            switch (DgvDevices.SelectedRows[0].Cells[2].Value.ToString())
+            {
+                case "Bluetooth":
+                    //deviceSelected = _BtDevicesList.First(device => device.ConnId == id);
+                    break;
+                case "HID":
+                    deviceSelected = _DevicesList.First(device => device.ConnId == id);
+                    break;
+            }
+
+            btnConnChanger.Text = deviceSelected.IsConnected ? "Desconectar" : "Conectar";
+            btnConnChanger.Enabled = true;
+            btnEditDevice.Enabled = true;
+        }
+
+        private void DgvDevices_MouseMove(object sender, MouseEventArgs e)
+        {
+            //throw new NotImplementedException();
+        }
+
+        private void DgvDevices_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            //throw new NotImplementedException();
+        }
+
+        private void DgvDevices_CellMouseLeave(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void DgvDevices_CellMouseEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            //if (e.RowIndex >= 0)
+            //{
+            //    DgvDevices.ClearSelection();
+            //    DgvDevices.Rows[e.RowIndex].Selected = true;
+            //}
+        }
+
+        private void DgvDevices_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                DgvDevices.Rows[e.RowIndex].Selected = true;
+            }
+
+            LvDevicesIndex = e.RowIndex;
+
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                LvDevicesIndex = e.RowIndex;
+
+                if (DgvDevices.Columns[e.ColumnIndex].Name == "AutoConnect")
+                {
+                    var cell = DgvDevices.Rows[e.RowIndex].Cells[e.ColumnIndex];
+                    bool currentValue = Convert.ToBoolean(cell.Value);
+                    cell.Value = !currentValue;
+                    
+                    for (int i = 0; i < _DevicesList.Count; i++)
+                    {
+                        if (_DevicesList[i].ConnId == DgvDevices.Rows[e.RowIndex].Cells[0].Value.ToString())
+                        {
+                            _DevicesList[i].AutoConnect = !currentValue;
+                            
+                            if (_DevicesList[i].AutoConnect)
+                            {
+                                btnConnChanger.Enabled = false;
+                                btnConnChanger.Text = "Auto Conectar Habilitado";
+                                break;
+                            }
+                            else if (_DevicesList[i].IsConnected)
+                            {
+                                btnConnChanger.Enabled = true;
+                                btnConnChanger.Text = "Desconectar";
+                                break;
+                            }
+                            else if (_DevicesList[i].IsConnected)
+                            {
+                                btnConnChanger.Enabled = true;
+                                btnConnChanger.Text = "Conectar";
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
 
         #region Collections
         private void _DevicesList_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -93,13 +263,13 @@ namespace JJManager
                             updater.CheckUpdate(device);
                             _UpdaterList.Add(updater);
 
-                            lvDevices.Items.Add(new ListViewItem(new string[]
-                            {
+                            DgvDevices.Rows.Add(
                                 device.ConnId,
                                 device.ProductName,
                                 device.DeviceType.ToString(),
-                                device.IsConnected ? "Conectado" : "Desconectado"
-                            }));
+                                device.IsConnected ? "Conectado" : "Desconectado",
+                                device.AutoConnect // default unchecked
+                            );
                         });
                     }
                     else
@@ -108,13 +278,13 @@ namespace JJManager
                         updater.CheckUpdate(device);
                         _UpdaterList.Add(updater);
 
-                        lvDevices.Items.Add(new ListViewItem(new string[]
-                            {
-                                device.ConnId,
-                                device.ProductName,
-                                device.DeviceType.ToString(),
-                                device.IsConnected ? "Conectado" : "Desconectado"
-                            }));
+                        DgvDevices.Rows.Add(
+                            device.ConnId,
+                            device.ProductName,
+                            device.DeviceType.ToString(),
+                            device.IsConnected ? "Conectado" : "Desconectado",
+                            device.AutoConnect // default unchecked
+                        );
                     }
                 }
             }
@@ -129,11 +299,11 @@ namespace JJManager
                             JJDeviceClass device = oldItem as JJDeviceClass;
                             device.PropertyChanged -= Device_PropertyChanged;
 
-                            for (int i = 0; i < lvDevices.Items.Count; i++)
+                            for (int i = 0; i < DgvDevices.Rows.Count; i++)
                             {
-                                if (lvDevices.Items[i].SubItems[0].Text == device.ConnId)
+                                if (DgvDevices.Rows[i].Cells[0].Value.ToString() == device.ConnId)
                                 {
-                                    lvDevices.Items[i].Remove();
+                                    DgvDevices.Rows.Remove(DgvDevices.Rows[i]);
                                 }
                             }
                         });
@@ -143,11 +313,11 @@ namespace JJManager
                         JJDeviceClass device = oldItem as JJDeviceClass;
                         device.PropertyChanged -= Device_PropertyChanged;
 
-                        for (int i = 0; i < lvDevices.Items.Count; i++)
+                        for (int i = 0; i < DgvDevices.Rows.Count; i++)
                         {
-                            if (lvDevices.Items[i].SubItems[0].Text == device.ConnId)
+                            if (DgvDevices.Rows[i].Cells[0].Value.ToString() == device.ConnId)
                             {
-                                lvDevices.Items[i].Remove();
+                                DgvDevices.Rows.Remove(DgvDevices.Rows[i]);
                             }
                         }
                     }
@@ -261,11 +431,23 @@ namespace JJManager
                 BeginInvoke((MethodInvoker)delegate
                 {
                     ChangeDeviceConnection(device.ConnId, device.IsConnected, true);
+
+                    // Update updater list when device disconnects
+                    if (!device.IsConnected)
+                    {
+                        UpdateUpdaterList();
+                    }
                 });
             }
             else
             {
                 ChangeDeviceConnection(device.ConnId, device.IsConnected, true);
+
+                // Update updater list when device disconnects
+                if (!device.IsConnected)
+                {
+                    UpdateUpdaterList();
+                }
             }
 
         }
@@ -320,7 +502,7 @@ namespace JJManager
 
         public async void UpdateUpdaterList(bool initialization = false)
         {
-            List<string> listToRemove = await JJManager.Class.App.Updater.GetUnavailableListEnties(_UpdaterList);
+            List<string> listToRemove = await JJManager.Class.App.Updater.GetUnavailableListEnties(_UpdaterList, _DevicesList);
             List<JJManager.Class.App.Updater> listToAdd = await JJManager.Class.App.Updater.GetAvailableListEntries(_UpdaterList);
 
             listToRemove.ForEach(updaterToRemove =>
@@ -355,7 +537,7 @@ namespace JJManager
 
         public bool ChangeDeviceConnection(string connId, bool connectionStatus, bool updateListStatusOnly = false)
         {
-            int selectedLvDevicesIndex = lvDevices.SelectedIndices[0];
+            int selectedLvDevicesIndex = -1;
             int selectedDeviceObjIndex = -1;
             bool successfullyChanged = false;
 
@@ -370,10 +552,14 @@ namespace JJManager
                         if (connectionStatus)
                         {
                             successfullyChanged = _DevicesList[j].Connect();
+                            selectedLvDevicesIndex = j;
+                            break;
                         }
                         else
                         {
                             successfullyChanged = _DevicesList[j].Disconnect();
+                            selectedLvDevicesIndex = j;
+                            break;
                         }
                     }
                 }
@@ -381,7 +567,15 @@ namespace JJManager
 
             if (successfullyChanged || updateListStatusOnly)
             {
-                lvDevices.Items[selectedLvDevicesIndex].SubItems[3].Text = (_DevicesList[selectedDeviceObjIndex].IsConnected ? "Conectado" : "Desconectado");
+                for (int i = 0; i < DgvDevices.Rows.Count; i++)
+                {
+                    if (DgvDevices.Rows[i].Cells[0].Value.ToString() == connId)
+                    {
+                        DgvDevices.Rows[i].Cells[3].Value = (_DevicesList[selectedDeviceObjIndex].IsConnected ? "Conectado" : "Desconectado");
+                        DgvDevices.Rows[i].Cells[4].Value = _DevicesList[selectedDeviceObjIndex].AutoConnect;
+                    }
+                }
+                //lvDevices.Items[selectedLvDevicesIndex].SubItems[3].Text = (_DevicesList[selectedDeviceObjIndex].IsConnected ? "Conectado" : "Desconectado");
                 return true;
             }
 
@@ -404,7 +598,7 @@ namespace JJManager
             {
                 if (control.Name == "btnConnChanger")
                 {
-                    control.Enabled = lvDevices.SelectedIndices.Count > 0 ? true : false;
+                    control.Enabled = DgvDevices.SelectedRows.Count > 0 ? true : false;
                 }
                 else if (control.Name == "BtnUpdateDevice")
                 {
@@ -581,6 +775,36 @@ namespace JJManager
                 }
             });
         }
+
+        private void AutoConnectTimer_tick(object sender, EventArgs e)
+        {
+            Task.Run(() =>
+            {
+                if (InvokeRequired)
+                {
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        for (int i = 0; i < _DevicesList.Count; i++)
+                        {
+                            if (!_DevicesList[i].IsConnected && _DevicesList[i].AutoConnect && _DevicesList[i].Version != null)
+                            {
+                                ChangeDeviceConnection(_DevicesList[i].ConnId, true);
+                            }
+                        }
+                    });
+                }
+                else
+                {
+                    for (int i = 0; i < _DevicesList.Count; i++)
+                    {
+                        if (!_DevicesList[i].IsConnected && _DevicesList[i].AutoConnect && _DevicesList[i].Version != null)
+                        {
+                            ChangeDeviceConnection(_DevicesList[i].ConnId, true);
+                        }
+                    }
+                }
+            });
+        }
         #endregion
 
         #region ButtonEvents
@@ -636,7 +860,7 @@ namespace JJManager
                             DisableAllForms();
                         });
 
-                        DialogResult dialogResult = MessageBox.Show("Você deseja realizar a " + whatIsUpdating + " '" + updater.Name + "'?", whatIsUpdating.ToUpperInvariant(), MessageBoxButtons.YesNo);
+                        DialogResult dialogResult = Pages.App.MessageBox.Show(this, "Atualização Disponível", "Você deseja realizar a " + whatIsUpdating + " '" + updater.Name + "'?", MessageBoxButtons.YesNo);
 
                         if (dialogResult == DialogResult.Yes)
                         {
@@ -665,22 +889,28 @@ namespace JJManager
 
         private void btnConnChanger_Click(object sender, EventArgs e)
         {
-            if (lvDevices.SelectedIndices.Count == 0)
+            if (DgvDevices.SelectedRows.Count == 0)
             {
                 return;
             }
 
-            int lvDeviceSelected = lvDevices.SelectedIndices[0];
+            int lvDeviceSelected = DgvDevices.SelectedRows[0].Index;
+            
+            string id = DgvDevices.Rows[lvDeviceSelected].Cells[0].Value.ToString();
 
-            string id = lvDevices.Items[lvDeviceSelected].SubItems[0].Text;
-            bool actualConnectionStatus = (lvDevices.Items[lvDeviceSelected].SubItems[3].Text == "Conectado");
+            if ((bool) DgvDevices.Rows[lvDeviceSelected].Cells[4].Value)
+            {
+                return;
+            }
+
+            bool actualConnectionStatus = (DgvDevices.Rows[lvDeviceSelected].Cells[3].Value.ToString() == "Conectado");
 
             btnConnChanger.Enabled = false;
             btnConnChanger.Text = (!actualConnectionStatus ? "Conectando..." : "Desconectando...");
 
             ChangeDeviceConnection(id, !actualConnectionStatus);
 
-            actualConnectionStatus = (lvDevices.Items[lvDeviceSelected].SubItems[3].Text == "Conectado");
+            actualConnectionStatus = (DgvDevices.Rows[lvDeviceSelected].Cells[3].Value.ToString() == "Conectado");
 
             btnConnChanger.Text = (!actualConnectionStatus ? "Conectar" : "Desconectar");
             btnConnChanger.Enabled = true;
@@ -688,15 +918,15 @@ namespace JJManager
 
         private void btnEditDevice_Click(object sender, EventArgs e)
         {
-            if (lvDevices.SelectedIndices.Count == 0)
+            if (DgvDevices.SelectedRows.Count == 0)
             {
                 return;
             }
 
             JJDeviceClass deviceSelected = null;
-            string id = lvDevices.SelectedItems[0].SubItems[0].Text;
+            string id = DgvDevices.SelectedRows[0].Cells[0].Value.ToString();
 
-            switch (lvDevices.SelectedItems[0].SubItems[2].Text)
+            switch (DgvDevices.SelectedRows[0].Cells[2].Value.ToString())
             {
                 case "Bluetooth":
                     //deviceSelected = _BtDevicesList.First(device => device.ConnId == id);
@@ -713,7 +943,7 @@ namespace JJManager
         {
             txtStatus.Text = "Buscando dispositivos bluetooth...";
 
-            DialogResult dialogResult = MessageBox.Show("Ao realizar a busca por dispositivos JohnJohn 3D via bluetooth, o JJManager pode parar de responder por alguns segundos até concluir a busca, deseja continuar?", "Busca de dispositivos bluetooth", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = Pages.App.MessageBox.Show(this, "Busca de dispositivos bluetooth", "Ao realizar a busca por dispositivos JohnJohn 3D via bluetooth, o JJManager pode parar de responder por alguns segundos até concluir a busca, deseja continuar?", MessageBoxButtons.YesNo);
 
             if (dialogResult == DialogResult.Yes)
             {
@@ -732,7 +962,7 @@ namespace JJManager
 
         private void btnRemoveAllLogs_Click(object sender, EventArgs e)
         {
-            DialogResult dialogResult = MessageBox.Show("Você deseja realizar a limpeza de todos os logs? Lembre-se que esta ação é irreversível.", "Limpeza de logs", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = Pages.App.MessageBox.Show(this, "Limpeza de logs", "Você deseja realizar a limpeza de todos os logs? Lembre-se que esta ação é irreversível.", MessageBoxButtons.YesNo);
 
             if (dialogResult == DialogResult.Yes)
             {
@@ -754,7 +984,7 @@ namespace JJManager
 
                 if (e.ColumnIndex == dgvLog.Columns["dgvLogRemove"].Index) // Index of your button column
                 {
-                    DialogResult result = MessageBox.Show($"Você deseja excluir o log do módulo '{moduleName}'?", "Confirmação de exclusão", MessageBoxButtons.YesNo);
+                    DialogResult result = Pages.App.MessageBox.Show(this, "Confirmação de exclusão", $"Você deseja excluir o log do módulo '{moduleName}'?", MessageBoxButtons.YesNo);
 
                     if (result == DialogResult.Yes)
                     {
@@ -787,6 +1017,8 @@ namespace JJManager
             SwtThemeColor.Checked = ConfigClass.Theme.SelectedTheme == MaterialSkinManager.Themes.DARK ? true : false;
             swtStartOnBoot.Checked = ConfigClass.StartOnBoot.OnBoot;
 
+            CleanDownloadFiles();
+
             CheckDevicesList();
             UpdateUpdaterList(true);
 
@@ -794,33 +1026,6 @@ namespace JJManager
             EnableAllForms();
         }
 
-        private void lvDevices_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (lvDevices.SelectedIndices.Count == 0)
-            {
-                btnConnChanger.Enabled = false;
-                btnEditDevice.Enabled = false;
-                btnConnChanger.Text = "Conectar/Desconectar";
-                return;
-            }
-
-            JJDeviceClass deviceSelected = null;
-            string id = lvDevices.SelectedItems[0].SubItems[0].Text;
-
-            switch (lvDevices.SelectedItems[0].SubItems[2].Text)
-            {
-                case "Bluetooth":
-                    //deviceSelected = _BtDevicesList.First(device => device.ConnId == id);
-                    break;
-                case "HID":
-                    deviceSelected = _DevicesList.First(device => device.ConnId == id);
-                    break;
-            }
-
-            btnConnChanger.Text = deviceSelected.IsConnected ? "Desconectar" : "Conectar";
-            btnConnChanger.Enabled = true;
-            btnEditDevice.Enabled = true;
-        }
 
         private void lvDevicesToUpdate_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -877,6 +1082,40 @@ namespace JJManager
         }
         #endregion
 
+        #region PrivateFunctions
+        /// <summary>
+        /// Clean download files on JJManager initialization
+        /// </summary>
+        private void CleanDownloadFiles()
+        {
+            try
+            {
+                string downloadPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "JohnJohn3D", "JJManager", "downloads");
+
+                if (Directory.Exists(downloadPath))
+                {
+                    DirectoryInfo di = new DirectoryInfo(downloadPath);
+
+                    foreach (FileInfo file in di.GetFiles())
+                    {
+                        try
+                        {
+                            file.Delete();
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Insert("Main", $"Erro ao deletar arquivo de download '{file.Name}'", ex);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Insert("Main", "Erro ao limpar pasta de downloads", ex);
+            }
+        }
+        #endregion
+
         #region PublicFunctions
         /// <summary>
         /// Used to go to update tab when has a new update of JJManager
@@ -886,5 +1125,6 @@ namespace JJManager
             tabMain.SelectedTab = tabMain.TabPages[2];
         }
         #endregion
+
     }
 }

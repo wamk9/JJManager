@@ -1,4 +1,4 @@
-﻿using AudioSwitcher.AudioApi.Session;
+﻿using NAudio.CoreAudioApi;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,21 +10,30 @@ namespace JJManager.Class.App.Input.AudioController
     public class AudioSession
     {
         public string Executable {  get; set; }
-        public List<IAudioSession> Sessions { get; set; }
+        public List<AudioSessionControl> Sessions { get; set; }
+        public List<int> PID { get; set; }
 
         public AudioSession (string executable)
         {
             Executable = executable;
-            Sessions = new List<IAudioSession> ();
+            PID = new List<int>();
+            Sessions = new List<AudioSessionControl> ();
         }
 
-        public void Add(IAudioSession session)
+        public void Add(AudioSessionControl session)
         {
             Sessions.Add (session);
         }
 
+        public void Add(int pid)
+        {
+            PID.Add(pid);
+        }
+
+
         public void Clear()
         {
+            PID.Clear();
             Sessions.Clear();
         }
     }

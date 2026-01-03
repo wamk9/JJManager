@@ -34,7 +34,12 @@ namespace JJManager.Class.Devices
 
         public JJHL01 (HidDevice hidDevice) : base (hidDevice) 
         {
-            _actionSendingData = () => { ActionSendingData(); };
+            RestartClass();
+        }
+        private void RestartClass()
+        {
+            _actionSendingData = () => { Task.Run(() => ActionSendingData()); };
+            _actionResetParams = () => { Task.Run(() => RestartClass()); };
         }
 
         private void ActionSendingData()
@@ -58,7 +63,6 @@ namespace JJManager.Class.Devices
 
                 foreach (var device in enumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active))
                 {
-                    Console.WriteLine(device.AudioMeterInformation.MasterPeakValue);
                     maxPeak = Math.Max(maxPeak, (int)Math.Round(device.AudioMeterInformation.MasterPeakValue * 255));
                 }
 
@@ -152,7 +156,6 @@ namespace JJManager.Class.Devices
 
             string messageToSend = JsonSerializer.Serialize(data);
 
-            Console.WriteLine(messageToSend);
             result = SendHIDData(messageToSend, false, 300).Result;
 
             return result;

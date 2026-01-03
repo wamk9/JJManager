@@ -60,7 +60,10 @@ namespace JJManager.Class
             _versions.Add(new Version(1, 2, 4));
             _versions.Add(new Version(1, 2, 5));
             _versions.Add(new Version(1, 2, 6));
-            _versions.Add(new Version(1, 2, 6, 1)); // Last Version
+            _versions.Add(new Version(1, 2, 6, 1));
+            _versions.Add(new Version(1, 2, 7));
+            _versions.Add(new Version(1, 2, 8));
+            _versions.Add(new Version(1, 2, 9)); // Last Version
         }
 
         private void ExecuteMigration (Version actual_version)
@@ -87,20 +90,16 @@ namespace JJManager.Class
                         {
                             type.GetMethod("ExecuteMigration").Invoke(null, null);
                         }
-                        else
-                        {
-                            Console.WriteLine("Class not found.");
-                        }
 
                         if (_versions.Last() == actual_version)
                         {
-                            MessageBox.Show("Banco de Dados atualizado para a versão " + actual_version.ToString());
+                            Pages.App.MessageBox.Show(null, "Banco de Dados Atualizado", "Banco de Dados atualizado para a versão " + actual_version.ToString());
                         }
                     }
                     else
                     {
                         //_database.RestoreBackup(actual_version);
-                        MessageBox.Show("Ocorreu um erro na atualização do banco de dados para a versão " + version.ToString() + ".");
+                        Pages.App.MessageBox.Show(null, "Erro na Atualização", "Ocorreu um erro na atualização do banco de dados para a versão " + version.ToString() + ".");
                     }
                 }
             }

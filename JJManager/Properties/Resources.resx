@@ -205,15 +205,6 @@
   <data name="SQL_1_2_3_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\MigrateQuerys\1_2_3_1 .sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;iso-8859-1</value>
   </data>
-  <data name="Font_Awesome_6_Brands_Regular_400" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Font Awesome 6 Brands-Regular-400.otf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="Font_Awesome_6_Free_Regular_400" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Font Awesome 6 Free-Regular-400.otf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="Font_Awesome_6_Free_Solid_900" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Font Awesome 6 Free-Solid-900.otf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="SQL_1_2_4" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\1_2_4 .sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
@@ -224,6 +215,48 @@
     <value>..\MigrateQuerys\1_2_6 .sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
   <data name="SQL_1_2_6_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\MigrateQuerys\1_2_6 _1 .sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+    <value>..\MigrateQuerys\1_2_6_1.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="SQL_1_2_7" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\MigrateQuerys\1_2_7.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="JJDB01_base" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\JJDB01_base.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="JJDB01_led" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\JJDB01_led.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SQL_1_2_8" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\MigrateQuerys\1_2_8 .sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="JJB_Slim_A" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\JJB-Slim_A.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="JJB_Slim_A_active" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\JJB-Slim_A_active.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="JJB_Slim_A_hover" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\JJB-Slim_A_hover.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SQL_1_2_9" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\MigrateQuerys\1_2_9 .sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="JJDB01_led_hover" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\JJDB01_led_hover.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="fa_brands_400" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\fa-brands-400.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="fa_regular_400" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\fa-regular-400.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="fa_solid_900" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\fa-solid-900.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="JJDB01_dashboard_vars" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\JJDB01_dashboard_vars.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="JJPropertyDictionary" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Config\JJPropertyDictionary.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

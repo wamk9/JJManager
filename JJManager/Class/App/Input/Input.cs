@@ -114,7 +114,7 @@ namespace JJManager.Class.App.Input
             return InputType.None;
         }
 
-        public Input (uint profileId, uint inputId)
+        public Input(uint profileId, uint inputId)
         {
             _id = inputId;
             _profileId = profileId;
@@ -254,7 +254,9 @@ namespace JJManager.Class.App.Input
                         AudioController.SettedVolume = jsonData["value"].GetValue<int>();
                     }
 
-                    Task.Run (async () => await AudioController.ChangeVolume()).Wait(1000);
+                    // Fire and forget - don't block or create unnecessary threads
+                    // AudioController.ChangeVolume() handles its own async operations
+                    AudioController.ChangeVolume().Wait();
                     break;
                 case InputMode.AudioPlayer:
                     _audioPlayer.PlayAudio();

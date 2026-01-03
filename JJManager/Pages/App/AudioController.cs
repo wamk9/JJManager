@@ -1,4 +1,4 @@
-﻿using AudioSwitcher.AudioApi.CoreAudio;
+﻿using NAudio.CoreAudioApi;
 using JJManager.Class;
 using MaterialSkin;
 using MaterialSkin.Controls;
@@ -16,7 +16,7 @@ namespace JJManager.Pages.App
 {
     public partial class AudioController : MaterialForm
     {
-        List<CoreAudioDevice> devices = new CoreAudioController().GetDevices().ToList();
+        List<MMDevice> devices = new MMDeviceEnumerator().EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active).ToList();
         Dictionary<string, string> inputParams = new Dictionary<string, string>();
         JJManager.Class.App.WaitForm waitForm = new JJManager.Class.App.WaitForm();
 
@@ -161,10 +161,10 @@ namespace JJManager.Pages.App
         private void UpdateDevicesToChkBox()
         {
             cklDevices.Items.Clear();
-            
-            foreach (CoreAudioDevice device in devices)
+
+            foreach (MMDevice device in devices)
             {
-                cklDevices.Items.Add(device.Name + " - " + device.InterfaceName + " (" + device.Id + ")");
+                cklDevices.Items.Add(device.FriendlyName + " - " + device.DeviceFriendlyName + " (" + device.ID + ")");
             }
         }
 
@@ -275,7 +275,7 @@ namespace JJManager.Pages.App
         {
             DisableAllForms();
 
-            DialogResult insertExecutables = MessageBox.Show("Ao executarmos essa opção, TODOS os executáveis da pasta selecionada (incluindo suas subpastas) serão inseridos na lista do input '" + _profile.Inputs[_IdInput].Name + "', você deseja continuar o processo? Lembrando que pode ser que o JJManager pare de responder durante esse processo.", "Inserção de listagem de executáveis", MessageBoxButtons.YesNo);
+            DialogResult insertExecutables = Pages.App.MessageBox.Show(this, "Inserção de listagem de executáveis", "Ao executarmos essa opção, TODOS os executáveis da pasta selecionada (incluindo suas subpastas) serão inseridos na lista do input '" + _profile.Inputs[_IdInput].Name + "', você deseja continuar o processo? Lembrando que pode ser que o JJManager pare de responder durante esse processo.", MessageBoxButtons.YesNo);
 
             if (insertExecutables == DialogResult.No)
             {
@@ -369,7 +369,7 @@ namespace JJManager.Pages.App
             DisableAllForms();
             waitForm.Show(this);
 
-            DialogResult result = MessageBox.Show("Deseja mesmo deletar " + (itemsToExclude.Count > 1 ? "os " + itemsToExclude.Count + " items" : "o item") + " selecionado?", "Exclusão de itens", MessageBoxButtons.YesNo);
+            DialogResult result = Pages.App.MessageBox.Show(this, "Exclusão de itens", "Deseja mesmo deletar " + (itemsToExclude.Count > 1 ? "os " + itemsToExclude.Count + " items" : "o item") + " selecionado?", MessageBoxButtons.YesNo);
 
             if (result == DialogResult.Yes)
             {

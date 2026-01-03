@@ -80,7 +80,7 @@ namespace JJManager.Class.App
 
             if (simHubWebsocket != null && !simHubWebsocket.IsConnected)
             {
-                simHubWebsocket.StartCommunication();
+                simHubWebsocket.StartCommunication(false);
             }
 
             int attemptsToGetVersion = 0;

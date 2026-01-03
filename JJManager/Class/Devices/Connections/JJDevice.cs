@@ -36,6 +36,7 @@ namespace JJManager.Class.Devices
         protected string _productId = null; // ID in jj_products table
         protected string _productName = null; // Name of product in jj_products table
         protected Type _type = Type.Unsetted;
+        protected HashSet<ushort> _cmds = new HashSet<ushort>(); // Set of connection commands that this device supports
         #endregion
 
         #region VariablesOfUser
@@ -48,13 +49,20 @@ namespace JJManager.Class.Devices
         protected Version _version = null; // Actual firmware of this device, necessary to update or connect in a especific device
         protected bool _sendInProgress = false; // Used when any data are going to device
         protected bool _receiveInProgress = false; // Used when JJManager is wating to receive anything of device
+        protected bool _requestInProgress = false; // Used when JJManager is requesting anything of device
+        protected bool _cancelAutoConnect = false; // If has a error, cancel auto connection
         #endregion
 
         #region ThreadVariables
         protected Action _actionSendingData = null;
         protected Action _actionReceivingData = null;
+        protected Action _actionResetParams = null;
         protected Thread _threadSendingData = null; // Responsable to send data to device
         protected Thread _threadReceivingData = null; // Responsable to receive data from device
+        protected Thread _threadResetParams = null; // Responsable to reset connection params from device
+        protected Task _taskReceivingData = null;
+        protected Task _taskSendingData = null;
+        protected Task _taskResetParams = null;
         #endregion
 
         #region FormsToWork
@@ -100,11 +108,96 @@ namespace JJManager.Class.Devices
         {
             get => _isConnected;
         }
+        public bool AutoConnect
+        {
+            get => _autoConn;
+            set => SetAutoConnection(value);
+        }
+
+        public bool IsAutoConnectCancelled
+        {
+            get => _cancelAutoConnect;
+            set => _cancelAutoConnect = value;
+        }
         #endregion
 
         public JJDevice()
         {
             _dbConnection = new DatabaseConnection();
+        }
+
+        private void SetAutoConnection(bool autoConn)
+        {
+            _autoConn = autoConn;
+
+            string sql = $@"UPDATE dbo.user_products SET auto_connect = {(_autoConn ? 1 : 0)} WHERE conn_id = '{_connId}' AND id_product = '{_productId}'";
+
+            if (_dbConnection.RunSQL(sql))
+            {
+                // OK
+            }
+        }
+
+        protected Version TranslateVersion(string version)
+        {
+            if (version == null || version == string.Empty)
+            {
+                return null;
+            }
+
+            Version translatedVersion = null;
+
+            string[] versionSplitted = version.Split('.');
+
+            switch (versionSplitted.Length)
+            {
+                case 1:
+                    translatedVersion = new Version(int.Parse(versionSplitted[0]), 0);
+                    break;
+                case 2:
+                    translatedVersion = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]));
+                    break;
+                case 3:
+                    translatedVersion = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]), int.Parse(versionSplitted[2]));
+                    break;
+                case 4:
+                    translatedVersion = new Version(int.Parse(versionSplitted[0]), int.Parse(versionSplitted[1]), int.Parse(versionSplitted[2]), int.Parse(versionSplitted[3]));
+                    break;
+                default:
+                    translatedVersion = null;
+                    break;
+            }
+
+            return translatedVersion;
+        }
+        protected void GetAutoConnection()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_connId))
+                {
+                    throw new ArgumentNullException("_connId", "Necessary product connection ID to check if auto connection is enabled");
+                }
+
+                if (string.IsNullOrEmpty(_productId))
+                {
+                    throw new ArgumentNullException("_productId", "Necessary product ID to check if auto connection is enabled");
+                }
+
+                string sql = $"SELECT auto_connect FROM dbo.user_products WHERE conn_id = '{_connId}' AND id_product = '{_productId}';";
+
+                foreach (JsonObject obj in _dbConnection.RunSQLWithResults(sql))
+                {
+                    if (obj.ContainsKey("auto_connect"))
+                    {
+                        _autoConn = Boolean.Parse(obj["auto_connect"].GetValue<string>());
+                    }
+                }
+            }
+            catch (ArgumentNullException ex)
+            {
+                Log.Insert("Device", $"Ocorreu um problema ao tentarmos buscar se o produto '{_productName}' possui auto conexão habilitada", ex);
+            }
         }
 
         public static string GetClassNameFromDB(string productName, string connType)
@@ -178,8 +271,8 @@ namespace JJManager.Class.Devices
             }
             else
             {
-                MessageBox.Show("Este dispositivo ainda não é compatível com o JJManager, aguarde pelas próximas versões do software para tentar novamente.");
-                Console.WriteLine($"Class '{className}' not found.");
+                Pages.App.MessageBox.Show(parent, "Dispositivo Incompatível", "Este dispositivo ainda não é compatível com o JJManager, aguarde pelas próximas versões do software para tentar novamente.");
+                //Console.WriteLine($"Class '{className}' not found.");
             }
 
             parent.Visible = true;
@@ -197,22 +290,27 @@ namespace JJManager.Class.Devices
                 return true;
             }
 
-            if (_actionReceivingData != null)
+            // Start receiving task only if not already running
+            if (_actionReceivingData != null && (_taskReceivingData == null || _taskReceivingData.IsCompleted))
             {
-                _threadReceivingData = new Thread(new ThreadStart(_actionReceivingData));
-                _threadReceivingData.TrySetApartmentState(ApartmentState.STA);
-                _threadReceivingData.Start();
+                _taskReceivingData = Task.Run(_actionReceivingData);
             }
 
-            if (_actionSendingData != null)
+            // Start sending task only if not already running
+            if (_actionSendingData != null && (_taskSendingData == null || _taskSendingData.IsCompleted))
             {
-                _threadSendingData = new Thread(new ThreadStart(_actionSendingData));
-                _threadSendingData.TrySetApartmentState(ApartmentState.STA);
-                _threadSendingData.Start();
-
+                _taskSendingData = Task.Run(_actionSendingData);
             }
 
-            if (_threadReceivingData?.ThreadState == ThreadState.Running || _threadSendingData?.ThreadState == ThreadState.Running)
+            // Start reset params task only if not already running
+            if (_actionResetParams != null && (_taskResetParams == null || _taskResetParams.IsCompleted))
+            {
+                _taskResetParams = Task.Run(_actionResetParams);
+            }
+
+            if (_taskReceivingData != null && !_taskReceivingData.IsCompleted ||
+                _taskSendingData != null && !_taskSendingData.IsCompleted ||
+                _taskResetParams != null && !_taskResetParams.IsCompleted)
             {
                 _isConnected = true;
                 OnPropertyChanged("IsConnected");
@@ -223,9 +321,37 @@ namespace JJManager.Class.Devices
 
         public virtual bool Disconnect()
         {
-            _threadReceivingData = null;
-            _threadSendingData = null;
+            // Signal disconnection first
             _isConnected = false;
+
+            // Wait for Threads to stop (legacy support)
+            _threadReceivingData?.Join();
+            _threadSendingData?.Join();
+            _threadResetParams?.Join();
+
+            // Wait for Tasks to complete (with 5 second timeout each)
+            try
+            {
+                _taskReceivingData?.Wait(5000);
+                _taskSendingData?.Wait(5000);
+                _taskResetParams?.Wait(5000);
+            }
+            catch (AggregateException)
+            {
+                // Tasks were cancelled or timed out - this is expected
+            }
+
+            // Reset tasks to null to prevent reuse
+            _taskReceivingData = null;
+            _taskSendingData = null;
+            _taskResetParams = null;
+
+            // Run reset action if defined
+            if (_actionResetParams != null)
+            {
+                _taskResetParams = Task.Run(_actionResetParams);
+            }
+
             GC.Collect();
             GC.WaitForPendingFinalizers();
             OnPropertyChanged("IsConnected");
@@ -384,12 +510,12 @@ namespace JJManager.Class.Devices
                             return true;
                         }
                     }
-                    MessageBox.Show("O seu dispositivo '" + _productName + "' encontra-se na versão '" + (_version == null ? "Não identif." : _version.ToString()) + "' que não é mais compatível com o JJManager, para continuar utilizando todos os seus recursos realize a atualização do firmware do mesmo na aba 'Atualizações'\n\nPara conectar '" + _productName + "' você precisará da versão de firmeware '" + deviceCompatibleVersion.ToString() + "'\n\n" + "Para conectar '" + _productName + "' você precisará ao menos da versão de firmware '" + deviceCompatibleVersion.ToString() + "'", "Dispositivo desatualizado");
+                    Pages.App.MessageBox.Show(null, "Dispositivo Desatualizado", "O seu dispositivo '" + _productName + "' encontra-se na versão '" + (_version == null ? "Não identif." : _version.ToString()) + "' que não é mais compatível com o JJManager, para continuar utilizando todos os seus recursos realize a atualização do firmware do mesmo na aba 'Atualizações'\n\nPara conectar '" + _productName + "' você precisará da versão de firmeware '" + deviceCompatibleVersion.ToString() + "'");
                     return false;
                 }
             }
 
-            MessageBox.Show("Parece que o seu dispositivo '" + _productName + "' ainda não é compatível com o JJManager, entre em contato conosco para saber quando será implementado nas próximas versões.", "Dispositivo incompatível");
+            Pages.App.MessageBox.Show(null, "Dispositivo Incompatível", "Parece que o seu dispositivo '" + _productName + "' ainda não é compatível com o JJManager, entre em contato conosco para saber quando será implementado nas próximas versões.");
 
             return false;
         }
@@ -463,7 +589,7 @@ namespace JJManager.Class.Devices
                     }
                     else
                     {
-                        Console.WriteLine($"Class '{className}' not found.");
+                        //Console.WriteLine($"Class '{className}' not found.");
                     }
                 });
 
@@ -499,7 +625,9 @@ namespace JJManager.Class.Devices
                 "Hub ARGB JJHL-01 Plus",
                 "Hub RGB JJHL-02",
                 "Hub RGB JJHL-02 Plus",
-                "Dashboard JJDB-01"
+                "Dashboard JJDB-01",
+                "LoadCell JJLC-01",
+                "ButtonBox JJB-Slim Type A"
             };
 
             await Task.Run(() =>
@@ -530,7 +658,7 @@ namespace JJManager.Class.Devices
                     device.GetReportDescriptor().Reports[0].ReportID == (byte)0x02
                 );
 
-                Main main = (Main)Main.ActiveForm;
+                Main main = Application.OpenForms.Cast<Main>().FirstOrDefault(f => f is Main);
 
                 if (main != null && main.InvokeRequired)
                 {

@@ -87,7 +87,7 @@ namespace JJManager.Class
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ocorreu um erro ao tentar limpar os logs de '{module}': {ex.Message}");
+                Pages.App.MessageBox.Show(null, "Erro ao Limpar Logs", $"Ocorreu um erro ao tentar limpar os logs de '{module}': {ex.Message}");
             }
         }
 
@@ -116,14 +116,14 @@ namespace JJManager.Class
 
                     if (modulesUndeleted.Count > 0)
                     {
-                        MessageBox.Show($"Não foi possível limpar os logs dos módulos: {string.Join(", ", modulesUndeleted)}");
+                        Pages.App.MessageBox.Show(null, "Falha na Limpeza", $"Não foi possível limpar os logs dos módulos: {string.Join(", ", modulesUndeleted)}");
                     }
                 }
             }
             catch (Exception ex)
             {
                 Log.Insert("Log", $"Falha ao deletar os logs do JJManager", ex);
-                MessageBox.Show($"Ocorreu um erro ao tentar limpar os logs: {ex.Message}");
+                Pages.App.MessageBox.Show(null, "Erro ao Limpar Logs", $"Ocorreu um erro ao tentar limpar os logs: {ex.Message}");
             }
         }
 
@@ -174,7 +174,7 @@ namespace JJManager.Class
             }
             catch (Exception ex)
             {
-                Console.WriteLine("An error occurred while trying to open the file: " + ex.Message);
+                //Console.WriteLine("An error occurred while trying to open the file: " + ex.Message);
             }
         }
     }

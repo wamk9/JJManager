@@ -218,7 +218,7 @@ namespace JJManager.Pages.App
 
             if (e.ColumnIndex == dgvActions.Columns["dgvActionRemove"].Index) // Index of your button column
             {
-                DialogResult result = MessageBox.Show("Você deseja excluir está ação?", "Confirmação de exclusão", MessageBoxButtons.YesNo);
+                DialogResult result = Pages.App.MessageBox.Show(this, "Confirmação de Exclusão", "Você deseja excluir está ação?", MessageBoxButtons.YesNo);
                 
                 if (result == DialogResult.Yes)
                 {

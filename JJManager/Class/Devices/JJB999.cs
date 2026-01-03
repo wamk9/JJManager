@@ -4,9 +4,12 @@ using System.Collections.Generic;
 using System.Text.Json;
 using JJManager.Class.App;
 using HIDClass = JJManager.Class.Devices.Connections.HID;
+using HIDMessage = JJManager.Class.Devices.Connections.HIDMessage;
+using OutputClass = JJManager.Class.App.Output.Output;
 using System.Text.Json.Nodes;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace JJManager.Class.Devices
 {
@@ -17,9 +20,40 @@ namespace JJManager.Class.Devices
         private int _actualSendingAttempts = 0;
         private bool _sending = false;
 
+        // Keep-alive tracking
+        private DateTime _lastLedModeKeepAlive = DateTime.MinValue;
+        private readonly TimeSpan _keepAliveInterval = TimeSpan.FromSeconds(3);
+
+        // Change tracking variables (to avoid sending unchanged data)
+        private int _lastSentLedMode = -1;      // -1 = never sent
+        private int _lastSentBrightness = -1;
+        private int _lastSentBlinkSpeed = -1;
+        private int _lastSentPulseDelay = -1;
+
         public JJB999(HidDevice hidDevice) : base(hidDevice)
         {
+            _cmds = new HashSet<ushort>
+            {
+                0x0001, // LED Mode (changed from 0x0000)
+                0x0002, // Brightness (changed from 0x0001)
+                0x0003, // Blink Speed (changed from 0x0002)
+                0x0004, // Pulse Delay (changed from 0x0003)
+                0x00FF  // Device Info
+            };
+
+            RestartClass();
+        }
+        private void RestartClass()
+        {
+            // Reset tracking variables to force resend of all parameters
+            _lastSentLedMode = -1;
+            _lastSentBrightness = -1;
+            _lastSentBlinkSpeed = -1;
+            _lastSentPulseDelay = -1;
+            _lastLedModeKeepAlive = DateTime.MinValue;
+
             _actionSendingData = () => { Task.Run(async () => await ActionSendingData()); };
+            _actionResetParams = () => { Task.Run(() => RestartClass()); };
         }
 
         private async Task ActionSendingData()
@@ -27,6 +61,7 @@ namespace JJManager.Class.Devices
             while (_isConnected)
             {
                 await SendData();
+                await Task.Delay(2); // Wait 2ms between iterations to reduce CPU usage
             }
         }
 
@@ -38,12 +73,10 @@ namespace JJManager.Class.Devices
             }
 
             bool forceDisconnection = false;
-            bool sended = false;
 
             try
             {
                 _sending = true;
-                string messageToSend = null;
 
                 if (_profile.NeedsUpdate)
                 {
@@ -51,11 +84,13 @@ namespace JJManager.Class.Devices
                     _profile.NeedsUpdate = false;
                 }
 
-                int led_mode_value = (_profile.Data.ContainsKey("led_mode") ? _profile.Data["led_mode"].GetValue<int>() : 0);
-                int brightness_limit_value = (_profile.Data.ContainsKey("brightness") ? _profile.Data["brightness"].GetValue<int>() : 0);
+                int ledMode = (_profile.Data.ContainsKey("led_mode") ? _profile.Data["led_mode"].GetValue<int>() : 0);
+                int brightness = (_profile.Data.ContainsKey("brightness") ? _profile.Data["brightness"].GetValue<int>() : 100);
+                int blinkSpeed = (_profile.Data.ContainsKey("blink_speed") ? _profile.Data["blink_speed"].GetValue<int>() : 50);
+                int pulseDelay = (_profile.Data.ContainsKey("pulse_delay") ? _profile.Data["pulse_delay"].GetValue<int>() : 50);
 
                 // 4 = it's SimHub Sync!
-                if (led_mode_value == 4)
+                if (ledMode == 4)
                 {
                     if (_simHubSync == null)
                     {
@@ -67,8 +102,7 @@ namespace JJManager.Class.Devices
                         _simHubSync.StartCommunication();
                     }
 
-
-                    var (success, message) = _simHubSync.RequestMessage(
+                    var (success, _) = _simHubSync.RequestMessage(
                         new JsonObject {
                         {
                             "request", new JsonArray {
@@ -83,9 +117,87 @@ namespace JJManager.Class.Devices
                     {
                         throw new WebSocketException("Falha ao fazer requisição ao plugin 'JJManager Sync' do SimHub");
                     }
-                    else
+
+                    // Use cached LastValues instead of parsing response every time
+                    JsonObject lastData = _simHubSync.LastValues ?? new JsonObject();
+
+                    // JJB999 has only 1 LED (index 0)
+                    int targetLedIndex = 0;
+                    OutputClass activeOutputForLed = null;
+
+                    // Get only LED outputs (filter first to optimize)
+                    var ledOutputs = _profile.Outputs
+                        .Where(o => o.Mode == OutputClass.OutputMode.Leds && o.Led != null)
+                        .ToList();
+
+                    // Iterate LED outputs from last to first (reverse order)
+                    // This ensures that the LAST active output in the list has priority
+                    for (int i = ledOutputs.Count - 1; i >= 0; i--)
                     {
-                        _simHubSync.TranslateToButtonBoxHID(message, out messageToSend, "jjb999", brightness_limit_value);
+                        var output = ledOutputs[i];
+                        string property = output.Led.Property;
+
+                        if (lastData.ContainsKey(property))
+                        {
+                            dynamic value = lastData[property]?.GetValue<dynamic>() ?? false;
+                            bool isActive = output.Led.SetActivatedValue(value);
+
+                            if (isActive && output.Led.LedsGrouped != null &&
+                                output.Led.LedsGrouped.Contains(targetLedIndex))
+                            {
+                                activeOutputForLed = output;
+                                break;  // Found the last active output for this LED
+                            }
+                        }
+                    }
+
+                    // Use active output configuration or turn off if no output is active
+                    int activeLedMode = activeOutputForLed?.Led.ModeIfEnabled ?? 0;
+
+                    // Prepare list of messages to send
+                    List<HIDMessage> messages = new List<HIDMessage>();
+
+                    // Keep-alive: Send LED Mode if changed OR every 3 seconds
+                    bool shouldSendLedMode = _lastSentLedMode != activeLedMode ||
+                                           (DateTime.Now - _lastLedModeKeepAlive) >= _keepAliveInterval;
+
+                    if (shouldSendLedMode)
+                    {
+                        messages.Add(new HIDMessage(0x0001, (byte)activeLedMode));
+                    }
+
+                    // Send Brightness only if changed
+                    if (_lastSentBrightness != brightness)
+                    {
+                        messages.Add(new HIDMessage(0x0002, (byte)brightness));
+                    }
+
+                    // Send Blink Speed only if changed
+                    if (_lastSentBlinkSpeed != blinkSpeed)
+                    {
+                        messages.Add(new HIDMessage(0x0003, (byte)blinkSpeed));
+                    }
+
+                    // Send Pulse Delay only if changed
+                    if (_lastSentPulseDelay != pulseDelay)
+                    {
+                        messages.Add(new HIDMessage(0x0004, (byte)pulseDelay));
+                    }
+
+                    // Send all messages at once
+                    if (messages.Count > 0)
+                    {
+                        await SendHIDBytes(messages, false, 0, 2000, 5);
+
+                        // Update tracking variables
+                        if (shouldSendLedMode)
+                        {
+                            _lastSentLedMode = activeLedMode;
+                            _lastLedModeKeepAlive = DateTime.Now;
+                        }
+                        if (_lastSentBrightness != brightness) _lastSentBrightness = brightness;
+                        if (_lastSentBlinkSpeed != blinkSpeed) _lastSentBlinkSpeed = blinkSpeed;
+                        if (_lastSentPulseDelay != pulseDelay) _lastSentPulseDelay = pulseDelay;
                     }
                 }
                 else
@@ -96,38 +208,61 @@ namespace JJManager.Class.Devices
                         _simHubSync = null;
                     }
 
-                    var data = new Dictionary<string, object>
-                {
-                    { "jjb999_data", _profile.Data }
-                };
-                    messageToSend = JsonSerializer.Serialize(data);
-                }
+                    // Prepare list of messages to send
+                    List<HIDMessage> messages = new List<HIDMessage>();
 
-                for (int i = 0; i < _sendingAttemptsLimit; i++)
-                {
-                    await SendHIDData(messageToSend, false, 100).ContinueWith((result) =>
-                    {
-                        sended = result.Result;
-                    });
+                    // Send LED Mode if changed OR every 3 seconds (keep-alive)
+                    bool shouldSendLedMode = _lastSentLedMode != ledMode ||
+                                            (DateTime.Now - _lastLedModeKeepAlive) >= _keepAliveInterval;
 
-                    if (sended)
+                    if (shouldSendLedMode)
                     {
-                        break;
+                        messages.Add(new HIDMessage(0x0001, (byte)ledMode));
                     }
-                    else
-                    {
-                        await Task.Delay(50);
-                    }
-                }
 
-                if (!sended)
-                {
-                    throw new Exception($"Falha ao enviar '{messageToSend}' via HID para a button box JJB-999 de ID '{_connId}'");
+                    // Send Brightness only if changed
+                    if (_lastSentBrightness != brightness)
+                    {
+                        messages.Add(new HIDMessage(0x0002, (byte)brightness));
+                    }
+
+                    // Send Blink Speed only if changed
+                    if (_lastSentBlinkSpeed != blinkSpeed)
+                    {
+                        messages.Add(new HIDMessage(0x0003, (byte)blinkSpeed));
+                    }
+
+                    // Send Pulse Delay only if changed
+                    if (_lastSentPulseDelay != pulseDelay)
+                    {
+                        messages.Add(new HIDMessage(0x0004, (byte)pulseDelay));
+                    }
+
+                    // Send all messages at once
+                    if (messages.Count > 0)
+                    {
+                        await SendHIDBytes(messages, false, 0, 2000, 5);
+
+                        // Update tracking variables
+                        if (shouldSendLedMode)
+                        {
+                            _lastSentLedMode = ledMode;
+                            _lastLedModeKeepAlive = DateTime.Now;
+                        }
+                        if (_lastSentBrightness != brightness) _lastSentBrightness = brightness;
+                        if (_lastSentBlinkSpeed != blinkSpeed) _lastSentBlinkSpeed = blinkSpeed;
+                        if (_lastSentPulseDelay != pulseDelay) _lastSentPulseDelay = pulseDelay;
+                    }
                 }
             }
             catch (WebSocketException)
             {
                 // Called when SimHub connection fails, without log.
+                if (SimHubWebsocket.CancelAutoConnIfEnabled)
+                {
+                    AutoConnect = false;
+                }
+
                 forceDisconnection = true;
             }
             catch (Exception ex)

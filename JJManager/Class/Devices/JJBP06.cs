@@ -13,7 +13,12 @@ namespace JJManager.Class.Devices
     {
         public JJBP06(HidDevice hidDevice) : base(hidDevice)
         {
+            RestartClass();
+        }
+        private void RestartClass()
+        {
             _actionSendingData = () => { Task.Run(async () => await ActionSendingData()); };
+            _actionResetParams = () => { Task.Run(() => RestartClass()); };
         }
 
         private async Task ActionSendingData()

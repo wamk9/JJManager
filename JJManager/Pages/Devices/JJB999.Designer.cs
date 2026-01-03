@@ -32,15 +32,33 @@
             this.CmbBoxSelectProfile = new MaterialSkin.Controls.MaterialComboBox();
             this.BtnAddProfile = new MaterialSkin.Controls.MaterialButton();
             this.BtnRemoveProfile = new MaterialSkin.Controls.MaterialButton();
-            this.cmdBoxLedMode = new MaterialSkin.Controls.MaterialComboBox();
-            this.sldLedBrightness = new MaterialSkin.Controls.MaterialSlider();
             this.btnSaveConfig = new MaterialSkin.Controls.MaterialButton();
             this.ImgJJB999Off = new System.Windows.Forms.PictureBox();
             this.ImgJJB999On = new System.Windows.Forms.PictureBox();
             this.materialDivider1 = new MaterialSkin.Controls.MaterialDivider();
             this.btnSaveAndCloseConfig = new MaterialSkin.Controls.MaterialButton();
+            this.SldBlinkSpeed = new MaterialSkin.Controls.MaterialSlider();
+            this.SldPulseSpeed = new MaterialSkin.Controls.MaterialSlider();
+            this.BtnAddLedAction = new MaterialSkin.Controls.MaterialButton();
+            this.dgvActions = new System.Windows.Forms.DataGridView();
+            this.Id = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Ordem = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dgvActionType = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dgvActionEdit = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.dgvActionRemove = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.dgvActionMoveUp = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.dgvActionMoveDown = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.PropertiesDivider = new MaterialSkin.Controls.MaterialDivider();
+            this.TxtGeneralConfigs = new MaterialSkin.Controls.MaterialLabel();
+            this.SldLedBrightness = new MaterialSkin.Controls.MaterialSlider();
+            this.materialDivider3 = new MaterialSkin.Controls.MaterialDivider();
+            this.cmdBoxLedMode = new MaterialSkin.Controls.MaterialComboBox();
+            this.TxtProperties = new MaterialSkin.Controls.MaterialLabel();
+            this.FlpJJB999 = new System.Windows.Forms.FlowLayoutPanel();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJB999Off)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJB999On)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvActions)).BeginInit();
+            this.FlpJJB999.SuspendLayout();
             this.SuspendLayout();
             // 
             // CmbBoxSelectProfile
@@ -64,7 +82,7 @@
             this.CmbBoxSelectProfile.MaxDropDownItems = 4;
             this.CmbBoxSelectProfile.MouseState = MaterialSkin.MouseState.OUT;
             this.CmbBoxSelectProfile.Name = "CmbBoxSelectProfile";
-            this.CmbBoxSelectProfile.Size = new System.Drawing.Size(671, 49);
+            this.CmbBoxSelectProfile.Size = new System.Drawing.Size(871, 49);
             this.CmbBoxSelectProfile.StartIndex = 0;
             this.CmbBoxSelectProfile.TabIndex = 10;
             // 
@@ -78,7 +96,7 @@
             this.BtnAddProfile.Font = new System.Drawing.Font("Microsoft Sans Serif", 17F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtnAddProfile.HighEmphasis = true;
             this.BtnAddProfile.Icon = null;
-            this.BtnAddProfile.Location = new System.Drawing.Point(743, 68);
+            this.BtnAddProfile.Location = new System.Drawing.Point(943, 68);
             this.BtnAddProfile.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             this.BtnAddProfile.MouseState = MaterialSkin.MouseState.HOVER;
             this.BtnAddProfile.Name = "BtnAddProfile";
@@ -101,7 +119,7 @@
             this.BtnRemoveProfile.Font = new System.Drawing.Font("Microsoft Sans Serif", 17F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtnRemoveProfile.HighEmphasis = true;
             this.BtnRemoveProfile.Icon = null;
-            this.BtnRemoveProfile.Location = new System.Drawing.Point(685, 68);
+            this.BtnRemoveProfile.Location = new System.Drawing.Point(885, 68);
             this.BtnRemoveProfile.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             this.BtnRemoveProfile.MouseState = MaterialSkin.MouseState.HOVER;
             this.BtnRemoveProfile.Name = "BtnRemoveProfile";
@@ -114,18 +132,294 @@
             this.BtnRemoveProfile.UseVisualStyleBackColor = true;
             this.BtnRemoveProfile.Click += new System.EventHandler(this.BtnRemoveProfile_Click);
             // 
+            // btnSaveConfig
+            //
+            this.btnSaveConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSaveConfig.AutoSize = false;
+            this.btnSaveConfig.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnSaveConfig.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnSaveConfig.Depth = 0;
+            this.btnSaveConfig.HighEmphasis = true;
+            this.btnSaveConfig.Icon = null;
+            this.btnSaveConfig.Location = new System.Drawing.Point(688, 655);
+            this.btnSaveConfig.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnSaveConfig.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnSaveConfig.Name = "btnSaveConfig";
+            this.btnSaveConfig.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnSaveConfig.Size = new System.Drawing.Size(219, 36);
+            this.btnSaveConfig.TabIndex = 15;
+            this.btnSaveConfig.Text = "Conectar";
+            this.btnSaveConfig.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnSaveConfig.UseAccentColor = false;
+            this.btnSaveConfig.UseVisualStyleBackColor = true;
+            this.btnSaveConfig.Click += new System.EventHandler(this.btnSaveConfig_Click);
+            // 
+            // ImgJJB999Off
+            // 
+            this.ImgJJB999Off.BackColor = System.Drawing.Color.Transparent;
+            this.ImgJJB999Off.Image = global::JJManager.Properties.Resources.JJB_999_off;
+            this.ImgJJB999Off.Location = new System.Drawing.Point(13, 176);
+            this.ImgJJB999Off.Margin = new System.Windows.Forms.Padding(10);
+            this.ImgJJB999Off.Name = "ImgJJB999Off";
+            this.ImgJJB999Off.Size = new System.Drawing.Size(406, 402);
+            this.ImgJJB999Off.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.ImgJJB999Off.TabIndex = 0;
+            this.ImgJJB999Off.TabStop = false;
+            // 
+            // ImgJJB999On
+            // 
+            this.ImgJJB999On.BackColor = System.Drawing.Color.Transparent;
+            this.ImgJJB999On.Image = global::JJManager.Properties.Resources.JJB_999_on;
+            this.ImgJJB999On.Location = new System.Drawing.Point(13, 176);
+            this.ImgJJB999On.Margin = new System.Windows.Forms.Padding(10);
+            this.ImgJJB999On.Name = "ImgJJB999On";
+            this.ImgJJB999On.Size = new System.Drawing.Size(406, 402);
+            this.ImgJJB999On.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.ImgJJB999On.TabIndex = 16;
+            this.ImgJJB999On.TabStop = false;
+            // 
+            // materialDivider1
+            // 
+            this.materialDivider1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.materialDivider1.Depth = 0;
+            this.materialDivider1.Location = new System.Drawing.Point(7, 645);
+            this.materialDivider1.MouseState = MaterialSkin.MouseState.HOVER;
+            this.materialDivider1.Name = "materialDivider1";
+            this.materialDivider1.Size = new System.Drawing.Size(981, 1);
+            this.materialDivider1.TabIndex = 17;
+            this.materialDivider1.Text = "materialDivider1";
+            // 
+            // btnSaveAndCloseConfig
+            //
+            this.btnSaveAndCloseConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSaveAndCloseConfig.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnSaveAndCloseConfig.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnSaveAndCloseConfig.Depth = 0;
+            this.btnSaveAndCloseConfig.HighEmphasis = true;
+            this.btnSaveAndCloseConfig.Icon = null;
+            this.btnSaveAndCloseConfig.Location = new System.Drawing.Point(915, 655);
+            this.btnSaveAndCloseConfig.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnSaveAndCloseConfig.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnSaveAndCloseConfig.Name = "btnSaveAndCloseConfig";
+            this.btnSaveAndCloseConfig.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnSaveAndCloseConfig.Size = new System.Drawing.Size(77, 36);
+            this.btnSaveAndCloseConfig.TabIndex = 18;
+            this.btnSaveAndCloseConfig.Text = "Fechar";
+            this.btnSaveAndCloseConfig.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnSaveAndCloseConfig.UseAccentColor = false;
+            this.btnSaveAndCloseConfig.UseVisualStyleBackColor = true;
+            this.btnSaveAndCloseConfig.Click += new System.EventHandler(this.btnSaveAndCloseConfig_Click);
+            // 
+            // SldBlinkSpeed
+            // 
+            this.SldBlinkSpeed.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.SldBlinkSpeed.Depth = 0;
+            this.SldBlinkSpeed.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.SldBlinkSpeed.Location = new System.Drawing.Point(3, 176);
+            this.SldBlinkSpeed.MouseState = MaterialSkin.MouseState.HOVER;
+            this.SldBlinkSpeed.Name = "SldBlinkSpeed";
+            this.SldBlinkSpeed.RangeMax = 255;
+            this.SldBlinkSpeed.RangeMin = 50;
+            this.SldBlinkSpeed.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.SldBlinkSpeed.ShowValue = false;
+            this.SldBlinkSpeed.Size = new System.Drawing.Size(553, 40);
+            this.SldBlinkSpeed.TabIndex = 25;
+            this.SldBlinkSpeed.Text = "Vel. Piscar";
+            this.SldBlinkSpeed.Value = 100;
+            // 
+            // SldPulseSpeed
+            // 
+            this.SldPulseSpeed.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.SldPulseSpeed.Depth = 0;
+            this.SldPulseSpeed.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.SldPulseSpeed.Location = new System.Drawing.Point(3, 130);
+            this.SldPulseSpeed.MouseState = MaterialSkin.MouseState.HOVER;
+            this.SldPulseSpeed.Name = "SldPulseSpeed";
+            this.SldPulseSpeed.RangeMax = 255;
+            this.SldPulseSpeed.RangeMin = 50;
+            this.SldPulseSpeed.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.SldPulseSpeed.ShowValue = false;
+            this.SldPulseSpeed.Size = new System.Drawing.Size(553, 40);
+            this.SldPulseSpeed.TabIndex = 24;
+            this.SldPulseSpeed.Text = "Vel. Pulso";
+            this.SldPulseSpeed.Value = 100;
+            // 
+            // BtnAddLedAction
+            // 
+            this.BtnAddLedAction.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.BtnAddLedAction.AutoSize = false;
+            this.BtnAddLedAction.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnAddLedAction.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.BtnAddLedAction.Depth = 0;
+            this.BtnAddLedAction.DrawShadows = false;
+            this.BtnAddLedAction.HighEmphasis = true;
+            this.BtnAddLedAction.Icon = null;
+            this.BtnAddLedAction.Location = new System.Drawing.Point(4, 452);
+            this.BtnAddLedAction.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.BtnAddLedAction.MouseState = MaterialSkin.MouseState.HOVER;
+            this.BtnAddLedAction.Name = "BtnAddLedAction";
+            this.BtnAddLedAction.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.BtnAddLedAction.Size = new System.Drawing.Size(551, 36);
+            this.BtnAddLedAction.TabIndex = 29;
+            this.BtnAddLedAction.Text = "Adicionar Ação";
+            this.BtnAddLedAction.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.BtnAddLedAction.UseAccentColor = false;
+            this.BtnAddLedAction.UseVisualStyleBackColor = true;
+            this.BtnAddLedAction.Visible = false;
+            // 
+            // dgvActions
+            // 
+            this.dgvActions.AllowUserToAddRows = false;
+            this.dgvActions.AllowUserToDeleteRows = false;
+            this.dgvActions.AllowUserToResizeColumns = false;
+            this.dgvActions.AllowUserToResizeRows = false;
+            this.dgvActions.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.dgvActions.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.dgvActions.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
+            this.dgvActions.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
+            this.dgvActions.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvActions.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Id,
+            this.Ordem,
+            this.dgvActionType,
+            this.dgvActionEdit,
+            this.dgvActionRemove,
+            this.dgvActionMoveUp,
+            this.dgvActionMoveDown});
+            this.dgvActions.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
+            this.dgvActions.EnableHeadersVisualStyles = false;
+            this.dgvActions.Location = new System.Drawing.Point(3, 248);
+            this.dgvActions.MultiSelect = false;
+            this.dgvActions.Name = "dgvActions";
+            this.dgvActions.ReadOnly = true;
+            this.dgvActions.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
+            this.dgvActions.RowHeadersVisible = false;
+            this.dgvActions.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvActions.Size = new System.Drawing.Size(553, 195);
+            this.dgvActions.TabIndex = 28;
+            this.dgvActions.Visible = false;
+            // 
+            // Id
+            // 
+            this.Id.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.Id.DataPropertyName = "Id";
+            this.Id.HeaderText = "ID";
+            this.Id.Name = "Id";
+            this.Id.ReadOnly = true;
+            this.Id.Visible = false;
+            // 
+            // Ordem
+            // 
+            this.Ordem.DataPropertyName = "Order";
+            this.Ordem.HeaderText = "Ordem";
+            this.Ordem.Name = "Ordem";
+            this.Ordem.ReadOnly = true;
+            this.Ordem.Visible = false;
+            // 
+            // dgvActionType
+            // 
+            this.dgvActionType.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.dgvActionType.DataPropertyName = "Name";
+            this.dgvActionType.FillWeight = 200F;
+            this.dgvActionType.HeaderText = "Ação";
+            this.dgvActionType.Name = "dgvActionType";
+            this.dgvActionType.ReadOnly = true;
+            this.dgvActionType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // dgvActionEdit
+            // 
+            this.dgvActionEdit.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.dgvActionEdit.FillWeight = 35F;
+            this.dgvActionEdit.HeaderText = "";
+            this.dgvActionEdit.Name = "dgvActionEdit";
+            this.dgvActionEdit.ReadOnly = true;
+            // 
+            // dgvActionRemove
+            // 
+            this.dgvActionRemove.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.dgvActionRemove.FillWeight = 35F;
+            this.dgvActionRemove.HeaderText = "";
+            this.dgvActionRemove.Name = "dgvActionRemove";
+            this.dgvActionRemove.ReadOnly = true;
+            // 
+            // dgvActionMoveUp
+            // 
+            this.dgvActionMoveUp.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.dgvActionMoveUp.FillWeight = 35F;
+            this.dgvActionMoveUp.HeaderText = "";
+            this.dgvActionMoveUp.Name = "dgvActionMoveUp";
+            this.dgvActionMoveUp.ReadOnly = true;
+            // 
+            // dgvActionMoveDown
+            // 
+            this.dgvActionMoveDown.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.dgvActionMoveDown.FillWeight = 35F;
+            this.dgvActionMoveDown.HeaderText = "";
+            this.dgvActionMoveDown.Name = "dgvActionMoveDown";
+            this.dgvActionMoveDown.ReadOnly = true;
+            // 
+            // PropertiesDivider
+            // 
+            this.PropertiesDivider.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.PropertiesDivider.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.PropertiesDivider.Depth = 0;
+            this.PropertiesDivider.Location = new System.Drawing.Point(3, 241);
+            this.PropertiesDivider.MouseState = MaterialSkin.MouseState.HOVER;
+            this.PropertiesDivider.Name = "PropertiesDivider";
+            this.PropertiesDivider.Size = new System.Drawing.Size(553, 1);
+            this.PropertiesDivider.TabIndex = 27;
+            this.PropertiesDivider.Text = "materialDivider2";
+            this.PropertiesDivider.Visible = false;
+            // 
+            // TxtGeneralConfigs
+            // 
+            this.TxtGeneralConfigs.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.TxtGeneralConfigs.Depth = 0;
+            this.TxtGeneralConfigs.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.TxtGeneralConfigs.Location = new System.Drawing.Point(4, 0);
+            this.TxtGeneralConfigs.MouseState = MaterialSkin.MouseState.HOVER;
+            this.TxtGeneralConfigs.Name = "TxtGeneralConfigs";
+            this.TxtGeneralConfigs.Size = new System.Drawing.Size(550, 19);
+            this.TxtGeneralConfigs.TabIndex = 20;
+            this.TxtGeneralConfigs.Text = "Geral";
+            this.TxtGeneralConfigs.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // SldLedBrightness
+            // 
+            this.SldLedBrightness.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.SldLedBrightness.Depth = 0;
+            this.SldLedBrightness.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.SldLedBrightness.Location = new System.Drawing.Point(3, 84);
+            this.SldLedBrightness.MouseState = MaterialSkin.MouseState.HOVER;
+            this.SldLedBrightness.Name = "SldLedBrightness";
+            this.SldLedBrightness.RangeMax = 255;
+            this.SldLedBrightness.ShowValue = false;
+            this.SldLedBrightness.Size = new System.Drawing.Size(553, 40);
+            this.SldLedBrightness.TabIndex = 23;
+            this.SldLedBrightness.Text = "Brilho";
+            this.SldLedBrightness.Value = 255;
+            // 
+            // materialDivider3
+            // 
+            this.materialDivider3.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.materialDivider3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.materialDivider3.Depth = 0;
+            this.materialDivider3.Location = new System.Drawing.Point(3, 22);
+            this.materialDivider3.MouseState = MaterialSkin.MouseState.HOVER;
+            this.materialDivider3.Name = "materialDivider3";
+            this.materialDivider3.Size = new System.Drawing.Size(553, 1);
+            this.materialDivider3.TabIndex = 21;
+            this.materialDivider3.Text = "materialDivider3";
+            // 
             // cmdBoxLedMode
             // 
-            this.cmdBoxLedMode.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdBoxLedMode.AutoResize = false;
             this.cmdBoxLedMode.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.cmdBoxLedMode.Depth = 0;
             this.cmdBoxLedMode.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
             this.cmdBoxLedMode.DropDownHeight = 174;
             this.cmdBoxLedMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmdBoxLedMode.DropDownWidth = 121;
+            this.cmdBoxLedMode.DropDownWidth = 190;
             this.cmdBoxLedMode.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
             this.cmdBoxLedMode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.cmdBoxLedMode.FormattingEnabled = true;
@@ -138,118 +432,62 @@
             "Fade In/Out",
             "Piscar",
             "Sync com SimHub"});
-            this.cmdBoxLedMode.Location = new System.Drawing.Point(432, 278);
+            this.cmdBoxLedMode.Location = new System.Drawing.Point(3, 29);
             this.cmdBoxLedMode.MaxDropDownItems = 4;
             this.cmdBoxLedMode.MouseState = MaterialSkin.MouseState.OUT;
             this.cmdBoxLedMode.Name = "cmdBoxLedMode";
-            this.cmdBoxLedMode.Size = new System.Drawing.Size(361, 49);
+            this.cmdBoxLedMode.Size = new System.Drawing.Size(553, 49);
             this.cmdBoxLedMode.StartIndex = 0;
-            this.cmdBoxLedMode.TabIndex = 13;
-            this.cmdBoxLedMode.SelectedIndexChanged += new System.EventHandler(this.cmdBoxLedMode_SelectedIndexChanged);
+            this.cmdBoxLedMode.TabIndex = 22;
             // 
-            // sldLedBrightness
+            // TxtProperties
             // 
-            this.sldLedBrightness.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.TxtProperties.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.TxtProperties.Depth = 0;
+            this.TxtProperties.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.TxtProperties.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.TxtProperties.Location = new System.Drawing.Point(3, 219);
+            this.TxtProperties.MouseState = MaterialSkin.MouseState.HOVER;
+            this.TxtProperties.Name = "TxtProperties";
+            this.TxtProperties.Size = new System.Drawing.Size(553, 19);
+            this.TxtProperties.TabIndex = 26;
+            this.TxtProperties.Text = "Propriedades";
+            this.TxtProperties.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.TxtProperties.Visible = false;
+            // 
+            // FlpJJB999
+            // 
+            this.FlpJJB999.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.sldLedBrightness.Depth = 0;
-            this.sldLedBrightness.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.sldLedBrightness.Location = new System.Drawing.Point(432, 333);
-            this.sldLedBrightness.MouseState = MaterialSkin.MouseState.HOVER;
-            this.sldLedBrightness.Name = "sldLedBrightness";
-            this.sldLedBrightness.Size = new System.Drawing.Size(361, 40);
-            this.sldLedBrightness.TabIndex = 14;
-            this.sldLedBrightness.Text = "Brilho";
-            this.sldLedBrightness.Value = 100;
-            this.sldLedBrightness.onValueChanged += new MaterialSkin.Controls.MaterialSlider.ValueChanged(this.sldLedBrightness_onValueChanged);
-            // 
-            // btnSaveConfig
-            // 
-            this.btnSaveConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSaveConfig.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnSaveConfig.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
-            this.btnSaveConfig.Depth = 0;
-            this.btnSaveConfig.HighEmphasis = true;
-            this.btnSaveConfig.Icon = null;
-            this.btnSaveConfig.Location = new System.Drawing.Point(561, 555);
-            this.btnSaveConfig.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
-            this.btnSaveConfig.MouseState = MaterialSkin.MouseState.HOVER;
-            this.btnSaveConfig.Name = "btnSaveConfig";
-            this.btnSaveConfig.NoAccentTextColor = System.Drawing.Color.Empty;
-            this.btnSaveConfig.Size = new System.Drawing.Size(76, 36);
-            this.btnSaveConfig.TabIndex = 15;
-            this.btnSaveConfig.Text = "Salvar";
-            this.btnSaveConfig.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
-            this.btnSaveConfig.UseAccentColor = false;
-            this.btnSaveConfig.UseVisualStyleBackColor = true;
-            this.btnSaveConfig.Click += new System.EventHandler(this.btnSaveConfig_Click);
-            // 
-            // ImgJJB999Off
-            // 
-            this.ImgJJB999Off.BackColor = System.Drawing.Color.Transparent;
-            this.ImgJJB999Off.Image = global::JJManager.Properties.Resources.JJB_999_off;
-            this.ImgJJB999Off.Location = new System.Drawing.Point(13, 130);
-            this.ImgJJB999Off.Margin = new System.Windows.Forms.Padding(10);
-            this.ImgJJB999Off.Name = "ImgJJB999Off";
-            this.ImgJJB999Off.Size = new System.Drawing.Size(406, 402);
-            this.ImgJJB999Off.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.ImgJJB999Off.TabIndex = 0;
-            this.ImgJJB999Off.TabStop = false;
-            // 
-            // ImgJJB999On
-            // 
-            this.ImgJJB999On.BackColor = System.Drawing.Color.Transparent;
-            this.ImgJJB999On.Image = global::JJManager.Properties.Resources.JJB_999_on;
-            this.ImgJJB999On.Location = new System.Drawing.Point(13, 130);
-            this.ImgJJB999On.Margin = new System.Windows.Forms.Padding(10);
-            this.ImgJJB999On.Name = "ImgJJB999On";
-            this.ImgJJB999On.Size = new System.Drawing.Size(406, 402);
-            this.ImgJJB999On.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.ImgJJB999On.TabIndex = 16;
-            this.ImgJJB999On.TabStop = false;
-            // 
-            // materialDivider1
-            // 
-            this.materialDivider1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.materialDivider1.Depth = 0;
-            this.materialDivider1.Location = new System.Drawing.Point(13, 545);
-            this.materialDivider1.MouseState = MaterialSkin.MouseState.HOVER;
-            this.materialDivider1.Name = "materialDivider1";
-            this.materialDivider1.Size = new System.Drawing.Size(780, 1);
-            this.materialDivider1.TabIndex = 17;
-            this.materialDivider1.Text = "materialDivider1";
-            // 
-            // btnSaveAndCloseConfig
-            // 
-            this.btnSaveAndCloseConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSaveAndCloseConfig.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnSaveAndCloseConfig.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
-            this.btnSaveAndCloseConfig.Depth = 0;
-            this.btnSaveAndCloseConfig.HighEmphasis = true;
-            this.btnSaveAndCloseConfig.Icon = null;
-            this.btnSaveAndCloseConfig.Location = new System.Drawing.Point(645, 555);
-            this.btnSaveAndCloseConfig.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
-            this.btnSaveAndCloseConfig.MouseState = MaterialSkin.MouseState.HOVER;
-            this.btnSaveAndCloseConfig.Name = "btnSaveAndCloseConfig";
-            this.btnSaveAndCloseConfig.NoAccentTextColor = System.Drawing.Color.Empty;
-            this.btnSaveAndCloseConfig.Size = new System.Drawing.Size(148, 36);
-            this.btnSaveAndCloseConfig.TabIndex = 18;
-            this.btnSaveAndCloseConfig.Text = "Salvar e Fechar";
-            this.btnSaveAndCloseConfig.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
-            this.btnSaveAndCloseConfig.UseAccentColor = false;
-            this.btnSaveAndCloseConfig.UseVisualStyleBackColor = true;
-            this.btnSaveAndCloseConfig.Click += new System.EventHandler(this.btnSaveAndCloseConfig_Click);
+            this.FlpJJB999.AutoScroll = true;
+            this.FlpJJB999.Controls.Add(this.TxtGeneralConfigs);
+            this.FlpJJB999.Controls.Add(this.materialDivider3);
+            this.FlpJJB999.Controls.Add(this.cmdBoxLedMode);
+            this.FlpJJB999.Controls.Add(this.SldLedBrightness);
+            this.FlpJJB999.Controls.Add(this.SldPulseSpeed);
+            this.FlpJJB999.Controls.Add(this.SldBlinkSpeed);
+            this.FlpJJB999.Controls.Add(this.TxtProperties);
+            this.FlpJJB999.Controls.Add(this.PropertiesDivider);
+            this.FlpJJB999.Controls.Add(this.dgvActions);
+            this.FlpJJB999.Controls.Add(this.BtnAddLedAction);
+            this.FlpJJB999.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.FlpJJB999.Location = new System.Drawing.Point(432, 123);
+            this.FlpJJB999.Name = "FlpJJB999";
+            this.FlpJJB999.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.FlpJJB999.Size = new System.Drawing.Size(561, 504);
+            this.FlpJJB999.TabIndex = 42;
+            this.FlpJJB999.WrapContents = false;
             // 
             // JJB999
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 600);
+            this.ClientSize = new System.Drawing.Size(1000, 700);
+            this.Controls.Add(this.FlpJJB999);
             this.Controls.Add(this.btnSaveAndCloseConfig);
             this.Controls.Add(this.materialDivider1);
             this.Controls.Add(this.btnSaveConfig);
-            this.Controls.Add(this.sldLedBrightness);
-            this.Controls.Add(this.cmdBoxLedMode);
             this.Controls.Add(this.BtnRemoveProfile);
             this.Controls.Add(this.BtnAddProfile);
             this.Controls.Add(this.CmbBoxSelectProfile);
@@ -257,14 +495,17 @@
             this.Controls.Add(this.ImgJJB999On);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.MaximumSize = new System.Drawing.Size(800, 600);
-            this.MinimumSize = new System.Drawing.Size(500, 500);
+            this.MaximumSize = new System.Drawing.Size(1000, 700);
+            this.MinimumSize = new System.Drawing.Size(1000, 700);
             this.Name = "JJB999";
             this.Sizable = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "JJB-999";
+            this.Text = "ButtonBox JJB-999";
+            this.Load += new System.EventHandler(this.JJB999_Load);
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJB999Off)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJB999On)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvActions)).EndInit();
+            this.FlpJJB999.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -274,12 +515,28 @@
         private MaterialSkin.Controls.MaterialComboBox CmbBoxSelectProfile;
         private MaterialSkin.Controls.MaterialButton BtnAddProfile;
         private MaterialSkin.Controls.MaterialButton BtnRemoveProfile;
-        private MaterialSkin.Controls.MaterialComboBox cmdBoxLedMode;
-        private MaterialSkin.Controls.MaterialSlider sldLedBrightness;
         private MaterialSkin.Controls.MaterialButton btnSaveConfig;
         private System.Windows.Forms.PictureBox ImgJJB999Off;
         private System.Windows.Forms.PictureBox ImgJJB999On;
         private MaterialSkin.Controls.MaterialDivider materialDivider1;
         private MaterialSkin.Controls.MaterialButton btnSaveAndCloseConfig;
+        private MaterialSkin.Controls.MaterialButton BtnAddLedAction;
+        private System.Windows.Forms.DataGridView dgvActions;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Id;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Ordem;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dgvActionType;
+        private System.Windows.Forms.DataGridViewButtonColumn dgvActionEdit;
+        private System.Windows.Forms.DataGridViewButtonColumn dgvActionRemove;
+        private System.Windows.Forms.DataGridViewButtonColumn dgvActionMoveUp;
+        private System.Windows.Forms.DataGridViewButtonColumn dgvActionMoveDown;
+        private MaterialSkin.Controls.MaterialDivider PropertiesDivider;
+        private MaterialSkin.Controls.MaterialLabel TxtGeneralConfigs;
+        private MaterialSkin.Controls.MaterialSlider SldLedBrightness;
+        private MaterialSkin.Controls.MaterialDivider materialDivider3;
+        private MaterialSkin.Controls.MaterialComboBox cmdBoxLedMode;
+        private MaterialSkin.Controls.MaterialLabel TxtProperties;
+        private MaterialSkin.Controls.MaterialSlider SldBlinkSpeed;
+        private MaterialSkin.Controls.MaterialSlider SldPulseSpeed;
+        private System.Windows.Forms.FlowLayoutPanel FlpJJB999;
     }
 }

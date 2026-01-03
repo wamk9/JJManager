@@ -59,20 +59,32 @@ namespace JJManager.Class.App
 
                     if (Json != null)
                     {
+                        Console.WriteLine($"[DeviceUpdater] Searching for device: '{_Name}' in {Json.RootElement.GetArrayLength()} entries");
+
                         for (int i = 0; i < Json.RootElement.GetArrayLength(); i++)
                         {
-                            if (_Name == Json.RootElement[i].GetProperty("device_name").ToString())
+                            string deviceNameFromJson = Json.RootElement[i].GetProperty("device_name").ToString();
+                            Console.WriteLine($"[DeviceUpdater] Comparing '{_Name}' with '{deviceNameFromJson}'");
+
+                            if (_Name == deviceNameFromJson)
                             {
+                                Console.WriteLine($"[DeviceUpdater] MATCH FOUND! Setting updater info...");
                                 SetUpdaterInfo(Json.RootElement[i]);
                                 break;
                             }
                         }
+
+                        if (_LastVersion == null)
+                        {
+                            Console.WriteLine($"[DeviceUpdater] WARNING: No match found for device '{_Name}'");
+                        }
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                Console.WriteLine($"[DeviceUpdater] ERROR in CheckUpdate: {ex.Message}");
+                Console.WriteLine($"[DeviceUpdater] Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -100,12 +112,17 @@ namespace JJManager.Class.App
             _DownloadURL = json.GetProperty("download_link").ToString();
             _DownloadFileName = json.GetProperty("file_name").ToString();
 
-            for (int i = 0; i < json.GetArrayLength(); i++)
+            // Process changelog if it exists
+            if (json.TryGetProperty("changelog", out JsonElement changelogElement) &&
+                changelogElement.ValueKind == JsonValueKind.Array)
             {
-                _ChangeLog.Add(new string[] {
-                    json[i].GetProperty("title").ToString(),
-                    json[i].GetProperty("description").ToString()
-                });
+                for (int i = 0; i < changelogElement.GetArrayLength(); i++)
+                {
+                    _ChangeLog.Add(new string[] {
+                        changelogElement[i].GetProperty("title").ToString(),
+                        changelogElement[i].GetProperty("description").ToString()
+                    });
+                }
             }
         }
     }

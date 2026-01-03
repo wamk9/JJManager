@@ -83,49 +83,58 @@
       <HintPath>..\packages\ArduinoUploader.3.2.0\lib\net452\ArduinoUploader.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="AudioSwitcher.AudioApi, Version=4.0.0.308, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
-      <HintPath>..\packages\AudioSwitcher.AudioApi.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="AudioSwitcher.AudioApi, Version=3.0.0.209, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
+      <HintPath>..\packages\AudioSwitcher.AudioApi.3.0.0\lib\net40\AudioSwitcher.AudioApi.dll</HintPath>
     </Reference>
-    <Reference Include="AudioSwitcher.AudioApi.CoreAudio, Version=4.0.0.308, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
-      <HintPath>..\packages\AudioSwitcher.AudioApi.CoreAudio.4.0.0-alpha5\lib\net45\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="AudioSwitcher.AudioApi.CoreAudio, Version=3.0.0.209, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
+      <HintPath>..\packages\AudioSwitcher.AudioApi.CoreAudio.3.0.3\lib\net472\AudioSwitcher.AudioApi.CoreAudio.dll</HintPath>
     </Reference>
     <Reference Include="Avalonia, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.Base, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.Base.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.Controls, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.Controls.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.DesignerSupport, Version=0.7.0.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.DesignerSupport.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.Dialogs, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.Dialogs.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.Markup, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.Markup.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.Markup.Xaml, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.Markup.Xaml.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.Metal, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.Metal.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.MicroCom, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.MicroCom.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.OpenGL, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.OpenGL.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Avalonia.Remote.Protocol, Version=11.1.3.0, Culture=neutral, PublicKeyToken=7ecde292c616a9f3, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.Remote.Protocol.11.1.3\lib\netstandard2.0\Avalonia.Remote.Protocol.dll</HintPath>
     </Reference>
     <Reference Include="Avalonia.Vulkan, Version=11.1.3.0, Culture=neutral, PublicKeyToken=c8d484a7012f9a8b, processorArchitecture=MSIL">
       <HintPath>..\packages\Avalonia.11.1.3\lib\netstandard2.0\Avalonia.Vulkan.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Azure.Core, Version=1.44.1.0, Culture=neutral, PublicKeyToken=92742159e12e44c8, processorArchitecture=MSIL">
       <HintPath>..\packages\Azure.Core.1.44.1\lib\net472\Azure.Core.dll</HintPath>
@@ -179,15 +188,14 @@
     <Reference Include="MicroCom.Runtime, Version=0.11.0.0, Culture=neutral, PublicKeyToken=b30be05a5f7688e9, processorArchitecture=MSIL">
       <HintPath>..\packages\MicroCom.Runtime.0.11.0\lib\netstandard2.0\MicroCom.Runtime.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=9.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.9.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=9.0.0.8, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.9.0.8\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.TimeProvider, Version=9.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.TimeProvider.9.0.0\lib\net462\Microsoft.Bcl.TimeProvider.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Data.SqlClient, Version=5.0.0.0, Culture=neutral, PublicKeyToken=23ec7fc2d6eaa4a5, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Data.SqlClient.5.2.2\lib\net462\Microsoft.Data.SqlClient.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Data.Tools.Sql.BatchParser, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.172.52.0\lib\net472\Microsoft.Data.Tools.Sql.BatchParser.dll</HintPath>
@@ -522,6 +530,9 @@
     <Reference Include="System.Text.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Text.Json.9.0.0\lib\net462\System.Text.Json.dll</HintPath>
     </Reference>
+    <Reference Include="System.Threading.Channels, Version=9.0.0.8, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Channels.9.0.8\lib\net462\System.Threading.Channels.dll</HintPath>
+    </Reference>
     <Reference Include="System.Threading.Overlapped, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Overlapped.4.3.0\lib\net46\System.Threading.Overlapped.dll</HintPath>
       <Private>True</Private>
@@ -589,14 +600,36 @@
     <Compile Include="Class\App\Config\Config.cs" />
     <Compile Include="Class\App\Config\OthersConfigs\StartOnBoot.cs" />
     <Compile Include="Class\App\Config\Theme\Theme.cs" />
+    <Compile Include="Class\App\Controls\CustomMaterialSkin\CustomMaterialButton.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Class\App\Controls\CustomMaterialSkin\CustomMaterialButton.Designer.cs">
+      <DependentUpon>CustomMaterialButton.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Class\App\Controls\CustomMaterialSkin\CustomMaterialLabel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Class\App\Controls\CustomMaterialSkin\CustomMaterialLabel.Designer.cs">
+      <DependentUpon>CustomMaterialLabel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Class\App\Controls\DrawImage\DrawImage.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Class\App\Controls\DrawImage\DrawImage.Designer.cs">
+      <DependentUpon>DrawImage.cs</DependentUpon>
+    </Compile>
     <Compile Include="Class\App\Fonts\FontAwesome.cs" />
     <Compile Include="Class\App\Input\AudioController\AudioController.cs" />
+    <Compile Include="Class\App\Input\AudioController\AudioMonitor.cs" />
     <Compile Include="Class\App\Input\AudioController\AudioSession.cs" />
     <Compile Include="Class\App\Input\AudioPlayer\AudioPlayer.cs" />
     <Compile Include="Class\App\Input\Input.cs" />
     <Compile Include="Class\App\Input\MacroKey\Keyboard\KeyboardController.cs" />
     <Compile Include="Class\App\Input\MacroKey\MacroKeyAction.cs" />
     <Compile Include="Class\App\Input\MacroKey\Mouse\MouseController.cs" />
+    <Compile Include="Class\App\Output\DashboardLeds\DashboardLeds.cs" />
+    <Compile Include="Class\App\Output\Leds\Leds.cs" />
+    <Compile Include="Class\App\Output\Output.cs" />
     <Compile Include="Class\App\Updater\PluginUpdater.cs" />
     <Compile Include="Class\App\Connections\SimHubWebsocket.cs" />
     <Compile Include="Class\App\Updater\Updater.cs" />
@@ -611,6 +644,7 @@
     <Compile Include="Class\Devices\Connections\Bluetooth.cs" />
     <Compile Include="Class\Devices\Connections\Joystick.cs" />
     <Compile Include="Class\Devices\Connections\JJDevice.cs" />
+    <Compile Include="Class\Devices\JJBSlim_A.cs" />
     <Compile Include="Class\Devices\JJB01_V2 .cs" />
     <Compile Include="Class\Devices\JJB999.cs" />
     <Compile Include="Class\Devices\JJBP06.cs" />
@@ -649,6 +683,18 @@
     <Compile Include="Pages\App\AudioSession.Designer.cs">
       <DependentUpon>AudioSession.cs</DependentUpon>
     </Compile>
+    <Compile Include="Pages\App\LedMonoAction.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\App\LedMonoAction.Designer.cs">
+      <DependentUpon>LedMonoAction.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\App\LedRgbAction.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\App\LedRgbAction.Designer.cs">
+      <DependentUpon>LedRgbAction.cs</DependentUpon>
+    </Compile>
     <Compile Include="Pages\App\MacroKeyAction.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -660,6 +706,12 @@
     </Compile>
     <Compile Include="Pages\App\MacroKeyMain.Designer.cs">
       <DependentUpon>MacroKeyMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\App\MessageBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\App\MessageBox.Designer.cs">
+      <DependentUpon>MessageBox.cs</DependentUpon>
     </Compile>
     <Compile Include="Pages\App\UpdateAppNotification.cs">
       <SubType>Form</SubType>
@@ -715,6 +767,18 @@
     <Compile Include="Pages\CreateProfile.Designer.cs">
       <DependentUpon>CreateProfile.cs</DependentUpon>
     </Compile>
+    <Compile Include="Pages\Devices\JJBSlim_A.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\Devices\JJBSlim_A.Designer.cs">
+      <DependentUpon>JJBSlim_A.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Devices\JJDB01.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pages\Devices\JJDB01.Designer.cs">
+      <DependentUpon>JJDB01.cs</DependentUpon>
+    </Compile>
     <Compile Include="Pages\Devices\JJHL01.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -745,12 +809,6 @@
     <Compile Include="Pages\Devices\JJM01.Designer.cs">
       <DependentUpon>JJM01.cs</DependentUpon>
     </Compile>
-    <Compile Include="Pages\App\UpdateDevice.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Pages\App\UpdateDevice.Designer.cs">
-      <DependentUpon>UpdateDevice.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -772,11 +830,20 @@
       <DependentUpon>AudioSession.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Pages\App\LedMonoAction.resx">
+      <DependentUpon>LedMonoAction.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\App\LedRgbAction.resx">
+      <DependentUpon>LedRgbAction.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Pages\App\MacroKeyAction.resx">
       <DependentUpon>MacroKeyAction.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pages\App\MacroKeyMain.resx">
       <DependentUpon>MacroKeyMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\App\MessageBox.resx">
+      <DependentUpon>MessageBox.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pages\App\UpdateAppNotification.resx">
       <DependentUpon>UpdateAppNotification.cs</DependentUpon>
@@ -811,6 +878,12 @@
       <DependentUpon>CreateProfile.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Pages\Devices\JJBSlim_A.resx">
+      <DependentUpon>JJBSlim_A.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pages\Devices\JJDB01.resx">
+      <DependentUpon>JJDB01.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Pages\Devices\JJHL01.resx">
       <DependentUpon>JJHL01.cs</DependentUpon>
     </EmbeddedResource>
@@ -827,14 +900,12 @@
     <EmbeddedResource Include="Pages\Devices\JJM01.resx">
       <DependentUpon>JJM01.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Pages\App\UpdateDevice.resx">
-      <DependentUpon>UpdateDevice.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="Config\JJPropertyDictionary.json" />
     <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
@@ -853,14 +924,15 @@
   <ItemGroup>
     <None Include="Resources\32px-Cog_font_awesome.png" />
     <None Include="Resources\compatible_devices.json" />
-    <None Include="Resources\Font Awesome 6 Brands-Regular-400.otf" />
-    <None Include="Resources\Font Awesome 6 Free-Regular-400.otf" />
-    <None Include="Resources\Font Awesome 6 Free-Solid-900.otf" />
+    <None Include="Resources\fa-brands-400.ttf" />
+    <None Include="Resources\fa-regular-400.ttf" />
+    <None Include="Resources\fa-solid-900.ttf" />
     <None Include="Resources\JJB-01_input02_hover.png" />
     <None Include="Resources\JJB-01_input02.png" />
     <None Include="Resources\JJB-01_input01.png" />
     <None Include="Resources\JJB-01_input01_hover.png" />
     <None Include="Resources\JJB-01.png" />
+    <None Include="Resources\JJDB01_dashboard_vars.json" />
     <None Include="Resources\refresh_icon.png" />
     <None Include="Resources\JJM-01_input.png" />
     <None Include="Resources\JJM-01_input_hover.png" />
@@ -902,7 +974,17 @@
     </Content>
     <Content Include="JJManagerrIcon.ico" />
     <Content Include="MigrateQuerys\1_1_14.sql" />
-    <None Include="MigrateQuerys\1_2_6 _1 .sql" />
+    <None Include="MigrateQuerys\1_3_0 .sql" />
+    <None Include="MigrateQuerys\1_2_9 .sql" />
+    <None Include="Resources\JJB-Slim_A_hover.png" />
+    <None Include="Resources\JJB-Slim_A_active.png" />
+    <None Include="Resources\JJB-Slim_A.png" />
+    <None Include="MigrateQuerys\1_2_8 .sql" />
+    <None Include="Resources\JJDB01_led_hover.png" />
+    <None Include="Resources\JJDB01_led.png" />
+    <None Include="Resources\JJDB01_base.png" />
+    <None Include="MigrateQuerys\1_2_7.sql" />
+    <None Include="MigrateQuerys\1_2_6_1.sql" />
     <None Include="MigrateQuerys\1_2_6 .sql" />
     <Content Include="MigrateQuerys\1_2_1.sql" />
     <Content Include="MigrateQuerys\1_2_5.sql" />
@@ -926,18 +1008,16 @@
     <None Include="Resources\Logo JohnJohn JJMixer.png" />
     <None Include="Resources\JJManagerIcon_256.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Class\App\Output\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>Este projeto faz referência a pacotes do NuGet que não estão presentes neste computador. Use a Restauração de Pacotes do NuGet para baixá-los.  Para obter mais informações, consulte http://go.microsoft.com/fwlink/?LinkID=322105. O arquivo ausente é {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Avalonia.BuildServices.0.0.29\build\Avalonia.BuildServices.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Avalonia.BuildServices.0.0.29\build\Avalonia.BuildServices.targets'))" />
-    <Error Condition="!Exists('..\packages\Avalonia.11.1.3\build\Avalonia.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Avalonia.11.1.3\build\Avalonia.props'))" />
     <Error Condition="!Exists('..\packages\Avalonia.11.1.3\build\Avalonia.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Avalonia.11.1.3\build\Avalonia.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Data.SqlClient.SNI.6.0.1\build\net462\Microsoft.Data.SqlClient.SNI.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Data.SqlClient.SNI.6.0.1\build\net462\Microsoft.Data.SqlClient.SNI.targets'))" />
+    <Error Condition="!Exists('..\packages\Avalonia.11.1.3\build\Avalonia.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Avalonia.11.1.3\build\Avalonia.props'))" />
   </Target>
   <PropertyGroup>
     <PostBuildEvent>if not exist "$(TargetDir)lib" mkdir "$(TargetDir)lib"

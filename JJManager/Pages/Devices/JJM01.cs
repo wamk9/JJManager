@@ -323,13 +323,13 @@ namespace JJManager.Pages.Devices
         {
             if (CmbBoxSelectProfile.SelectedIndex == -1)
             {
-                MessageBox.Show("Selecione um perfil para exclui-lo.");
+                Pages.App.MessageBox.Show(this, "Selecione um Perfil", "Selecione um perfil para excluí-lo.");
                 return;
             }
 
             if (CmbBoxSelectProfile.Items.Count == 1)
             {
-                MessageBox.Show("Você possui apenas um perfil e este não pode ser excluído.");
+                Pages.App.MessageBox.Show(this, "Não Pode Excluir", "Você possui apenas um perfil e este não pode ser excluído.");
                 return;
             }
 
@@ -341,12 +341,16 @@ namespace JJManager.Pages.Devices
 
                 CmbBoxSelectProfile.Items.Remove(CmbBoxSelectProfile.SelectedItem);
 
-                string profileNameToActive = CmbBoxSelectProfile.Items[0].ToString();
+                string profileNameToActive = CmbBoxSelectProfile.Items[(CmbBoxSelectProfile.Items[0] == CmbBoxSelectProfile.SelectedItem ? 1 : 0)].ToString();
+
+                _device.Profile = new ProfileClass(_device, profileNameToActive, true);
+
+                ProfileClass.Delete(profileNameToExclude, _device.ProductId);
+
                 CmbBoxSelectProfile.SelectedIndex = 0;
 
-                _device.Profile.Delete(_device, profileNameToActive);
+                Pages.App.MessageBox.Show(this, "Perfil Excluído", "Perfil excluído com sucesso!");
 
-                MessageBox.Show("Perfil excluído com sucesso!");
             }
         }
         #endregion
