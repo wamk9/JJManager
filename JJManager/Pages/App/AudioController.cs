@@ -162,9 +162,15 @@ namespace JJManager.Pages.App
         {
             cklDevices.Items.Clear();
 
-            foreach (MMDevice device in devices)
+            // Criar lista de dispositivos DINAMICAMENTE ao invés de usar lista estática
+            using (MMDeviceEnumerator enumerator = new MMDeviceEnumerator())
             {
-                cklDevices.Items.Add(device.FriendlyName + " - " + device.DeviceFriendlyName + " (" + device.ID + ")");
+                var activeDevices = enumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active);
+
+                foreach (MMDevice device in activeDevices)
+                {
+                    cklDevices.Items.Add(device.FriendlyName + " - " + device.DeviceFriendlyName + " (" + device.ID + ")");
+                }
             }
         }
 

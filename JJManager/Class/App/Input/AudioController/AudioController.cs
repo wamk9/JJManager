@@ -1,5 +1,4 @@
-﻿// NAudio CoreAudioApi - Direct Windows Core Audio API access (no Timer_UpdatePeakValue bugs)
-using NAudio.CoreAudioApi;
+﻿using NAudio.CoreAudioApi;
 using JJManager.Class.App.Input.MacroKey.Keyboard;
 using JJManager.Class.App.Input.MacroKey.Mouse;
 using Microsoft.SqlServer.Management.XEvent;
@@ -38,20 +37,11 @@ namespace JJManager.Class.App.Input.AudioController
         private MMDeviceEnumerator _deviceEnumerator = null; // NAudio: MMDeviceEnumerator replaces CoreAudioController
         private bool _deviceEnumeratorDisposed = false; // Track if enumerator was disposed
         private bool _audioCoreNeedsRestart = true;
-        private CancellationTokenSource _currentCtsDevice = new CancellationTokenSource();
         private CancellationTokenSource _currentCtsSession = new CancellationTokenSource();
-        private List<AudioSessionControl> _sessionsGetted = new List<AudioSessionControl>(); // NAudio: AudioSessionControl replaces IAudioSession
-        private List<MMDevice> _devicesGetted = new List<MMDevice>();
-        private List<MMDevice> _devicesToControl = new List<MMDevice>(); // NAudio: MMDevice replaces CoreAudioDevice
-        private List<AudioSession> _sessionsToControl = new List<AudioSession>();
-        private readonly SemaphoreSlim _volumeSemaphoreDevice = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim _volumeSemaphoreApp = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim _coreAudioOperationLock = new SemaphoreSlim(1, 1); // Protects reset/volume/session operations
-        private readonly object _lock = new object();
         private bool _changingVolume = false;
         private bool _resetingCore = false;
         private bool _updateSessionsToControl = false;
-        private bool _ignoreEvents = false; // Ignore events during reset to prevent infinite loops
         private AudioMonitor _audioMonitor = null;
 
         // Variáveis ESTÁTICAS compartilhadas entre todos os AudioControllers
@@ -77,12 +67,19 @@ namespace JJManager.Class.App.Input.AudioController
             set => _deviceEnumerator = value;
         }
 
+        /// <summary>
+        /// Propriedade thread-safe para acessar sessões agrupadas compartilhadas
+        /// </summary>
         public List<AudioSession> SessionsToControl
         {
-            get => _sessionsToControl;
-            set => _sessionsToControl = value;
+            get
+            {
+                lock (_sharedLock)
+                {
+                    return _sharedSessionsGrouped?.ToList() ?? new List<AudioSession>();
+                }
+            }
         }
-
 
         public ObservableCollection<string> ToManage
         {
@@ -140,18 +137,29 @@ namespace JJManager.Class.App.Input.AudioController
             {
                 try
                 {
-                    // Adicionar nova sessão a _sessionsGetted
-                    if (e.Info?.Session != null && !_sessionsGetted.Contains(e.Info.Session))
+                    string sessionName = null;
+
+                    // Thread-safe: adicionar nova sessão às listas compartilhadas
+                    lock (_sharedLock)
                     {
-                        _sessionsGetted.Add(e.Info.Session);
+                        if (_sharedSessions == null)
+                        {
+                            _sharedSessions = new List<AudioSessionControl>();
+                        }
+
+                        if (e.Info?.Session != null && !_sharedSessions.Contains(e.Info.Session))
+                        {
+                            _sharedSessions.Add(e.Info.Session);
+                        }
+
+                        // Atualizar sessões agrupadas
+                        _sharedSessionsGrouped = GroupSessionsByExecutableWithCache(_sharedSessions, _sharedSessionsGrouped);
+
+                        // Buscar nome da sessão
+                        sessionName = _sharedSessionsGrouped?.FirstOrDefault(x => x?.Sessions?.Any(y => y.GetProcessID == (e?.Info?.ProcessId ?? 0)) ?? false)?.Executable;
                     }
 
-                    // Atualizar _sessionsToControl
-                    RefreshSessionsToControl();
-
-                    string sessionName = _sessionsToControl.FirstOrDefault(x => x?.Sessions?.Any(y => y.GetProcessID == (e?.Info?.ProcessId ?? 0)) ?? false)?.Executable ?? string.Empty;
-
-                    if (!string.IsNullOrEmpty(sessionName))
+                    if (!string.IsNullOrEmpty(sessionName) && _settedVolume >= 0)
                     {
                         // Verificar se está em _toManage (app gerenciado)
                         var managedApp = _toManage.FirstOrDefault(app =>
@@ -177,22 +185,32 @@ namespace JJManager.Class.App.Input.AudioController
 
             _audioMonitor.SessionDisconnected += (sender, e) =>
             {
-                // Remover sessão de _sessionsGetted
-                var sessionToRemove = _sessionsGetted.FirstOrDefault(s => s.GetProcessID == e.ProcessId);
-                if (sessionToRemove != null)
+                // Thread-safe: remover sessão das listas compartilhadas
+                lock (_sharedLock)
                 {
-                    _sessionsGetted.Remove(sessionToRemove);
-                }
+                    if (_sharedSessions != null)
+                    {
+                        var sessionToRemove = _sharedSessions.FirstOrDefault(s => s.GetProcessID == e.ProcessId);
+                        if (sessionToRemove != null)
+                        {
+                            _sharedSessions.Remove(sessionToRemove);
+                        }
+                    }
 
-                // Atualizar _sessionsToControl
-                RefreshSessionsToControl();
+                    // Atualizar sessões agrupadas
+                    _sharedSessionsGrouped = GroupSessionsByExecutableWithCache(_sharedSessions, _sharedSessionsGrouped);
+                }
             };
 
             _audioMonitor.SessionVolumeChanged += (sender, e) =>
             {
-                // Buscar sessão em _sessionsToControl pelo PID
-                var audioSession = _sessionsToControl.FirstOrDefault(s =>
-                    s.Sessions?.Any(session => session.GetProcessID == e.ProcessId) == true);
+                // Thread-safe: buscar sessão nas listas compartilhadas
+                AudioSession audioSession = null;
+                lock (_sharedLock)
+                {
+                    audioSession = _sharedSessionsGrouped?.FirstOrDefault(s =>
+                        s.Sessions?.Any(session => session.GetProcessID == e.ProcessId) == true);
+                }
 
                 if (audioSession != null)
                 {
@@ -211,11 +229,15 @@ namespace JJManager.Class.App.Input.AudioController
                     // Quando sessão volta para Active (ex: usuário dá play após pausar), reaplicar volume
                     if (e.State == NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateActive)
                     {
-                        // Buscar sessão em _sessionsToControl pelo PID
-                        var audioSession = _sessionsToControl.FirstOrDefault(s =>
-                            s.Sessions?.Any(session => session.GetProcessID == e.ProcessId) == true);
+                        // Thread-safe: buscar sessão nas listas compartilhadas
+                        AudioSession audioSession = null;
+                        lock (_sharedLock)
+                        {
+                            audioSession = _sharedSessionsGrouped?.FirstOrDefault(s =>
+                                s.Sessions?.Any(session => session.GetProcessID == e.ProcessId) == true);
+                        }
 
-                        if (audioSession != null)
+                        if (audioSession != null && _settedVolume >= 0)
                         {
                             // Verificar se está em _toManage
                             var managedApp = _toManage.FirstOrDefault(app =>
@@ -241,29 +263,37 @@ namespace JJManager.Class.App.Input.AudioController
             {
                 try
                 {
-                    // Adicionar novo dispositivo a _devicesToControl
+                    // Adicionar novo dispositivo à lista compartilhada
                     if (e.Device != null && e.Device.Device != null && e.Device.State == DeviceState.Active)
                     {
                         var newDevice = e.Device.Device;
+                        bool wasAdded = false;
 
-                        // Verificar se o dispositivo já não está na lista
-                        if (!_devicesToControl.Any(d => d.ID == newDevice.ID))
+                        // Thread-safe: adicionar à lista compartilhada
+                        lock (_sharedLock)
                         {
-                            _devicesToControl.Add(newDevice);
-
-                            // Verificar se o dispositivo está sendo gerenciado
-                            if (_audioMode == AudioMode.DevicePlayback || _audioMode == AudioMode.DeviceRecord)
+                            if (_sharedDevices == null)
                             {
-                                // Verificar se está em _toManage (buscar por ID)
-                                var managedDevice = _toManage.FirstOrDefault(deviceId =>
-                                    !string.IsNullOrEmpty(deviceId) &&
-                                    deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
+                                _sharedDevices = new List<MMDevice>();
+                            }
 
-                                if (managedDevice != null)
-                                {
-                                    // Aplicar volume configurado imediatamente
-                                    await ChangeDeviceVolume(managedDevice, _settedVolume);
-                                }
+                            if (!_sharedDevices.Any(d => d.ID == newDevice.ID))
+                            {
+                                _sharedDevices.Add(newDevice);
+                                wasAdded = true;
+                            }
+                        }
+
+                        // Aplicar volume se foi adicionado e está sendo gerenciado
+                        if (wasAdded && (_audioMode == AudioMode.DevicePlayback || _audioMode == AudioMode.DeviceRecord))
+                        {
+                            var managedDevice = _toManage.FirstOrDefault(deviceId =>
+                                !string.IsNullOrEmpty(deviceId) &&
+                                deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
+
+                            if (managedDevice != null)
+                            {
+                                await ChangeDeviceVolume(managedDevice, _settedVolume);
                             }
                         }
                     }
@@ -278,11 +308,17 @@ namespace JJManager.Class.App.Input.AudioController
             {
                 try
                 {
-                    // Remover dispositivo de _devicesToControl
-                    var deviceToRemove = _devicesToControl.FirstOrDefault(d => d.ID == e.DeviceId);
-                    if (deviceToRemove != null)
+                    // Thread-safe: remover dispositivo da lista compartilhada
+                    lock (_sharedLock)
                     {
-                        _devicesToControl.Remove(deviceToRemove);
+                        if (_sharedDevices != null)
+                        {
+                            var deviceToRemove = _sharedDevices.FirstOrDefault(d => d.ID == e.DeviceId);
+                            if (deviceToRemove != null)
+                            {
+                                _sharedDevices.Remove(deviceToRemove);
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -297,29 +333,70 @@ namespace JJManager.Class.App.Input.AudioController
                 {
                     if (e.Device != null && (_audioMode == AudioMode.DevicePlayback || _audioMode == AudioMode.DeviceRecord) && e.NewState == DeviceState.Active)
                     {
-                        var managedDevice = _toManage.FirstOrDefault(deviceId =>
-                            !string.IsNullOrEmpty(deviceId) &&
-                            deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
-
-                        if (managedDevice == null)
+                        // Thread-safe: adicionar device à lista compartilhada se não estiver presente
+                        if (e.Device.Device != null)
                         {
-                            RefreshDevicesToControl();
+                            var newDevice = e.Device.Device;
+                            lock (_sharedLock)
+                            {
+                                if (_sharedDevices == null)
+                                {
+                                    _sharedDevices = new List<MMDevice>();
+                                }
 
-                            managedDevice = _toManage.FirstOrDefault(deviceId =>
-                            !string.IsNullOrEmpty(deviceId) &&
-                            deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
+                                if (!_sharedDevices.Any(d => d.ID == newDevice.ID))
+                                {
+                                    _sharedDevices.Add(newDevice);
+                                }
+                            }
                         }
 
-                        if (managedDevice != null)
+                        // Verificar se device está sendo gerenciado
+                        if (_settedVolume >= 0)
                         {
-                            // Aplicar volume configurado imediatamente
-                            await ChangeDeviceVolume(managedDevice, _settedVolume);
+                            var managedDevice = _toManage.FirstOrDefault(deviceId =>
+                                !string.IsNullOrEmpty(deviceId) &&
+                                deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
+
+                            if (managedDevice != null)
+                            {
+                                // Aplicar volume configurado imediatamente
+                                await ChangeDeviceVolume(managedDevice, _settedVolume);
+                            }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
                     Log.Insert("AudioController", $"Erro ao processar mudança de estado do dispositivo: {ex.Message}", ex);
+                }
+            };
+
+            _audioMonitor.DefaultDeviceChanged += async (sender, e) =>
+            {
+                try
+                {
+                    // Reiniciar AudioMonitor para registrar callbacks no novo dispositivo padrão
+                    _audioMonitor.StopMonitoring();
+                    _audioMonitor.StartMonitoring();
+
+                    // Atualizar sessões e reaplicar volume
+                    await UpdateSessionsOnly();
+
+                    if (_audioMode == AudioMode.Application && _settedVolume >= 0)
+                    {
+                        foreach (var managedApp in _toManage)
+                        {
+                            if (!string.IsNullOrEmpty(managedApp))
+                            {
+                                await ChangeAppVolume(managedApp, _settedVolume);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Insert("AudioController", $"Erro ao processar mudança de dispositivo padrão: {ex.Message}", ex);
                 }
             };
 
@@ -407,40 +484,16 @@ namespace JJManager.Class.App.Input.AudioController
                     _deviceEnumeratorDisposed = false; // New enumerator is not disposed
 
                     // NAudio: Simply store devices and sessions (no event subscriptions like AudioSwitcher)
+                    // Thread-safe: atualizar listas compartilhadas de devices e sessions
+                    // (já atualizadas em GetNewCoreAudioController, mas garantir aqui também)
                     if (devices != null && sessions != null)
                     {
-                        // Add provided sessions to the list
-                        foreach (AudioSessionControl session in sessions)
+                        lock (_sharedLock)
                         {
-                            if (session != null)
-                            {
-                                _sessionsGetted.Add(session);
-                            }
+                            _sharedDevices = devices;
+                            _sharedSessions = sessions;
+                            _sharedSessionsGrouped = GroupSessionsByExecutableWithCache(_sharedSessions, _sharedSessionsGrouped);
                         }
-
-                        RefreshSessionsToControl();
-
-                        //// Aplicar volume para dispositivos gerenciados
-                        //if (_audioMode == AudioMode.DevicePlayback || _audioMode == AudioMode.DeviceRecord)
-                        //{
-                        //    foreach (var deviceId in _toManage)
-                        //    {
-                        //        await ChangeDeviceVolume(deviceId, _settedVolume);
-                        //    }
-                        //}
-
-                        foreach (MMDevice device in devices)
-                        {
-                            if (device != null)
-                            {
-                                _devicesGetted = devices;
-                            }
-                        }
-
-                        RefreshDevicesToControl();
-
-
-
                     }
                 }
                 catch (Exception ex)
@@ -459,124 +512,7 @@ namespace JJManager.Class.App.Input.AudioController
             }).ConfigureAwait(false); // Execute entire method in thread pool
         }
 
-        /// <summary>
-        /// Atualiza _sessionsToControl agrupando sessões de _sessionsGetted por executável
-        /// Usa cache estático para evitar WMI calls desnecessárias
-        /// </summary>
-        private void RefreshSessionsToControl()
-        {
-            try
-            {
-                _sessionsToControl.Clear();
 
-                // Se não tem sessões, nada a fazer
-                if (_sessionsGetted == null || _sessionsGetted.Count == 0)
-                    return;
-
-                // Criar cache de PID → Executable a partir do cache estático compartilhado
-                var pidToExeCache = new Dictionary<int, string>();
-                lock (_sharedLock)
-                {
-                    if (_sharedSessionsGrouped != null)
-                    {
-                        foreach (var audioSession in _sharedSessionsGrouped)
-                        {
-                            if (audioSession?.Sessions != null)
-                            {
-                                foreach (var session in audioSession.Sessions)
-                                {
-                                    try
-                                    {
-                                        int pid = (int)session.GetProcessID;
-                                        if (!pidToExeCache.ContainsKey(pid))
-                                        {
-                                            pidToExeCache[pid] = audioSession.Executable;
-                                        }
-                                    }
-                                    catch { }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Agrupar sessões de _sessionsGetted por executável usando CACHE
-                var groupedSessions = _sessionsGetted
-                    .Where(s => s != null)
-                    .GroupBy(s =>
-                    {
-                        try
-                        {
-                            int pid = (int)s.GetProcessID;
-
-                            // Verificar se PID já estava em cache
-                            if (pidToExeCache.TryGetValue(pid, out string cachedName))
-                            {
-                                return cachedName;
-                            }
-
-                            // Não estava no cache, buscar (primeiro Process.GetProcessById, depois WMI)
-                            string exeName = GetProcessNameOrExecutableByIdStatic(pid);
-
-                            // Adicionar ao cache para próximas chamadas
-                            if (!string.IsNullOrEmpty(exeName) && !pidToExeCache.ContainsKey(pid))
-                            {
-                                pidToExeCache[pid] = exeName;
-                            }
-
-                            return exeName;
-                        }
-                        catch
-                        {
-                            return null;
-                        }
-                    })
-                    .Where(g => !string.IsNullOrEmpty(g.Key));
-
-                // Criar AudioSession para cada grupo
-                foreach (var group in groupedSessions)
-                {
-                    var audioSession = new AudioSession(group.Key);
-                    foreach (var session in group)
-                    {
-                        audioSession.Add(session);
-                    }
-                    _sessionsToControl.Add(audioSession);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("AudioController", $"Erro ao atualizar sessões de controle: {ex.Message}", ex);
-            }
-        }
-
-        /// <summary>
-        /// Atualiza _devicesToControl com dispositivos ativos disponíveis e também atualiza as sessões
-        /// </summary>
-        private void RefreshDevicesToControl()
-        {
-            try
-            {
-                if (_deviceEnumerator == null)
-                {
-                    return;
-                }
-
-                _devicesToControl.Clear();
-
-                foreach (var device in _devicesGetted)
-                {
-                    if (device != null)
-                    {
-                        _devicesToControl.Add(device);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("AudioController", $"Erro ao atualizar dispositivos de controle: {ex.Message}", ex);
-            }
-        }
 
         /// <summary>
         /// Updates only the audio sessions without resetting the entire MMDeviceEnumerator
@@ -595,12 +531,11 @@ namespace JJManager.Class.App.Input.AudioController
                 // Small delay to allow Windows to migrate apps to new device
                 await Task.Delay(500);
 
-                // Clear old sessions list
-                _sessionsGetted.Clear();
-
                 // Execute COM operations in thread pool to avoid ContextSwitchDeadlock
                 await Task.Run(() =>
                 {
+                    var newSessions = new List<AudioSessionControl>();
+
                     // NAudio: Get only Active devices
                     var playbackDevices = _deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
 
@@ -630,7 +565,7 @@ namespace JJManager.Class.App.Input.AudioController
                                     var session = sessionCollection[i];
                                     if (session != null)
                                     {
-                                        _sessionsGetted.Add(session);
+                                        newSessions.Add(session);
                                     }
                                 }
                             }
@@ -641,8 +576,12 @@ namespace JJManager.Class.App.Input.AudioController
                         }
                     }
 
-                    // Clear old session controls to force recreation with new sessions
-                    _sessionsToControl.Clear();
+                    // Thread-safe: atualizar listas compartilhadas
+                    lock (_sharedLock)
+                    {
+                        _sharedSessions = newSessions;
+                        _sharedSessionsGrouped = GroupSessionsByExecutableWithCache(_sharedSessions, _sharedSessionsGrouped);
+                    }
                 }).ConfigureAwait(false); // Execute in thread pool, don't return to STA context
             }
             catch (Exception ex)
@@ -1154,14 +1093,18 @@ namespace JJManager.Class.App.Input.AudioController
 
                 try
                 {
-                    // Buscar TODAS as sessões com o mesmo executável (não apenas a primeira)
+                    // Thread-safe: buscar TODAS as sessões com o mesmo executável (não apenas a primeira)
                     // Usar comparação flexível: permite match parcial (ex: "firefox" match "firefox.exe")
-                    var audioSessions = _sessionsToControl?.Where(s =>
-                        !string.IsNullOrEmpty(s?.Executable) &&
-                        !string.IsNullOrEmpty(AppExecutable) &&
-                        (s.Executable.IndexOf(AppExecutable, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                         AppExecutable.IndexOf(s.Executable, StringComparison.OrdinalIgnoreCase) >= 0)
-                    ).ToList();
+                    List<AudioSession> audioSessions = null;
+                    lock (_sharedLock)
+                    {
+                        audioSessions = _sharedSessionsGrouped?.Where(s =>
+                            !string.IsNullOrEmpty(s?.Executable) &&
+                            !string.IsNullOrEmpty(AppExecutable) &&
+                            (s.Executable.IndexOf(AppExecutable, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             AppExecutable.IndexOf(s.Executable, StringComparison.OrdinalIgnoreCase) >= 0)
+                        ).ToList();
+                    }
 
                     if (audioSessions == null || audioSessions.Count == 0)
                     {
@@ -1245,8 +1188,15 @@ namespace JJManager.Class.App.Input.AudioController
                     // Execute COM operations in thread pool to avoid ContextSwitchDeadlock
                     await Task.Run(() =>
                     {
-                        // NAudio: MMDevice.ID is a string, not a Guid
-                        MMDevice device = _devicesToControl.FirstOrDefault(x => x.ID == deviceId);
+                        // Thread-safe: buscar device na lista compartilhada
+                        MMDevice device = null;
+                        lock (_sharedLock)
+                        {
+                            if (_sharedDevices != null)
+                            {
+                                device = _sharedDevices.FirstOrDefault(x => x.ID == deviceId);
+                            }
+                        }
 
                         if (device != null)
                         {
