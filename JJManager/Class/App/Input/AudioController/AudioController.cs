@@ -1,22 +1,11 @@
 ﻿using NAudio.CoreAudioApi;
-using JJManager.Class.App.Input.MacroKey.Keyboard;
-using JJManager.Class.App.Input.MacroKey.Mouse;
-using Microsoft.SqlServer.Management.XEvent;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Management;
-using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using static OpenBLT.Lib;
 
 namespace JJManager.Class.App.Input.AudioController
 {
