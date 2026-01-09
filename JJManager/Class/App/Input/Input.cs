@@ -256,7 +256,7 @@ namespace JJManager.Class.App.Input
 
                     // Fire and forget - don't block or create unnecessary threads
                     // AudioController.ChangeVolume() handles its own async operations
-                    AudioController.ChangeVolume().Wait();
+                    _ = AudioController.ChangeVolume();
                     break;
                 case InputMode.AudioPlayer:
                     _audioPlayer.PlayAudio();

@@ -102,7 +102,18 @@ namespace JJManager.Class.Devices
         public ProfileClass Profile
         {
             get => _profile;
-            set => _profile = value;
+            set
+            {
+                if (_profile != value)
+                {
+                    _profile = value;
+                    // Automatically trigger profile update when profile changes
+                    if (_profile != null)
+                    {
+                        _profile.NeedsUpdate = true;
+                    }
+                }
+            }
         }
         public bool IsConnected
         {

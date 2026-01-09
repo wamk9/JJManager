@@ -3,6 +3,7 @@ using NAudio.CoreAudioApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 namespace JJManager.Class.App.Input.AudioController
 {
@@ -25,7 +26,7 @@ namespace JJManager.Class.App.Input.AudioController
         private bool _isMonitoring;
         private DataFlow _currentDataFlow;
         private Role _currentRole;
-
+        private string _defaultDeviceId;
         /// <summary>
         /// Indica se o monitoramento está ativo
         /// </summary>
@@ -530,6 +531,13 @@ namespace JJManager.Class.App.Input.AudioController
             {
                 try
                 {
+                    if (defaultDeviceId == _monitor._defaultDeviceId)
+                    {
+                        return;
+                    }
+
+                    _monitor._defaultDeviceId = defaultDeviceId;
+
                     var device = _monitor._enumerator.GetDevice(defaultDeviceId);
                     var info = _monitor.GetDeviceInfo(device);
 

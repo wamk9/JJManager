@@ -34,7 +34,6 @@ namespace JJManager.Class.App.Input.AudioController
         private AudioMode _audioMode = AudioMode.None;
         private ObservableCollection<string> _toManage = null;
         private bool _invertedAxis = false;
-        private MMDeviceEnumerator _deviceEnumerator = null; // NAudio: MMDeviceEnumerator replaces CoreAudioController
         private bool _deviceEnumeratorDisposed = false; // Track if enumerator was disposed
         private bool _audioCoreNeedsRestart = true;
         private CancellationTokenSource _currentCtsSession = new CancellationTokenSource();
@@ -42,13 +41,21 @@ namespace JJManager.Class.App.Input.AudioController
         private bool _changingVolume = false;
         private bool _resetingCore = false;
         private bool _updateSessionsToControl = false;
-        private AudioMonitor _audioMonitor = null;
+        private static AudioMonitor _audioMonitor = null; // Shared static monitor for all AudioControllers
 
         // Variáveis ESTÁTICAS compartilhadas entre todos os AudioControllers
+        private static MMDeviceEnumerator _deviceEnumerator = null; // NAudio: MMDeviceEnumerator replaces CoreAudioController
         private static List<MMDevice> _sharedDevices = null;
         private static List<AudioSessionControl> _sharedSessions = null;
         private static List<AudioSession> _sharedSessionsGrouped = null;
         private static readonly object _sharedLock = new object();
+
+        // Flag para controlar inicialização única das sessões globais
+        private static bool _sharedInitialized = false;
+        private static MMDeviceEnumerator _sharedDeviceEnumerator = null;
+
+        // Lista de todos os AudioControllers ativos (para aplicar volume inicial em novas sessões)
+        private static List<AudioController> _activeControllers = new List<AudioController>();
         public bool AudioCoreNeedsRestart
         {
             get => _audioCoreNeedsRestart;
@@ -68,7 +75,9 @@ namespace JJManager.Class.App.Input.AudioController
         }
 
         /// <summary>
-        /// Propriedade thread-safe para acessar sessões agrupadas compartilhadas
+        /// Retorna as sessões que ESTE input irá controlar (filtrado por _toManage).
+        /// Consulta on-demand: sempre retorna dados atualizados da lista estática global.
+        /// Thread-safe: retorna cópia para evitar modificações externas.
         /// </summary>
         public List<AudioSession> SessionsToControl
         {
@@ -76,7 +85,36 @@ namespace JJManager.Class.App.Input.AudioController
             {
                 lock (_sharedLock)
                 {
-                    return _sharedSessionsGrouped?.ToList() ?? new List<AudioSession>();
+                    // Se não há lista estática ou _toManage vazio, retorna vazio
+                    if (_sharedSessionsGrouped == null || _toManage == null || _toManage.Count == 0)
+                    {
+                        return new List<AudioSession>();
+                    }
+
+                    // Filtra sessões em tempo real baseado em _toManage
+                    List<AudioSession> filteredSessions = new List<AudioSession>();
+
+                    foreach (var managedApp in _toManage)
+                    {
+                        if (string.IsNullOrEmpty(managedApp))
+                        {
+                            continue;
+                        }
+
+                        // Busca sessão que corresponde ao app gerenciado
+                        var matchingSession = _sharedSessionsGrouped.FirstOrDefault(session =>
+                            session != null &&
+                            !string.IsNullOrEmpty(session.Executable) &&
+                            (session.Executable.IndexOf(managedApp, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             managedApp.IndexOf(session.Executable, StringComparison.OrdinalIgnoreCase) >= 0));
+
+                        if (matchingSession != null && !filteredSessions.Contains(matchingSession))
+                        {
+                            filteredSessions.Add(matchingSession);
+                        }
+                    }
+
+                    return filteredSessions;
                 }
             }
         }
@@ -130,7 +168,29 @@ namespace JJManager.Class.App.Input.AudioController
         private void InitializeClassAttribs()
         {
             _toManage = new ObservableCollection<string>();
-            _audioMonitor = new AudioMonitor();
+
+            // Registrar este AudioController na lista de ativos
+            lock (_sharedLock)
+            {
+                if (!_activeControllers.Contains(this))
+                {
+                    _activeControllers.Add(this);
+                }
+
+                // Inicializar AudioMonitor apenas uma vez (estático compartilhado)
+                if (_audioMonitor == null)
+                {
+                    _audioMonitor = new AudioMonitor();
+                    InitializeAudioMonitorCallbacks();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Inicializa os callbacks do AudioMonitor estático (chamado apenas uma vez)
+        /// </summary>
+        private static void InitializeAudioMonitorCallbacks()
+        {
 
 
             _audioMonitor.SessionCreated += async (sender, e) =>
@@ -155,25 +215,43 @@ namespace JJManager.Class.App.Input.AudioController
                         // Atualizar sessões agrupadas
                         _sharedSessionsGrouped = GroupSessionsByExecutableWithCache(_sharedSessions, _sharedSessionsGrouped);
 
-                        // Buscar nome da sessão
+                        // Buscar nome da sessão para aplicar volume inicial
                         sessionName = _sharedSessionsGrouped?.FirstOrDefault(x => x?.Sessions?.Any(y => y.GetProcessID == (e?.Info?.ProcessId ?? 0)) ?? false)?.Executable;
                     }
 
-                    if (!string.IsNullOrEmpty(sessionName) && _settedVolume >= 0)
+                    // Aplicar volume inicial em todos os inputs que gerenciam este app
+                    if (!string.IsNullOrEmpty(sessionName))
                     {
-                        // Verificar se está em _toManage (app gerenciado)
-                        var managedApp = _toManage.FirstOrDefault(app =>
-                            !string.IsNullOrEmpty(app) &&
-                            (sessionName.IndexOf(app, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                             app.IndexOf(sessionName, StringComparison.OrdinalIgnoreCase) >= 0));
+                        // Pequeno delay para garantir que a sessão esteja completamente inicializada
+                        await Task.Delay(100);
 
-                        if (managedApp != null)
+                        // Iterar sobre todos os AudioControllers ativos
+                        List<AudioController> controllers;
+                        lock (_sharedLock)
                         {
-                            // Pequeno delay para garantir que a sessão esteja completamente inicializada
-                            await Task.Delay(100);
+                            controllers = _activeControllers.ToList(); // Cópia para evitar lock longo
+                        }
 
-                            // Aplicar volume configurado imediatamente
-                            await ChangeAppVolume(managedApp, _settedVolume);
+                        foreach (var controller in controllers)
+                        {
+                            try
+                            {
+                                // Verificar se este controller gerencia o app
+                                var managedApp = controller._toManage?.FirstOrDefault(app =>
+                                    !string.IsNullOrEmpty(app) &&
+                                    (sessionName.IndexOf(app, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     app.IndexOf(sessionName, StringComparison.OrdinalIgnoreCase) >= 0));
+
+                                if (managedApp != null && controller._settedVolume >= 0 && controller._audioMode == AudioMode.Application)
+                                {
+                                    // Aplicar volume configurado imediatamente
+                                    await controller.ChangeAppVolume(managedApp, controller._settedVolume);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Insert("AudioController", $"Erro ao aplicar volume inicial para {sessionName}: {ex.Message}", ex);
+                            }
                         }
                     }
                 }
@@ -202,23 +280,55 @@ namespace JJManager.Class.App.Input.AudioController
                 }
             };
 
-            _audioMonitor.SessionVolumeChanged += (sender, e) =>
+            _audioMonitor.SessionVolumeChanged += async (sender, e) =>
             {
-                // Thread-safe: buscar sessão nas listas compartilhadas
-                AudioSession audioSession = null;
-                lock (_sharedLock)
+                try
                 {
-                    audioSession = _sharedSessionsGrouped?.FirstOrDefault(s =>
-                        s.Sessions?.Any(session => session.GetProcessID == e.ProcessId) == true);
-                }
+                    // Quando o volume de uma sessão muda externamente (por outro app),
+                    // reaplica o volume configurado nos inputs que gerenciam este app
+                    string sessionName = null;
 
-                if (audioSession != null)
-                {
-                    var session = audioSession.Sessions.FirstOrDefault(s => s.GetProcessID == e.ProcessId);
-                    if (session != null)
+                    lock (_sharedLock)
                     {
-                        SetVolumeAndMuteAsync(session, _settedVolume).Wait();
+                        // Buscar nome da sessão pelo PID
+                        sessionName = _sharedSessionsGrouped?.FirstOrDefault(x => x?.Sessions?.Any(y => y.GetProcessID == e.ProcessId) ?? false)?.Executable;
                     }
+
+                    if (!string.IsNullOrEmpty(sessionName))
+                    {
+                        // Iterar sobre todos os AudioControllers ativos
+                        List<AudioController> controllers;
+                        lock (_sharedLock)
+                        {
+                            controllers = _activeControllers.ToList();
+                        }
+
+                        foreach (var controller in controllers)
+                        {
+                            try
+                            {
+                                // Verificar se este controller gerencia o app
+                                var managedApp = controller._toManage?.FirstOrDefault(app =>
+                                    !string.IsNullOrEmpty(app) &&
+                                    (sessionName.IndexOf(app, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                     app.IndexOf(sessionName, StringComparison.OrdinalIgnoreCase) >= 0));
+
+                                if (managedApp != null && controller._settedVolume >= 0 && controller._audioMode == AudioMode.Application)
+                                {
+                                    // Aplicar volume configurado (sobrescrever mudança externa)
+                                    await controller.ChangeAppVolume(managedApp, controller._settedVolume);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Insert("AudioController", $"Erro ao aplicar volume após alteração de volume para {sessionName}: {ex.Message}", ex);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Insert("AudioController", $"Erro ao processar alteração de volume da sessão: {ex.Message}", ex);
                 }
             };
 
@@ -226,29 +336,50 @@ namespace JJManager.Class.App.Input.AudioController
             {
                 try
                 {
-                    // Quando sessão volta para Active (ex: usuário dá play após pausar), reaplicar volume
+                    // Quando uma sessão muda de estado (ativo/inativo/expirado),
+                    // reaplica o volume se ela está ficando ativa
                     if (e.State == NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateActive)
                     {
-                        // Thread-safe: buscar sessão nas listas compartilhadas
-                        AudioSession audioSession = null;
+                        string sessionName = null;
+
                         lock (_sharedLock)
                         {
-                            audioSession = _sharedSessionsGrouped?.FirstOrDefault(s =>
-                                s.Sessions?.Any(session => session.GetProcessID == e.ProcessId) == true);
+                            // Buscar nome da sessão pelo PID
+                            sessionName = _sharedSessionsGrouped?.FirstOrDefault(x => x?.Sessions?.Any(y => y.GetProcessID == e.ProcessId) ?? false)?.Executable;
                         }
 
-                        if (audioSession != null && _settedVolume >= 0)
+                        if (!string.IsNullOrEmpty(sessionName))
                         {
-                            // Verificar se está em _toManage
-                            var managedApp = _toManage.FirstOrDefault(app =>
-                                !string.IsNullOrEmpty(app) &&
-                                !string.IsNullOrEmpty(audioSession.Executable) &&
-                                (audioSession.Executable.IndexOf(app, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                 app.IndexOf(audioSession.Executable, StringComparison.OrdinalIgnoreCase) >= 0));
+                            // Pequeno delay para garantir que a sessão esteja completamente ativa
+                            await Task.Delay(100);
 
-                            if (managedApp != null)
+                            // Iterar sobre todos os AudioControllers ativos
+                            List<AudioController> controllers;
+                            lock (_sharedLock)
                             {
-                                await ChangeAppVolume(managedApp, _settedVolume);
+                                controllers = _activeControllers.ToList();
+                            }
+
+                            foreach (var controller in controllers)
+                            {
+                                try
+                                {
+                                    // Verificar se este controller gerencia o app
+                                    var managedApp = controller._toManage?.FirstOrDefault(app =>
+                                        !string.IsNullOrEmpty(app) &&
+                                        (sessionName.IndexOf(app, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                         app.IndexOf(sessionName, StringComparison.OrdinalIgnoreCase) >= 0));
+
+                                    if (managedApp != null && controller._settedVolume >= 0 && controller._audioMode == AudioMode.Application)
+                                    {
+                                        // Aplicar volume configurado quando sessão fica ativa
+                                        await controller.ChangeAppVolume(managedApp, controller._settedVolume);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Log.Insert("AudioController", $"Erro ao aplicar volume após mudança de estado para {sessionName}: {ex.Message}", ex);
+                                }
                             }
                         }
                     }
@@ -267,7 +398,6 @@ namespace JJManager.Class.App.Input.AudioController
                     if (e.Device != null && e.Device.Device != null && e.Device.State == DeviceState.Active)
                     {
                         var newDevice = e.Device.Device;
-                        bool wasAdded = false;
 
                         // Thread-safe: adicionar à lista compartilhada
                         lock (_sharedLock)
@@ -280,20 +410,35 @@ namespace JJManager.Class.App.Input.AudioController
                             if (!_sharedDevices.Any(d => d.ID == newDevice.ID))
                             {
                                 _sharedDevices.Add(newDevice);
-                                wasAdded = true;
                             }
                         }
 
-                        // Aplicar volume se foi adicionado e está sendo gerenciado
-                        if (wasAdded && (_audioMode == AudioMode.DevicePlayback || _audioMode == AudioMode.DeviceRecord))
+                        // Aplicar volume inicial em todos os inputs que gerenciam este dispositivo
+                        List<AudioController> controllers;
+                        lock (_sharedLock)
                         {
-                            var managedDevice = _toManage.FirstOrDefault(deviceId =>
-                                !string.IsNullOrEmpty(deviceId) &&
-                                deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
+                            controllers = _activeControllers.ToList();
+                        }
 
-                            if (managedDevice != null)
+                        foreach (var controller in controllers)
+                        {
+                            try
                             {
-                                await ChangeDeviceVolume(managedDevice, _settedVolume);
+                                if ((controller._audioMode == AudioMode.DevicePlayback || controller._audioMode == AudioMode.DeviceRecord) && controller._settedVolume >= 0)
+                                {
+                                    var managedDevice = controller._toManage?.FirstOrDefault(deviceId =>
+                                        !string.IsNullOrEmpty(deviceId) &&
+                                        deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
+
+                                    if (managedDevice != null)
+                                    {
+                                        await controller.ChangeDeviceVolume(managedDevice, controller._settedVolume);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Insert("AudioController", $"Erro ao aplicar volume inicial para dispositivo {e.Device.Id}: {ex.Message}", ex);
                             }
                         }
                     }
@@ -331,7 +476,7 @@ namespace JJManager.Class.App.Input.AudioController
             {
                 try
                 {
-                    if (e.Device != null && (_audioMode == AudioMode.DevicePlayback || _audioMode == AudioMode.DeviceRecord) && e.NewState == DeviceState.Active)
+                    if (e.Device != null && e.NewState == DeviceState.Active)
                     {
                         // Thread-safe: adicionar device à lista compartilhada se não estiver presente
                         if (e.Device.Device != null)
@@ -351,17 +496,32 @@ namespace JJManager.Class.App.Input.AudioController
                             }
                         }
 
-                        // Verificar se device está sendo gerenciado
-                        if (_settedVolume >= 0)
+                        // Aplicar volume inicial em todos os inputs que gerenciam este dispositivo
+                        List<AudioController> controllers;
+                        lock (_sharedLock)
                         {
-                            var managedDevice = _toManage.FirstOrDefault(deviceId =>
-                                !string.IsNullOrEmpty(deviceId) &&
-                                deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
+                            controllers = _activeControllers.ToList();
+                        }
 
-                            if (managedDevice != null)
+                        foreach (var controller in controllers)
+                        {
+                            try
                             {
-                                // Aplicar volume configurado imediatamente
-                                await ChangeDeviceVolume(managedDevice, _settedVolume);
+                                if ((controller._audioMode == AudioMode.DevicePlayback || controller._audioMode == AudioMode.DeviceRecord) && controller._settedVolume >= 0)
+                                {
+                                    var managedDevice = controller._toManage?.FirstOrDefault(deviceId =>
+                                        !string.IsNullOrEmpty(deviceId) &&
+                                        deviceId.Equals(e.Device.Id, StringComparison.OrdinalIgnoreCase));
+
+                                    if (managedDevice != null)
+                                    {
+                                        await controller.ChangeDeviceVolume(managedDevice, controller._settedVolume);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Insert("AudioController", $"Erro ao aplicar volume inicial para dispositivo {e.Device.Id}: {ex.Message}", ex);
                             }
                         }
                     }
@@ -372,32 +532,17 @@ namespace JJManager.Class.App.Input.AudioController
                 }
             };
 
-            _audioMonitor.DefaultDeviceChanged += async (sender, e) =>
+            _audioMonitor.DefaultDeviceChanged += (sender, e) =>
             {
-                try
+                // DefaultDeviceChanged: Não fazer nada
+                if (_audioMonitor.IsMonitoring)
                 {
-                    // Reiniciar AudioMonitor para registrar callbacks no novo dispositivo padrão
                     _audioMonitor.StopMonitoring();
-                    _audioMonitor.StartMonitoring();
-
-                    // Atualizar sessões e reaplicar volume
-                    await UpdateSessionsOnly();
-
-                    if (_audioMode == AudioMode.Application && _settedVolume >= 0)
-                    {
-                        foreach (var managedApp in _toManage)
-                        {
-                            if (!string.IsNullOrEmpty(managedApp))
-                            {
-                                await ChangeAppVolume(managedApp, _settedVolume);
-                            }
-                        }
-                    }
                 }
-                catch (Exception ex)
-                {
-                    Log.Insert("AudioController", $"Erro ao processar mudança de dispositivo padrão: {ex.Message}", ex);
-                }
+
+                _audioMonitor.StartMonitoring();
+
+                // O volume será aplicado quando o usuário mover o potenciômetro (RequestData → Execute)
             };
 
             // Iniciar monitoramento de sessões e dispositivos de áudio
@@ -457,8 +602,6 @@ namespace JJManager.Class.App.Input.AudioController
                     }
                 }
 
-                _resetingCore = true;
-
                 while (_changingVolume)
                 {
                     // Wait for any ongoing volume changes to complete
@@ -512,100 +655,6 @@ namespace JJManager.Class.App.Input.AudioController
             }).ConfigureAwait(false); // Execute entire method in thread pool
         }
 
-
-
-        /// <summary>
-        /// Updates only the audio sessions without resetting the entire MMDeviceEnumerator
-        /// Used when apps change audio device but enumerator is still valid
-        /// </summary>
-        private async Task UpdateSessionsOnly()
-        {
-            try
-            {
-                // Check if MMDeviceEnumerator is initialized
-                if (_deviceEnumerator == null)
-                {
-                    return;
-                }
-
-                // Small delay to allow Windows to migrate apps to new device
-                await Task.Delay(500);
-
-                // Execute COM operations in thread pool to avoid ContextSwitchDeadlock
-                await Task.Run(() =>
-                {
-                    var newSessions = new List<AudioSessionControl>();
-
-                    // NAudio: Get only Active devices
-                    var playbackDevices = _deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
-
-                    // Rebuild sessions from all active devices
-                    foreach (var device in playbackDevices)
-                    {
-                        // Validate device state
-                        if (device == null || device.State != DeviceState.Active)
-                        {
-                            continue;
-                        }
-
-                        try
-                        {
-                            // NAudio: Get audio sessions from device
-                            var sessionManager = device.AudioSessionManager;
-                            if (sessionManager == null)
-                            {
-                                continue;
-                            }
-
-                            var sessionCollection = sessionManager.Sessions;
-                            if (sessionCollection != null)
-                            {
-                                for (int i = 0; i < sessionCollection.Count; i++)
-                                {
-                                    var session = sessionCollection[i];
-                                    if (session != null)
-                                    {
-                                        newSessions.Add(session);
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Insert("AudioController", $"Erro ao atualizar sessões do dispositivo {device.FriendlyName}", ex);
-                        }
-                    }
-
-                    // Thread-safe: atualizar listas compartilhadas
-                    lock (_sharedLock)
-                    {
-                        _sharedSessions = newSessions;
-                        _sharedSessionsGrouped = GroupSessionsByExecutableWithCache(_sharedSessions, _sharedSessionsGrouped);
-                    }
-                }).ConfigureAwait(false); // Execute in thread pool, don't return to STA context
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("AudioController", "Erro ao atualizar sessões de áudio", ex);
-            }
-        }
-
-        /// <summary>
-        /// Check and optionally reset MMDeviceEnumerator
-        /// </summary>
-        public async Task CheckCoreAudioController(MMDeviceEnumerator deviceEnumerator, bool reset = false)
-        {
-            if (reset)
-            {
-                await ResetCoreAudioController(deviceEnumerator);
-            }
-            else
-            {
-                // Just update sessions without full reset
-                await UpdateSessionsOnly();
-            }
-        }
-
         /// <summary>
         /// Creates a new MMDeviceEnumerator instance using NAudio.CoreAudioApi
         /// Returns tuple (enumerator, devices, sessions)
@@ -613,12 +662,26 @@ namespace JJManager.Class.App.Input.AudioController
         /// </summary>
         public static (MMDeviceEnumerator, List<MMDevice>, List<AudioSessionControl>) GetNewCoreAudioController()
         {
+            lock (_sharedLock)
+            {
+                // Se já foi inicializado, retornar variáveis estáticas existentes
+                if (_sharedInitialized && _sharedDeviceEnumerator != null && _sharedDevices != null && _sharedSessions != null)
+                {
+                    Log.Insert("AudioController", "Reutilizando sessões globais já inicializadas (não recriando)");
+                    // Retorna referências existentes (não cria novas listas)
+                    return (_sharedDeviceEnumerator, _sharedDevices, _sharedSessions);
+                }
+            }
+
+            // Primeira inicialização: criar enumerator e buscar devices/sessions
             MMDeviceEnumerator deviceEnumerator = null;
             List<MMDevice> devices = null;
             List<AudioSessionControl> sessions = null;
 
             try
             {
+                Log.Insert("AudioController", "Inicializando sessões globais pela primeira vez");
+
                 deviceEnumerator = new MMDeviceEnumerator();
                 devices = new List<MMDevice>();
                 sessions = new List<AudioSessionControl>();
@@ -626,7 +689,8 @@ namespace JJManager.Class.App.Input.AudioController
                 // NAudio: Get playback (render) devices - ONLY Active devices
                 try
                 {
-                    var playbackDevices = deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+                    // Buscar de TODOS os dispositivos para capturar sessões em dispositivos secundários
+                    var playbackDevices = deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.All);
 
                     if (playbackDevices == null)
                     {
@@ -635,8 +699,8 @@ namespace JJManager.Class.App.Input.AudioController
 
                     foreach (MMDevice device in playbackDevices)
                     {
-                        // Validate device state
-                        if (device == null || device.State != DeviceState.Active)
+                        // Skip apenas dispositivos desabilitados/inválidos
+                        if (device == null || device.State == DeviceState.Disabled || device.State == DeviceState.NotPresent)
                         {
                             continue;
                         }
@@ -675,20 +739,20 @@ namespace JJManager.Class.App.Input.AudioController
                     Log.Insert("AudioController", $"Erro ao enumerar playback devices: {ex.Message}");
                 }
 
-                // NAudio: Get capture (recording) devices - ONLY Active devices
+                // NAudio: Get capture (recording) devices - ALL devices
                 try
                 {
-                    var captureDevices = deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
+                    var captureDevices = deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.All);
 
                     if (captureDevices == null)
                     {
                         return (deviceEnumerator, devices, sessions);
-                    }   
+                    }
 
                     foreach (MMDevice device in captureDevices)
                     {
-                        // Validate device state
-                        if (device == null || device.State != DeviceState.Active)
+                        // Skip apenas dispositivos desabilitados/inválidos
+                        if (device == null || device.State == DeviceState.Disabled || device.State == DeviceState.NotPresent)
                         {
                             continue;
                         }
@@ -735,11 +799,18 @@ namespace JJManager.Class.App.Input.AudioController
             // Atualizar variáveis estáticas compartilhadas
             lock (_sharedLock)
             {
+                // Salvar enumerator, devices e sessions nas estáticas
+                _sharedDeviceEnumerator = deviceEnumerator;
                 _sharedDevices = devices;
                 _sharedSessions = sessions;
 
                 // Agrupar sessões por executável UMA vez usando cache dos _sharedSessionsGrouped anteriores
                 _sharedSessionsGrouped = GroupSessionsByExecutableWithCache(sessions, _sharedSessionsGrouped);
+
+                // Marcar como inicializado
+                _sharedInitialized = true;
+
+                Log.Insert("AudioController", $"Sessões globais inicializadas: {devices?.Count ?? 0} devices, {sessions?.Count ?? 0} sessions");
             }
 
             return (deviceEnumerator, devices, sessions);
@@ -1006,82 +1077,11 @@ namespace JJManager.Class.App.Input.AudioController
             }
         }
 
-        /// <summary>
-        /// Checks if process info contains specified string using WMI (universal, no Win32Exception)
-        /// </summary>
-        private bool CheckProcessInfo(int pid, string info)
-        {
-            if (pid == 0 || string.IsNullOrEmpty(info)) return false;
-
-            try
-            {
-                // Try WMI first (more reliable, no Win32Exception)
-                using (var searcher = new System.Management.ManagementObjectSearcher(
-                    $"SELECT ExecutablePath, Name FROM Win32_Process WHERE ProcessId = {pid}"))
-                {
-                    foreach (System.Management.ManagementObject obj in searcher.Get())
-                    {
-                        try
-                        {
-                            // Check executable path
-                            string execPath = obj["ExecutablePath"]?.ToString();
-                            if (!string.IsNullOrEmpty(execPath) && execPath.Contains(info))
-                            {
-                                return true;
-                            }
-
-                            // Check process name
-                            string processName = obj["Name"]?.ToString();
-                            if (!string.IsNullOrEmpty(processName) && processName.Contains(info))
-                            {
-                                return true;
-                            }
-                        }
-                        finally
-                        {
-                            obj?.Dispose();
-                        }
-                    }
-                }
-
-                // Fallback to Process.GetProcessById (faster but can throw Win32Exception)
-                try
-                {
-                    using (var process = System.Diagnostics.Process.GetProcessById(pid))
-                    {
-                        string name = process.ProcessName;
-                        if (!string.IsNullOrEmpty(name) && name.Contains(info))
-                        {
-                            return true;
-                        }
-                    }
-                }
-                catch
-                {
-                    // Fallback failed - ignore
-                }
-
-                return false;
-            }
-            catch
-            {
-                // Any error - fail silently
-                return false;
-            }
-        }
-
-
         private async Task ChangeAppVolume(String AppExecutable, int SettedVolume)
         {
             // Execute lock acquisition in thread pool to avoid COM deadlock on STA thread
             await Task.Run(async () =>
             {
-                // SKIP immediately if reset is in progress - don't even try to acquire lock
-                if (_resetingCore)
-                {
-                    return;
-                }
-
                 // Try to acquire lock - if another volume operation in progress, skip this request
                 bool lockAcquired = await _coreAudioOperationLock.WaitAsync(50); // Wait max 50ms
 
@@ -1093,11 +1093,25 @@ namespace JJManager.Class.App.Input.AudioController
 
                 try
                 {
+                    // NOVA ABORDAGEM: Validar _toManage e buscar sessões com filtragem
                     // Thread-safe: buscar TODAS as sessões com o mesmo executável (não apenas a primeira)
                     // Usar comparação flexível: permite match parcial (ex: "firefox" match "firefox.exe")
                     List<AudioSession> audioSessions = null;
                     lock (_sharedLock)
                     {
+                        // Primeiro valida se app está em _toManage (isolamento por input)
+                        bool isAppManaged = _toManage?.Any(managedApp =>
+                            !string.IsNullOrEmpty(managedApp) &&
+                            (managedApp.IndexOf(AppExecutable, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             AppExecutable.IndexOf(managedApp, StringComparison.OrdinalIgnoreCase) >= 0)) ?? false;
+
+                        if (!isAppManaged)
+                        {
+                            // App não está na lista de apps gerenciados por este input - SKIP
+                            return;
+                        }
+
+                        // Agora busca as sessões (mesma lógica anterior)
                         audioSessions = _sharedSessionsGrouped?.Where(s =>
                             !string.IsNullOrEmpty(s?.Executable) &&
                             !string.IsNullOrEmpty(AppExecutable) &&
@@ -1230,14 +1244,14 @@ namespace JJManager.Class.App.Input.AudioController
             }).ConfigureAwait(false); // Execute entire method in thread pool
         }
 
-        private async Task SetVolumeAndMuteAsync(MMDevice device, int SettedVolume)
+        private Task SetVolumeAndMuteAsync(MMDevice device, int SettedVolume)
         {
             try
             {
                 // Check if device is in a valid state before attempting volume operations
                 if (device == null || device.State != DeviceState.Active)
                 {
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // NAudio: Set volume (0.0-1.0) and mute
@@ -1256,16 +1270,18 @@ namespace JJManager.Class.App.Input.AudioController
                 // Log but don't throw - prevents blocking the entire audio control flow
                 Log.Insert("AudioController", $"Failed to set volume for device {device?.FriendlyName}: {ex.Message}", ex);
             }
+
+            return Task.CompletedTask;
         }
 
-        private async Task SetVolumeAndMuteAsync(AudioSessionControl session, int SettedVolume)
+        private Task SetVolumeAndMuteAsync(AudioSessionControl session, int SettedVolume)
         {
             try
             {
                 // Check if session is valid
                 if (session == null)
                 {
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 // NAudio: Set volume (0.0-1.0) and mute via SimpleAudioVolume
@@ -1284,6 +1300,8 @@ namespace JJManager.Class.App.Input.AudioController
                 // Log but don't throw - prevents blocking the entire audio control flow
                 Log.Insert("AudioController", $"Failed to set volume for session {session?.DisplayName}: {ex.Message}", ex);
             }
+
+            return Task.CompletedTask;
         }
 
         public async Task ChangeVolume()
@@ -1291,12 +1309,6 @@ namespace JJManager.Class.App.Input.AudioController
             // Execute entire method in thread pool to avoid COM deadlock on STA thread
             await Task.Run(async () =>
             {
-                // SKIP if reset is in progress - don't wait, just ignore this request
-                if (_resetingCore)
-                {
-                    return;
-                }
-
                 _changingVolume = true;
 
                 try

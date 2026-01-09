@@ -23,6 +23,12 @@ namespace JJManager.Pages.Devices
         private String DataReceived = "";
         private String[] DataTreated = null;
         private MaterialForm _parent = null;
+
+        // Profile switching UI blocking
+        private System.Windows.Forms.Timer _profileSwitchMonitor = null;
+        private bool _isProfileSwitching = false;
+        private bool _loadingProfiles = false; // Flag to prevent SelectedIndexChanged during dropdown load
+
         #region WinForms
         MaterialSkinManager materialSkinManager = null;
         private AppModulesTimer HidReceiver = null;
@@ -71,6 +77,11 @@ namespace JJManager.Pages.Devices
 
             CmbBoxSelectProfile.DropDown += new EventHandler(CmbBoxSelectProfile_DropDown);
             CmbBoxSelectProfile.SelectedIndexChanged += new EventHandler(CmbBoxSelectProfile_SelectedIndexChanged);
+
+            // Initialize profile switch monitor timer
+            _profileSwitchMonitor = new System.Windows.Forms.Timer();
+            _profileSwitchMonitor.Interval = 100; // Check every 100ms
+            _profileSwitchMonitor.Tick += ProfileSwitchMonitor_Tick;
         }
 
         private void OpenInputModal(ProfileClass profile, int idInput)
@@ -82,14 +93,119 @@ namespace JJManager.Pages.Devices
             _IsInputSelected = false;
         }
 
+        #region Profile Switch UI Blocking
+
+        /// <summary>
+        /// Blocks all UI controls during profile switch
+        /// </summary>
+        private void BlockUIControls()
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(BlockUIControls));
+                return;
+            }
+
+            _isProfileSwitching = true;
+
+            // Disable profile selector
+            CmbBoxSelectProfile.Enabled = false;
+
+            // Disable input buttons
+            BtnInput01JJM01.Enabled = false;
+            BtnInput02JJM01.Enabled = false;
+            BtnInput03JJM01.Enabled = false;
+            BtnInput04JJM01.Enabled = false;
+            BtnInput05JJM01.Enabled = false;
+
+            // Disable profile management buttons
+            BtnAddProfile.Enabled = false;
+            BtnRemoveProfile.Enabled = false;
+        }
+
+        /// <summary>
+        /// Unblocks all UI controls after profile switch completes
+        /// </summary>
+        private void UnblockUIControls()
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(UnblockUIControls));
+                return;
+            }
+
+            _isProfileSwitching = false;
+
+            // Enable profile selector
+            CmbBoxSelectProfile.Enabled = true;
+
+            // Enable input buttons
+            BtnInput01JJM01.Enabled = true;
+            BtnInput02JJM01.Enabled = true;
+            BtnInput03JJM01.Enabled = true;
+            BtnInput04JJM01.Enabled = true;
+            BtnInput05JJM01.Enabled = true;
+
+            // Enable profile management buttons
+            BtnAddProfile.Enabled = true;
+            BtnRemoveProfile.Enabled = true;
+        }
+
+        /// <summary>
+        /// Timer event that monitors profile switch completion
+        /// </summary>
+        private void ProfileSwitchMonitor_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                // Check if profile switch is complete AND communication is healthy
+                // Profile switch is complete when:
+                // 1. NeedsUpdate becomes false (profile processing done)
+                // 2. IsCommunicationHealthy is true (RequestData() responding successfully)
+                if (_device != null && _device.Profile != null && !_device.Profile.NeedsUpdate)
+                {
+                    // Cast to JJM01 to access IsCommunicationHealthy property
+                    var jjm01Device = _device as Class.Devices.JJM01;
+                    if (jjm01Device != null && jjm01Device.IsCommunicationHealthy)
+                    {
+                        // Stop monitoring
+                        _profileSwitchMonitor.Stop();
+
+                        // Unblock UI
+                        UnblockUIControls();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Insert("JJM01_UI", "Erro ao monitorar troca de perfil", ex);
+                // In case of error, stop monitoring and unblock UI
+                _profileSwitchMonitor.Stop();
+                UnblockUIControls();
+            }
+        }
+
+        #endregion
+
         #region Events
         private void JJM_01_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // Stop and dispose timer
+            if (_profileSwitchMonitor != null)
+            {
+                _profileSwitchMonitor.Stop();
+                _profileSwitchMonitor.Dispose();
+                _profileSwitchMonitor = null;
+            }
+
             _parent.Visible = true;
         }
 
         private void CmbBoxSelectProfile_DropDown(object sender, EventArgs e)
         {
+            // Set flag to prevent SelectedIndexChanged from triggering during load
+            _loadingProfiles = true;
+
             int selectedIndex = CmbBoxSelectProfile.SelectedIndex;
 
             CmbBoxSelectProfile.Items.Clear();
@@ -98,23 +214,50 @@ namespace JJManager.Pages.Devices
                 CmbBoxSelectProfile.Items.Add(Profile);
 
             CmbBoxSelectProfile.SelectedIndex = selectedIndex;
+
+            // Reset flag after loading is complete
+            _loadingProfiles = false;
         }
 
         private void CmbBoxSelectProfile_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // Don't process if we're just loading the profile list
+            if (_loadingProfiles)
+            {
+                return;
+            }
+
             if (CmbBoxSelectProfile.SelectedIndex == -1)
             {
                 CmbBoxSelectProfile.SelectedIndex = 0;
+                return;
             }
 
-            _device.Profile = new ProfileClass(_device, CmbBoxSelectProfile.SelectedItem.ToString());
+            // Block UI during profile switch
+            BlockUIControls();
+
+            // Request profile change in a thread-safe manner
+            // The device loop will handle the actual profile change
+            var jjm01Device = _device as Class.Devices.JJM01;
+            if (jjm01Device != null)
+            {
+                jjm01Device.RequestProfileChange(CmbBoxSelectProfile.SelectedItem.ToString());
+            }
+            else
+            {
+                // Fallback for other device types (direct assignment)
+                _device.Profile = new ProfileClass(_device, CmbBoxSelectProfile.SelectedItem.ToString(), true);
+            }
+
+            // Start monitoring for profile switch completion
+            _profileSwitchMonitor.Start();
         }
         #endregion
 
         #region Buttons
         private void BtnInput01JJM01_Click(object sender, EventArgs e)
         {
-            if (_IsInputSelected)
+            if (_IsInputSelected || _isProfileSwitching)
                 return;
 
             _IsInputSelected = true;
@@ -149,7 +292,7 @@ namespace JJManager.Pages.Devices
 
         private void BtnInput02JJM01_Click(object sender, EventArgs e)
         {
-            if (_IsInputSelected)
+            if (_IsInputSelected || _isProfileSwitching)
                 return;
 
             _IsInputSelected = true;
@@ -184,7 +327,7 @@ namespace JJManager.Pages.Devices
 
         private void BtnInput03JJM01_Click(object sender, EventArgs e)
         {
-            if (_IsInputSelected)
+            if (_IsInputSelected || _isProfileSwitching)
                 return;
 
             _IsInputSelected = true;
@@ -219,7 +362,7 @@ namespace JJManager.Pages.Devices
 
         private void BtnInput04JJM01_Click(object sender, EventArgs e)
         {
-            if (_IsInputSelected)
+            if (_IsInputSelected || _isProfileSwitching)
                 return;
 
             _IsInputSelected = true;
@@ -254,7 +397,7 @@ namespace JJManager.Pages.Devices
 
         private void BtnInput05JJM01_Click(object sender, EventArgs e)
         {
-            if (_IsInputSelected)
+            if (_IsInputSelected || _isProfileSwitching)
                 return;
 
             _IsInputSelected = true;

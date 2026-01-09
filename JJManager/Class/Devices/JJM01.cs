@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ProfileClass = JJManager.Class.App.Profile.Profile;
 using HIDClass = JJManager.Class.Devices.Connections.HID;
 using HIDMessage = JJManager.Class.Devices.Connections.HIDMessage;
 
@@ -15,12 +16,18 @@ namespace JJManager.Class.Devices
 {
     public class JJM01 : HIDClass, IDisposable
     {
-        private MMDeviceEnumerator _deviceEnumerator = null;
         private volatile bool _requesting = false;
         private volatile bool _sending = false;
+        private volatile bool _updatingAudioController = false; // Prevents concurrent audio controller updates
         private readonly int _connectionTimeoutLimit = 10;
         private int _actualConnectionTimeout = 0;
         private bool _disposed = false;
+
+        // Profile change request (safer than changing profile directly from UI thread)
+        private volatile string _pendingProfileName = null;
+
+        // Public property to check if communication is healthy
+        public bool IsCommunicationHealthy => _actualConnectionTimeout == 0;
 
         // Keep-alive tracking
         private DateTime _lastKeepAlive = DateTime.MinValue;
@@ -48,6 +55,16 @@ namespace JJManager.Class.Devices
             RestartClass();
         }
 
+        /// <summary>
+        /// Requests a profile change in a thread-safe manner.
+        /// The actual profile change will happen in the next loop iteration.
+        /// </summary>
+        /// <param name="profileName">Name of the profile to switch to</param>
+        public void RequestProfileChange(string profileName)
+        {
+            _pendingProfileName = profileName;
+        }
+
         private void RestartClass()
         {
             // Clean up audio resources
@@ -58,6 +75,7 @@ namespace JJManager.Class.Devices
             _lastRequest = DateTime.MinValue;
             _lastAudioSessionCheck = DateTime.MinValue;
             _lastActivePIDsByInput.Clear();
+            _updatingAudioController = false;
 
             _actionReceivingData = () => { Task.Run(async () => await ActionMainLoop()); };
             _actionSendingData = null; // Não usado mais - tudo em ActionMainLoop
@@ -68,13 +86,6 @@ namespace JJManager.Class.Devices
         {
             try
             {
-                // Dispose MMDeviceEnumerator and clear reference
-                if (_deviceEnumerator != null)
-                {
-                    _deviceEnumerator.Dispose();
-                    _deviceEnumerator = null;
-                }
-
                 // Clean up audio controllers in each input
                 if (_profile?.Inputs != null)
                 {
@@ -82,8 +93,7 @@ namespace JJManager.Class.Devices
                     {
                         if (input?.AudioController != null)
                         {
-                            // Clear sessions and devices
-                            input.AudioController.SessionsToControl?.Clear();
+                            // SessionsToControl agora é propriedade calculada (não armazenada), não precisa limpar
                             input.AudioController.UpdateSessionsToControl = false;
                             input.AudioController.AudioCoreNeedsRestart = true;
                         }
@@ -113,27 +123,83 @@ namespace JJManager.Class.Devices
             {
                 try
                 {
-                    // Verifica se precisa atualizar perfil (usuário mudou configuração)
-                    if (_profile.NeedsUpdate)
+                    // PRIORIDADE MÁXIMA: Verifica requisição de mudança de perfil NO INÍCIO do loop
+                    // Isso garante que nenhuma operação está em execução quando o perfil muda
+                    if (_pendingProfileName != null && !_updatingAudioController)
                     {
-                        _profile.Restart();
-                        // Run in background to not block keep-alive loop
-                        _ = Task.Run(async () => await UpdateCoreAudioController(forceRecreateCore: true));
-                        await SendInputs();
-                        _profile.NeedsUpdate = false;
-                        lastAudioCheckTime = DateTime.Now;
+                        _updatingAudioController = true;
+                        try
+                        {
+                            string profileNameToLoad = _pendingProfileName;
+                            _pendingProfileName = null; // Clear request
+
+                            // Create new profile in a thread-safe manner (within device loop)
+                            _profile = new ProfileClass(this, profileNameToLoad, true);
+
+                            // Sinaliza que AudioControllers precisam ser atualizados com as sessões estáticas
+                            foreach (var input in _profile.Inputs.Where(x => x.AudioController != null))
+                            {
+                                input.AudioController.UpdateSessionsToControl = true;
+                            }
+
+                            await SendInputs();
+                            _profile.NeedsUpdate = false;
+                            lastAudioCheckTime = DateTime.Now;
+                        }
+                        finally
+                        {
+                            _updatingAudioController = false;
+                        }
+
+                        // IMPORTANTE: Pula para próxima iteração - não executa mais nada durante troca de perfil
+                        await Task.Delay(10);
+                        continue;
+                    }
+
+                    // Verifica se precisa atualizar perfil (mudança interna, não da UI)
+                    if (_profile.NeedsUpdate && !_updatingAudioController)
+                    {
+                        _updatingAudioController = true;
+                        try
+                        {
+                            //_profile.Restart();
+                            // IMPORTANTE: Usar await para garantir que termina antes de processar outro perfil
+                            //await UpdateCoreAudioController(forceRecreateCore: true);
+                            await SendInputs();
+                            _profile.NeedsUpdate = false;
+                            lastAudioCheckTime = DateTime.Now;
+                        }
+                        finally
+                        {
+                            _updatingAudioController = false;
+                        }
+
+                        // IMPORTANTE: Pula para próxima iteração - não executa mais nada durante troca de perfil
+                        await Task.Delay(10);
+                        continue;
                     }
 
                     // Verifica se algum AudioController solicitou restart ou update
-                    bool needsRestartCore = _profile.Inputs?.Any(x => x.AudioController?.AudioCoreNeedsRestart ?? false) ?? false;
-                    bool needsUpdateSessions = _profile.Inputs?.Any(x => x.AudioController?.UpdateSessionsToControl ?? false) ?? false;
+                    // Só processa se não estiver atualizando perfil
+                    //if (!_updatingAudioController)
+                    //{
+                    //    bool needsRestartCore = _profile.Inputs?.Any(x => x.AudioController?.AudioCoreNeedsRestart ?? false) ?? false;
+                    //    bool needsUpdateSessions = _profile.Inputs?.Any(x => x.AudioController?.UpdateSessionsToControl ?? false) ?? false;
 
-                    // Run in background to not block RequestData() and keep device communication alive
-                    if (needsRestartCore || needsUpdateSessions)
-                    {
-                        //_ = Task.Run(async () => await UpdateCoreAudioController(forceRecreateCore: needsRestartCore, forceUpdateSessions: needsUpdateSessions));
-                        await UpdateCoreAudioController(forceRecreateCore: needsRestartCore, forceUpdateSessions: needsUpdateSessions);
-                    }
+                    //    // Run in background to not block RequestData() and keep device communication alive
+                    //    if (needsRestartCore || needsUpdateSessions)
+                    //    {
+                    //        _updatingAudioController = true;
+                    //        try
+                    //        {
+                    //            await UpdateCoreAudioController(forceRecreateCore: needsRestartCore, forceUpdateSessions: needsUpdateSessions);
+                    //        }
+                    //        finally
+                    //        {
+                    //            _updatingAudioController = false;
+                    //        }
+                    //    }
+                    //}
 
                     // Requisita dados do mixer (valores dos potenciômetros)
                     // Continua executando mesmo durante atualização do CoreAudioController
@@ -208,155 +274,28 @@ namespace JJManager.Class.Devices
             return Task.CompletedTask;
         }
 
-        /// <summary>
-        /// Checks which specific inputs have had their audio sessions changed.
-        /// Returns list of bools (one per input) indicating if that input changed.
-        /// This enables granular updates - only changed inputs are processed.
-        /// </summary>
-        private List<bool> GetInputsChangedFlags()
-        {
-            List<bool> changedFlags = new List<bool>();
-
-            try
-            {
-                for (int i = 0; i < _profile.Inputs.Count; i++)
-                {
-                    bool hasChanged = false;
-
-                    if (_profile.Inputs[i]?.AudioController != null)
-                    {
-                        // Collect current PIDs for this specific input
-                        HashSet<int> currentPIDs = new HashSet<int>();
-                        foreach (var session in _profile.Inputs[i].AudioController.SessionsToControl)
-                        {
-                            if (session?.PID != null)
-                            {
-                                foreach (int pid in session.PID)
-                                {
-                                    currentPIDs.Add(pid);
-                                }
-                            }
-                        }
-
-                        // Check if this input has changed
-                        if (!_lastActivePIDsByInput.ContainsKey(i))
-                        {
-                            // First time seeing this input - consider changed if has PIDs
-                            hasChanged = currentPIDs.Count > 0;
-                            _lastActivePIDsByInput[i] = new HashSet<int>(currentPIDs);
-                        }
-                        else
-                        {
-                            // Compare with last known state for this input
-                            hasChanged = !currentPIDs.SetEquals(_lastActivePIDsByInput[i]);
-
-                            if (hasChanged)
-                            {
-                                _lastActivePIDsByInput[i] = new HashSet<int>(currentPIDs);
-                            }
-                        }
-                    }
-
-                    changedFlags.Add(hasChanged);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("JJM01", "Erro ao verificar mudanças em audio sessions por input", ex);
-            }
-
-            return changedFlags;
-        }
-
-        /// <summary>
-        /// Updates only specific inputs that have changed.
-        /// Much more efficient than updating all inputs.
-        /// Creates MMDeviceEnumerator if needed.
-        /// </summary>
-        private async Task UpdateSpecificInputs(List<bool> changedFlags)
-        {
-            try
-            {
-                // Create MMDeviceEnumerator ONLY if null
-                if (_deviceEnumerator == null)
-                {
-                    var (deviceEnumerator, devicesGetted, sessionsGetted) = AudioController.GetNewCoreAudioController();
-                    _deviceEnumerator = deviceEnumerator;
-                }
-
-                // Update only the inputs that changed
-                if (_deviceEnumerator != null && changedFlags.Any(flag => flag))
-                {
-                    for (int i = 0; i < changedFlags.Count && i < _profile.Inputs.Count; i++)
-                    {
-                        // Only update if this specific input changed
-                        if (changedFlags[i] && _profile.Inputs[i]?.AudioController != null)
-                        {
-                            // CheckCoreAudioController will refresh audio sessions/devices as needed
-                            await _profile.Inputs[i].AudioController.CheckCoreAudioController(_deviceEnumerator, false);
-                            _profile.Inputs[i].AudioController.AudioCoreNeedsRestart = false;
-                            _profile.Inputs[i].AudioController.UpdateSessionsToControl = false;
-                            _profile.Inputs[i].Execute();
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("JJM01", "Erro ao atualizar inputs específicos", ex);
-            }
-        }
-
         public async Task UpdateCoreAudioController(bool forceRecreateCore = false, bool forceUpdateSessions = false)
         {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
             bool needsRestart = _profile.Inputs.Any(x => x?.AudioController?.AudioCoreNeedsRestart ?? false);
 
             if (forceRecreateCore || needsRestart)
             {
-                var (deviceEnumerator, devicesGetted, sessionsGetted) = AudioController.GetNewCoreAudioController();
-
-                _deviceEnumerator?.Dispose();
-                _deviceEnumerator = null;
-                _deviceEnumerator = deviceEnumerator;
-
-                // Executar TODOS os resets em PARALELO (reduz 15s→3s com 5 inputs)
-                // skipLock: true = permite paralelização (todos recebem mesmos parâmetros)
-                var audioInputs = _profile.Inputs.Where(x => x.AudioController != null && x.Mode == Input.InputMode.AudioController).ToList();
-
-                await Task.WhenAll(audioInputs.Select(input =>
-                    input.AudioController.ResetCoreAudioController(_deviceEnumerator, devicesGetted, sessionsGetted, skipLock: true)
-                ));
-
-                // Atualizar flags e executar após todos os resets
-                foreach (Input input in audioInputs)
-                {
-                    input.AudioController.AudioCoreNeedsRestart = false;
-                    input.AudioController.UpdateSessionsToControl = false;
-                    input.Execute();
-                }
+                AudioController.GetNewCoreAudioController();
             }
-            else if (forceUpdateSessions || _profile.Inputs.Any(x => x?.AudioController?.UpdateSessionsToControl ?? false))
-            {
-                // Executar TODOS os checks em PARALELO
-                var audioInputs = _profile.Inputs.Where(x => x.AudioController != null && x.Mode == Input.InputMode.AudioController).ToList();
-                await Task.WhenAll(audioInputs.Select(input =>
-                    input.AudioController.CheckCoreAudioController(_deviceEnumerator, false)
-                ));
+            
+            var audioInputs = _profile.Inputs.Where(x => x.AudioController != null && x.Mode == Input.InputMode.AudioController).ToList();
 
-                // Atualizar flags e executar após todos os checks
-                foreach (Input input in audioInputs)
-                {
-                    input.AudioController.UpdateSessionsToControl = false;
-                    input.Execute();
-                }
+            // Atualizar flags e executar após todos os resets
+            foreach (Input input in audioInputs)
+            {
+                input.Execute();
             }
         }
 
         public async Task RequestData()
         {
             // Wait to acquire the semaphore
-            if (_disposed || _sending || _requesting || _deviceEnumerator == null)
+            if (_disposed || _sending || _requesting)
             {
                 return;
             }
@@ -455,6 +394,7 @@ namespace JJManager.Class.Devices
                 // Reset flags
                 _requesting = false;
                 _sending = false;
+                _updatingAudioController = false;
                 _actualConnectionTimeout = 0;
             }
 

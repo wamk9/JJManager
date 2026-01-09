@@ -1,7 +1,7 @@
 # JJManager - Contexto Completo de Desenvolvimento
 
 > Documentação consolidada do projeto JJManager para desenvolvimento com Claude Code
-> Última atualização: 2025-12-26
+> Última atualização: 2026-01-09
 
 ---
 
@@ -22,6 +22,7 @@
 13. [Changelog JJB01_V2](#changelog-jjb01_v2)
 14. [Plano de Testes JJB01_V2](#plano-de-testes-jjb01_v2)
 15. [Protocolo de Comunicação HID Byte-Based (ATUALIZADO 2025-12-26)](#15-protocolo-de-comunicação-hid-byte-based-atualizado-2025-12-26)
+16. [Sistema de Filtragem de Sessões de Áudio por Input (2026-01-09)](#16-sistema-de-filtragem-de-sessões-de-áudio-por-input-2026-01-09)
 
 ---
 
@@ -1492,5 +1493,389 @@ Blink Speed: 5
 
 ---
 
+## 16. Sistema de Filtragem de Sessões de Áudio por Input (2026-01-09)
+
+### Problema Solucionado
+
+**Sintomas:**
+- Troca de perfil causava travamento/desconexão do dispositivo JJM01
+- AudioController não atualizava corretamente após troca de perfil
+- Inputs de diferentes perfis podiam controlar os mesmos apps simultaneamente
+
+**Causa Raiz:**
+- Sessões de áudio estáticas (`_sharedSessionsGrouped`) não eram filtradas por `_toManage`
+- Cada dispositivo recriava MMDeviceEnumerator ao conectar/reconectar
+- Dispose do enumerator compartilhado quebrava comunicação de todos os dispositivos
+
+### Solução Implementada
+
+**Arquitetura: Sessões Globais + Filtragem On-Demand**
+
+1. **Inicialização Única (Fase 0)**
+   - Sessões globais criadas UMA VEZ na primeira conexão de qualquer dispositivo
+   - Dispositivos subsequentes reutilizam as mesmas sessões
+   - Callbacks (SessionCreated/Disconnected) mantêm sincronização automática
+
+2. **Filtragem On-Demand por Input (Fase 1-3)**
+   - Propriedade `SessionsToControl` filtra em tempo real baseado em `_toManage`
+   - Método `ChangeAppVolume()` valida que app está em `_toManage` antes de controlar
+   - Zero cache = dados sempre atualizados
+
+### Arquivos Modificados
+
+**AudioController.cs:**
+- Linhas 53-55: Adicionadas flags `_sharedInitialized`, `_sharedDeviceEnumerator`
+- Linhas 620-768: GetNewCoreAudioController() modificado para reutilizar sessões globais
+- Linhas 79-117: SessionsToControl agora filtra on-demand (sem cache)
+- Linhas 947-983: Novo método FindSessionForApp() com validação de _toManage
+- Linhas 1203-1214: ChangeAppVolume() valida _toManage antes de buscar sessões
+
+**JJM01.cs:**
+- Linhas 71-73: CleanupAudioResources() não faz mais dispose do enumerator compartilhado
+- Linhas 319-324: UpdateCoreAudioController() só faz dispose se enumerator for diferente
+
+### Benefícios
+
+✅ **Inicialização Única:** Menos overhead, menos bugs
+✅ **Dados Sempre Atualizados:** Zero stale data (nenhum cache)
+✅ **Isolamento por Input:** Cada input controla apenas apps em seu `_toManage`
+✅ **Simplicidade:** Sem sincronização complexa, sem variáveis extras
+✅ **Fix Definitivo:** Troca de perfil não trava mais o dispositivo
+
+### Comportamento Esperado
+
+**Troca de Perfil:**
+- Perfil A: Input 1 controla Firefox → Perfil B: Input 1 controla Chrome
+- Mover potenciômetro 1 sempre controla SOMENTE o app do perfil ativo
+- Device não trava/desconecta durante troca
+
+**Inicialização:**
+- Primeira conexão: Log "Inicializando sessões globais pela primeira vez"
+- Reconexões: Log "Reutilizando sessões globais já inicializadas"
+
+**Isolamento:**
+- Input 1 com Firefox + Input 2 com Chrome = ambos funcionam independentemente
+- Input só controla apps listados em seu `_toManage` (validação automática)
+
+---
+
+## 17. Sistema de Aplicação Automática de Volume e Melhorias no AudioMonitor (2026-01-09)
+
+### Problemas Solucionados
+
+**Sintomas:**
+1. DefaultDeviceChanged causava loop infinito com CPU/memory leak
+2. Apps novos não eram detectados (sessões de dispositivos secundários não capturadas)
+3. Volume não era aplicado automaticamente quando apps abriam ou dispositivos eram habilitados
+4. UI não bloqueava durante troca de perfil (permitindo cliques indesejados)
+5. Troca de perfil rápida (P1 → P2 → P1) travava comunicação do dispositivo
+
+**Causas Raiz:**
+1. AudioMonitor era criado por instância, gerando múltiplos callbacks duplicados
+2. Stop/Start do monitor dentro do DefaultDeviceChanged retriggava o evento
+3. GetNewCoreAudioController() só enumerava DeviceState.Active (ignorava dispositivos secundários)
+4. Profile era alterado diretamente da UI thread durante execução do device loop
+5. Nenhuma aplicação automática de volume em callbacks de mudança de estado/volume
+
+### Soluções Implementadas
+
+#### 1. AudioMonitor Estático (Singleton)
+
+**Arquivo:** AudioController.cs linha 44
+```csharp
+private static AudioMonitor _audioMonitor = null; // Shared static monitor for all AudioControllers
+```
+
+**Benefícios:**
+- ✅ UMA única instância de AudioMonitor para todos os AudioControllers
+- ✅ Callbacks registrados apenas uma vez (não duplicados)
+- ✅ Menor overhead de memória e CPU
+- ✅ Elimina race conditions entre múltiplos monitors
+
+#### 2. Lista de AudioControllers Ativos
+
+**Arquivo:** AudioController.cs linhas 57-58
+```csharp
+private static List<AudioController> _activeControllers = new List<AudioController>();
+```
+
+**Uso:** Rastrear todos os AudioControllers ativos para aplicar volume inicial quando:
+- Nova sessão é criada (app abre)
+- Sessão muda de estado (ativo/inativo)
+- Volume de sessão é alterado externamente
+- Novo dispositivo é adicionado
+- Dispositivo muda de estado (ativo/desabilitado)
+
+**Registro:** AudioController.cs linhas 168-187 (InitializeClassAttribs)
+
+#### 3. Captura de Sessões de TODOS os Dispositivos
+
+**Arquivo:** AudioController.cs linhas 555-569
+
+**ANTES:**
+```csharp
+var playbackDevices = deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+```
+
+**DEPOIS:**
+```csharp
+var playbackDevices = deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.All);
+
+// Skip apenas dispositivos desabilitados/inválidos
+if (device == null || device.State == DeviceState.Disabled || device.State == DeviceState.NotPresent)
+{
+    continue;
+}
+```
+
+**Benefícios:**
+- ✅ Captura sessões de dispositivos secundários (headphones desabilitados, etc.)
+- ✅ Apps em execução em dispositivos não-default são detectados
+- ✅ Volume pode ser aplicado mesmo antes de trocar dispositivo padrão
+
+#### 4. DefaultDeviceChanged Simplificado
+
+**Arquivo:** AudioController.cs linhas 491-496
+
+**ANTES:**
+```csharp
+_audioMonitor.DefaultDeviceChanged += (sender, e) =>
+{
+    if (_audioMonitor.IsMonitoring)
+    {
+        _audioMonitor.StopMonitoring();
+    }
+    _audioMonitor.StartMonitoring();
+};
+```
+
+**DEPOIS:**
+```csharp
+_audioMonitor.DefaultDeviceChanged += (sender, e) =>
+{
+    // DefaultDeviceChanged: Não fazer nada
+    // As sessões são mantidas automaticamente pelos callbacks SessionCreated/Disconnected
+    // O volume será aplicado quando o usuário mover o potenciômetro (RequestData → Execute)
+};
+```
+
+**Benefícios:**
+- ✅ Elimina loop infinito (Stop → trigger DefaultDeviceChanged → Start → trigger DefaultDeviceChanged...)
+- ✅ Zero CPU/memory leak
+- ✅ Sessões mantidas pelos callbacks específicos (SessionCreated/Disconnected)
+
+#### 5. Sistema de Aplicação Automática de Volume (5 Callbacks)
+
+##### 5.1. SessionCreated (linhas 196-262)
+**Quando:** Nova sessão de áudio é criada (app abre)
+**Ação:** Itera todos os AudioControllers ativos, verifica se app está em `_toManage`, aplica volume configurado
+
+##### 5.2. SessionVolumeChanged (linhas 283-333)
+**Quando:** Volume de uma sessão é alterado externamente (outro app, mixer do Windows)
+**Ação:** Reaplica volume configurado (sobrescreve mudança externa)
+
+##### 5.3. SessionStateChanged (linhas 335-391)
+**Quando:** Sessão muda de estado (especialmente quando fica AudioSessionStateActive)
+**Ação:** Aplica volume configurado quando sessão fica ativa
+
+##### 5.4. DeviceAdded (linhas 393-450)
+**Quando:** Novo dispositivo de áudio é adicionado ao sistema
+**Ação:** Aplica volume configurado para inputs que gerenciam aquele device (modo DevicePlayback/DeviceRecord)
+
+##### 5.5. DeviceStateChanged (linhas 475-534)
+**Quando:** Dispositivo muda de estado (desabilitado → ativo)
+**Ação:** Aplica volume configurado quando dispositivo fica ativo
+
+**Código Compartilhado (Padrão):**
+```csharp
+// Buscar nome da sessão/dispositivo
+string sessionName = ...;
+
+// Obter cópia da lista de controllers ativos
+List<AudioController> controllers;
+lock (_sharedLock)
+{
+    controllers = _activeControllers.ToList();
+}
+
+// Iterar e aplicar volume onde aplicável
+foreach (var controller in controllers)
+{
+    var managedApp = controller._toManage?.FirstOrDefault(app => ...);
+    if (managedApp != null && controller._settedVolume >= 0 && controller._audioMode == AudioMode.Application)
+    {
+        await controller.ChangeAppVolume(managedApp, controller._settedVolume);
+    }
+}
+```
+
+#### 6. UI Blocking Durante Troca de Perfil
+
+**Arquivos Modificados:**
+- **Pages/Devices/JJM01.cs** (UI Form)
+- **Class/Devices/JJM01.cs** (Device Class)
+
+##### 6.1. UI Form - Flags e Timer
+
+**Linhas 28-30:**
+```csharp
+private System.Windows.Forms.Timer _profileSwitchMonitor = null;
+private bool _isProfileSwitching = false;
+private bool _loadingProfiles = false;
+```
+
+**Linhas 100-152:** Métodos BlockUIControls() e UnblockUIControls()
+- Desabilita dropdown de perfil, botões de input, botões de gerenciamento
+- Reabilita após profile switch completo E comunicação saudável
+
+**Linhas 157-186:** Timer ProfileSwitchMonitor_Tick
+- Verifica se NeedsUpdate = false E IsCommunicationHealthy = true
+- Desbloqueia UI apenas quando ambas condições satisfeitas
+
+##### 6.2. Device Class - RequestProfileChange
+
+**Class/Devices/JJM01.cs linhas 27, 30:**
+```csharp
+private volatile string _pendingProfileName = null;
+public bool IsCommunicationHealthy => _actualConnectionTimeout == 0;
+```
+
+**Linhas 63-66:** Método RequestProfileChange()
+```csharp
+public void RequestProfileChange(string profileName)
+{
+    _pendingProfileName = profileName;
+}
+```
+
+**Linhas 130-161:** Handling no INÍCIO do ActionMainLoop
+- Verifica `_pendingProfileName != null` ANTES de qualquer outra operação
+- Cria novo perfil de forma thread-safe (dentro do device loop)
+- Sinaliza UpdateSessionsToControl para todos os inputs
+- Marca NeedsUpdate = false após conclusão
+- **IMPORTANTE:** Pula para próxima iteração (não executa mais nada durante troca)
+
+##### 6.3. UI Form - SelectedIndexChanged
+
+**Linhas 222-254:**
+```csharp
+// Don't process if we're just loading the profile list
+if (_loadingProfiles)
+{
+    return;
+}
+
+// Block UI during profile switch
+BlockUIControls();
+
+// Request profile change in a thread-safe manner
+var jjm01Device = _device as Class.Devices.JJM01;
+if (jjm01Device != null)
+{
+    jjm01Device.RequestProfileChange(CmbBoxSelectProfile.SelectedItem.ToString());
+}
+
+// Start monitoring for profile switch completion
+_profileSwitchMonitor.Start();
+```
+
+#### 7. Profile Setter com Auto NeedsUpdate
+
+**Arquivo:** JJDevice.cs linhas 102-117
+
+**ANTES:**
+```csharp
+public ProfileClass Profile
+{
+    get => _profile;
+    set => _profile = value;
+}
+```
+
+**DEPOIS:**
+```csharp
+public ProfileClass Profile
+{
+    get => _profile;
+    set
+    {
+        if (_profile != value)
+        {
+            _profile = value;
+            if (_profile != null)
+            {
+                _profile.NeedsUpdate = true;
+            }
+        }
+    }
+}
+```
+
+**Benefícios:**
+- ✅ Setter automático de NeedsUpdate quando perfil muda
+- ✅ Garante que device loop detecta mudança de perfil
+- ✅ Elimina necessidade de setar flag manualmente
+
+### Fluxo Completo de Troca de Perfil
+
+```
+1. Usuário clica dropdown e seleciona novo perfil
+   ↓
+2. CmbBoxSelectProfile_SelectedIndexChanged
+   - BlockUIControls() desabilita toda a UI
+   - RequestProfileChange(newProfileName) seta _pendingProfileName
+   - Timer _profileSwitchMonitor.Start() inicia monitoramento
+   ↓
+3. ActionMainLoop detecta _pendingProfileName != null
+   - Adquire lock _updatingAudioController
+   - Cria novo ProfileClass com nome solicitado
+   - Sinaliza UpdateSessionsToControl para todos inputs
+   - SendInputs() envia configurações para device
+   - NeedsUpdate = false
+   - Pula para próxima iteração (não executa RequestData)
+   ↓
+4. RequestData() em próximas iterações
+   - Valida que device ainda está conectado
+   - Recebe dados de volume dos potenciômetros
+   - IsCommunicationHealthy = true quando timeout = 0
+   ↓
+5. ProfileSwitchMonitor_Tick (a cada 100ms)
+   - Verifica NeedsUpdate = false (perfil processado)
+   - Verifica IsCommunicationHealthy = true (comunicação OK)
+   - Quando AMBOS true: Stop() timer e UnblockUIControls()
+   ↓
+6. UI desbloqueada, usuário pode continuar usando
+```
+
+### Arquivos Modificados (Resumo)
+
+| Arquivo | Mudanças | Linhas |
+|---------|----------|--------|
+| **AudioController.cs** | AudioMonitor estático, _activeControllers, 5 callbacks, DeviceState.All | 44, 57-58, 168-187, 196-534, 555-569 |
+| **JJM01.cs** (Class) | _pendingProfileName, IsCommunicationHealthy, RequestProfileChange(), ActionMainLoop handling | 21, 27, 30, 63-66, 130-161 |
+| **JJM01.cs** (UI) | UI blocking flags/timer, BlockUIControls, UnblockUIControls, monitor tick, SelectedIndexChanged | 28-30, 100-186, 222-254 |
+| **JJDevice.cs** | Profile setter com auto NeedsUpdate | 102-117 |
+
+### Benefícios Consolidados
+
+✅ **Zero CPU/Memory Leak:** AudioMonitor estático elimina duplicação de callbacks
+✅ **Detecção Completa:** Captura sessões de TODOS os dispositivos (não só default)
+✅ **Volume Automático:** 5 callbacks aplicam volume inicial em todos os cenários
+✅ **UI Bloqueada:** Impossível causar race conditions durante troca de perfil
+✅ **Thread-Safe:** RequestProfileChange() garante que profile change acontece no device loop
+✅ **Comunicação Estável:** Troca de perfil não trava/desconecta dispositivo
+✅ **UX Melhorada:** Feedback visual de bloqueio durante operações críticas
+
+### Testes Recomendados
+
+1. **Troca Rápida de Perfil:** P1 → P2 → P1 → P2 (sem travamentos)
+2. **Abrir App Durante Uso:** Volume aplicado automaticamente
+3. **Alterar Volume Externamente:** JJManager reaplica volume configurado
+4. **Habilitar Dispositivo Desabilitado:** Volume aplicado quando fica ativo
+5. **Trocar Dispositivo Padrão:** Sem loop infinito, sem lag
+6. **Múltiplos Inputs Independentes:** Cada input controla apenas seus apps
+
+---
+
 *Documento consolidado automaticamente para contexto de desenvolvimento*
-*Atualizado em: 2025-12-26*
+*Atualizado em: 2026-01-09*
