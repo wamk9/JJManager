@@ -29,6 +29,10 @@ namespace JJManager.Pages.Devices
         private bool _isProfileSwitching = false;
         private bool _loadingProfiles = false; // Flag to prevent SelectedIndexChanged during dropdown load
 
+        // Connection monitoring
+        private bool _lastConnectionState = false;
+        private System.Windows.Forms.Timer _connectionMonitorTimer = null;
+
         #region WinForms
         MaterialSkinManager materialSkinManager = null;
         private AppModulesTimer HidReceiver = null;
@@ -82,6 +86,15 @@ namespace JJManager.Pages.Devices
             _profileSwitchMonitor = new System.Windows.Forms.Timer();
             _profileSwitchMonitor.Interval = 100; // Check every 100ms
             _profileSwitchMonitor.Tick += ProfileSwitchMonitor_Tick;
+
+            // Initialize connection monitor timer
+            _lastConnectionState = _device.IsConnected;
+            _connectionMonitorTimer = new System.Windows.Forms.Timer();
+            _connectionMonitorTimer.Interval = 1000; // Check every 1 second
+            _connectionMonitorTimer.Tick += ConnectionMonitorTimer_Tick;
+            _connectionMonitorTimer.Start();
+
+            UpdateConnectionStatus();
         }
 
         private void OpenInputModal(ProfileClass profile, int idInput)
@@ -190,12 +203,19 @@ namespace JJManager.Pages.Devices
         #region Events
         private void JJM_01_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // Stop and dispose timer
+            // Stop and dispose timers
             if (_profileSwitchMonitor != null)
             {
                 _profileSwitchMonitor.Stop();
                 _profileSwitchMonitor.Dispose();
                 _profileSwitchMonitor = null;
+            }
+
+            if (_connectionMonitorTimer != null)
+            {
+                _connectionMonitorTimer.Stop();
+                _connectionMonitorTimer.Dispose();
+                _connectionMonitorTimer = null;
             }
 
             _parent.Visible = true;
@@ -252,6 +272,84 @@ namespace JJManager.Pages.Devices
             // Start monitoring for profile switch completion
             _profileSwitchMonitor.Start();
         }
+        #endregion
+
+        #region Connection Monitoring
+
+        private void ConnectionMonitorTimer_Tick(object sender, EventArgs e)
+        {
+            bool currentState = _device.IsConnected;
+
+            // Check if connection state changed
+            if (currentState != _lastConnectionState)
+            {
+                // If device disconnected and it was previously connected
+                if (!currentState && _lastConnectionState)
+                {
+                    // Disable auto connect to prevent continuous reconnection attempts
+                    // This happens when SimHub or other software takes control of the device
+                    _device.AutoConnect = false;
+                }
+
+                _lastConnectionState = currentState;
+
+                // Update button text based on connection status
+                UpdateConnectionStatus();
+            }
+        }
+
+        private void UpdateConnectionStatus()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(UpdateConnectionStatus));
+                return;
+            }
+
+            if (_device.AutoConnect)
+            {
+                btnConnectDevice.Text = "Auto Conectar Habilitado";
+                btnConnectDevice.Enabled = false;
+            }
+            else if (_device.IsConnected)
+            {
+                btnConnectDevice.Text = "Desconectar";
+                btnConnectDevice.Enabled = true;
+            }
+            else
+            {
+                btnConnectDevice.Text = "Conectar";
+                btnConnectDevice.Enabled = true;
+            }
+        }
+
+        private void btnConnectDevice_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_device.IsConnected)
+                {
+                    // Disconnect
+                    if (_device.Disconnect())
+                    {
+                        UpdateConnectionStatus();
+                    }
+                }
+                else
+                {
+                    // Connect
+                    if (_device.Connect())
+                    {
+                        UpdateConnectionStatus();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Pages.App.MessageBox.Show(this, "Erro de Conexão", "Erro ao conectar/desconectar: " + ex.Message);
+            }
+        }
+
         #endregion
 
         #region Buttons

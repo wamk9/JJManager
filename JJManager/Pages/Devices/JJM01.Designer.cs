@@ -39,6 +39,7 @@
             this.BtnAddProfile = new MaterialSkin.Controls.MaterialButton();
             this.BtnRemoveProfile = new MaterialSkin.Controls.MaterialButton();
             this.btnCloseConfig = new MaterialSkin.Controls.MaterialButton();
+            this.btnConnectDevice = new MaterialSkin.Controls.MaterialButton();
             this.materialDivider1 = new MaterialSkin.Controls.MaterialDivider();
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput01JJM01)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJM01)).BeginInit();
@@ -193,7 +194,7 @@
             this.BtnRemoveProfile.Click += new System.EventHandler(this.BtnRemoveProfile_Click);
             // 
             // btnCloseConfig
-            // 
+            //
             this.btnCloseConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCloseConfig.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.btnCloseConfig.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
@@ -212,7 +213,29 @@
             this.btnCloseConfig.UseAccentColor = false;
             this.btnCloseConfig.UseVisualStyleBackColor = true;
             this.btnCloseConfig.Click += new System.EventHandler(this.btnCloseConfig_Click);
-            // 
+            //
+            // btnConnectDevice
+            //
+            this.btnConnectDevice.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnConnectDevice.AutoSize = false;
+            this.btnConnectDevice.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnConnectDevice.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.btnConnectDevice.Depth = 0;
+            this.btnConnectDevice.HighEmphasis = true;
+            this.btnConnectDevice.Icon = null;
+            this.btnConnectDevice.Location = new System.Drawing.Point(435, 385);
+            this.btnConnectDevice.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.btnConnectDevice.MouseState = MaterialSkin.MouseState.HOVER;
+            this.btnConnectDevice.Name = "btnConnectDevice";
+            this.btnConnectDevice.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.btnConnectDevice.Size = new System.Drawing.Size(219, 36);
+            this.btnConnectDevice.TabIndex = 22;
+            this.btnConnectDevice.Text = "Conectar";
+            this.btnConnectDevice.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.btnConnectDevice.UseAccentColor = false;
+            this.btnConnectDevice.UseVisualStyleBackColor = true;
+            this.btnConnectDevice.Click += new System.EventHandler(this.btnConnectDevice_Click);
+            //
             // materialDivider1
             // 
             this.materialDivider1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
@@ -230,6 +253,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImage = global::JJManager.Properties.Resources.JJM_01;
             this.ClientSize = new System.Drawing.Size(750, 430);
+            this.Controls.Add(this.btnConnectDevice);
             this.Controls.Add(this.btnCloseConfig);
             this.Controls.Add(this.materialDivider1);
             this.Controls.Add(this.BtnRemoveProfile);
@@ -271,6 +295,7 @@
         private MaterialSkin.Controls.MaterialButton BtnAddProfile;
         private MaterialSkin.Controls.MaterialButton BtnRemoveProfile;
         private MaterialSkin.Controls.MaterialButton btnCloseConfig;
+        private MaterialSkin.Controls.MaterialButton btnConnectDevice;
         private MaterialSkin.Controls.MaterialDivider materialDivider1;
     }
 }
