@@ -10,14 +10,17 @@
 &lt;/SerializableConnectionString&gt;</DesignTimeValue>
       <Value Profile="(Default)">Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|JohnJohn3D\JJManager\JJManagerDB.mdf;Integrated Security=True;MultipleActiveResultSets=true;</Value>
     </Setting>
-    <Setting Name="LastVersionAppURL" Type="(Web Service URL)" Scope="Application">
-      <Value Profile="(Default)">https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_app.json</Value>
+    <Setting Name="SoftwareUpdateUrlBase" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://johnjohn3d.com.br/common/versioncontrol/softwares/</Value>
     </Setting>
-    <Setting Name="LastVersionDeviceURL" Type="(Web Service URL)" Scope="Application">
-      <Value Profile="(Default)">https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_device.json</Value>
+    <Setting Name="DeviceUpdateUrlBase" Type="(Web Service URL)" Scope="Application">
+      <Value Profile="(Default)">https://johnjohn3d.com.br/common/versioncontrol/products/</Value>
     </Setting>
-    <Setting Name="LastVersionPluginURL" Type="(Web Service URL)" Scope="Application">
-      <Value Profile="(Default)">https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_plugin.json</Value>
+    <Setting Name="ListUpdateFileName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">available.json</Value>
+    </Setting>
+    <Setting Name="DevMode" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>

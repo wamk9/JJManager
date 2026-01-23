@@ -18,6 +18,12 @@ namespace JJManager.Class.App
     {
         private bool _InExecution = false;
 
+        // Map plugin display names to their JSON ids
+        private static readonly Dictionary<string, string> PluginIdMap = new Dictionary<string, string>
+        {
+            { "JJManager Sync (Integração SimHub)", "jjmanagersync_simhub" }
+        };
+
         public bool InExecution
         {
             get => _InExecution;
@@ -34,31 +40,52 @@ namespace JJManager.Class.App
 
                 using (WebClient wc = new WebClient())
                 {
-                    
-                    byte[] jsonData = wc.DownloadData(Properties.Settings.Default.LastVersionPluginURL);
+                    // Step 1: Download available.json index
+                    string indexBaseUrl = Properties.Settings.Default.DevMode
+                        ? Properties.Settings.Default.SoftwareUpdateUrlBase.Replace("versioncontrol", "versioncontrol_dev")
+                        : Properties.Settings.Default.SoftwareUpdateUrlBase;
+                    byte[] indexData = wc.DownloadData(indexBaseUrl + Properties.Settings.Default.ListUpdateFileName);
                     string charset = wc.ResponseHeaders["charset"];
                     Encoding encoding = Encoding.GetEncoding(charset ?? "utf-8");
-                    string jsonString = encoding.GetString(jsonData);
-                    JsonDocument Json = JsonDocument.Parse(jsonString);
+                    string indexJson = encoding.GetString(indexData);
+                    JsonDocument indexDoc = JsonDocument.Parse(indexJson);
 
-                    if (Json != null)
+                    if (indexDoc != null && indexDoc.RootElement.ValueKind == JsonValueKind.Array)
                     {
-                        for (int i = 0; i < Json.RootElement.GetArrayLength(); i++)
-                        {
-                            if (pluginName == Json.RootElement[i].GetProperty("plugin_name").ToString())
-                            {
-                                _LastVersion = new Version(Json.RootElement[i].GetProperty("last_version").ToString());
-                                _DownloadURL = Json.RootElement[i].GetProperty("download_link").ToString();
-                                _DownloadPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "JohnJohn3D", "JJManager", "downloads");
-                                _DownloadFileName = Json.RootElement[i].GetProperty("file_name").ToString();
+                        // Get the plugin id from the map
+                        string pluginId = PluginIdMap.ContainsKey(pluginName) ? PluginIdMap[pluginName] : pluginName.ToLowerInvariant().Replace(" ", "_");
+                        string pluginType = null;
 
-                                for (int j = 0; j < Json.RootElement[i].GetProperty("change_log").GetArrayLength(); j++)
+                        for (int i = 0; i < indexDoc.RootElement.GetArrayLength(); i++)
+                        {
+                            var entry = indexDoc.RootElement[i];
+                            if (entry.TryGetProperty("id", out JsonElement idElement) &&
+                                idElement.GetString() == pluginId)
+                            {
+                                if (entry.TryGetProperty("type", out JsonElement typeElement))
                                 {
-                                    _ChangeLog.Add(new string[] {
-                                        Json.RootElement[i].GetProperty("change_log")[j].GetProperty("title").ToString(),
-                                        Json.RootElement[i].GetProperty("change_log")[j].GetProperty("description").ToString()
-                                    });
+                                    pluginType = typeElement.GetString();
                                 }
+                                break;
+                            }
+                        }
+
+                        // Step 2: Download specific plugin JSON if found in index
+                        if (!string.IsNullOrEmpty(pluginType))
+                        {
+                            string baseUrl = Properties.Settings.Default.DevMode
+                                ? Properties.Settings.Default.SoftwareUpdateUrlBase.Replace("versioncontrol", "versioncontrol_dev")
+                                : Properties.Settings.Default.SoftwareUpdateUrlBase;
+                            string pluginUrl = $"{baseUrl}{pluginType}/{pluginId}.json";
+                            byte[] pluginData = wc.DownloadData(pluginUrl);
+                            charset = wc.ResponseHeaders["charset"];
+                            encoding = Encoding.GetEncoding(charset ?? "utf-8");
+                            string pluginJson = encoding.GetString(pluginData);
+                            JsonDocument pluginDoc = JsonDocument.Parse(pluginJson);
+
+                            if (pluginDoc != null)
+                            {
+                                ParsePluginDetails(pluginDoc.RootElement, pluginName);
                             }
                         }
                     }
@@ -67,6 +94,46 @@ namespace JJManager.Class.App
             catch (Exception)
             {
 
+            }
+        }
+
+        /// <summary>
+        /// Parses the plugin details JSON and extracts version info and changelog
+        /// </summary>
+        private void ParsePluginDetails(JsonElement root, string pluginName)
+        {
+            // New format: { "id": "...", "name": "...", "items": { "software": [...] } }
+            if (root.TryGetProperty("items", out JsonElement itemsElement) &&
+                itemsElement.TryGetProperty("software", out JsonElement softwareArray))
+            {
+                // Get the first (latest) software entry
+                if (softwareArray.GetArrayLength() > 0)
+                {
+                    var latestSoftware = softwareArray[0];
+
+                    _LastVersion = new Version(latestSoftware.GetProperty("last_version").ToString());
+                    _DownloadURL = latestSoftware.GetProperty("download_link").ToString();
+                    _DownloadPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "JohnJohn3D", "JJManager", "downloads");
+                    _DownloadFileName = latestSoftware.GetProperty("file_name").ToString();
+
+                    if (latestSoftware.TryGetProperty("change_log", out JsonElement changeLogArray))
+                    {
+                        for (int j = 0; j < changeLogArray.GetArrayLength(); j++)
+                        {
+                            var logEntry = changeLogArray[j];
+                            // Support both formats: with img_url and without
+                            string imgUrl = logEntry.TryGetProperty("img_url", out JsonElement imgElement) ? imgElement.GetString() : "#";
+                            string changeType = logEntry.TryGetProperty("type", out JsonElement typeElement) ? typeElement.GetString() : "";
+
+                            _ChangeLog.Add(new string[] {
+                                imgUrl,
+                                logEntry.GetProperty("title").ToString(),
+                                logEntry.GetProperty("description").ToString(),
+                                changeType
+                            });
+                        }
+                    }
+                }
             }
         }
 

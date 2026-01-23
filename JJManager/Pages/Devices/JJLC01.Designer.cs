@@ -107,19 +107,20 @@
             // BtnSave
             // 
             this.BtnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtnSave.AutoSize = false;
             this.BtnSave.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.BtnSave.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
             this.BtnSave.Depth = 0;
             this.BtnSave.HighEmphasis = true;
             this.BtnSave.Icon = null;
-            this.BtnSave.Location = new System.Drawing.Point(644, 588);
+            this.BtnSave.Location = new System.Drawing.Point(501, 588);
             this.BtnSave.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             this.BtnSave.MouseState = MaterialSkin.MouseState.HOVER;
             this.BtnSave.Name = "BtnSave";
             this.BtnSave.NoAccentTextColor = System.Drawing.Color.Empty;
-            this.BtnSave.Size = new System.Drawing.Size(76, 36);
+            this.BtnSave.Size = new System.Drawing.Size(219, 36);
             this.BtnSave.TabIndex = 22;
-            this.BtnSave.Text = "Salvar";
+            this.BtnSave.Text = "Conectar";
             this.BtnSave.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
             this.BtnSave.UseAccentColor = false;
             this.BtnSave.UseVisualStyleBackColor = true;

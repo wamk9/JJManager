@@ -3,8 +3,7 @@ using MaterialSkin;
 using MaterialSkin.Controls;
 using System;
 using System.Drawing;
-using System.Linq;
-using System.Net;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using ConfigClass = JJManager.Class.App.Config.Config;
 
@@ -28,14 +27,15 @@ namespace JJManager.Pages.App
 
             _softwareUpdater = softwareUpdater;
             Text += _softwareUpdater.LastVersion;
- 
+
             // MaterialDesign
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
             materialSkinManager.Theme = ConfigClass.Theme.SelectedTheme;
             materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
-            FillChangeLog();
+            // Initialize and load changelog
+            InitializeWebView();
 
             FormClosing += UpdateAppNotification_FormClosing;
         }
@@ -62,7 +62,8 @@ namespace JJManager.Pages.App
             materialSkinManager.Theme = ConfigClass.Theme.SelectedTheme;
             materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
-            FillChangeLog();
+            // Initialize and load changelog
+            InitializeWebView();
 
             FormClosing += UpdateAppNotification_FormClosing;
 
@@ -81,55 +82,72 @@ namespace JJManager.Pages.App
             }
         }
 
-        private Image GetImageFromWeb(string url)
+        /// <summary>
+        /// Initializes the WebView2 control and loads the changelog HTML
+        /// </summary>
+        private async void InitializeWebView()
         {
-            Image image = null;
-
             try
             {
+                // Ensure WebView2 runtime is initialized
+                await webView2Changelog.EnsureCoreWebView2Async(null);
 
-                if (url == "" || url == "#")
-                {
-                    return Properties.Resources.Logo_JohnJohn_JJMixer;
-                }
-
-                WebClient webClient = new WebClient();
-                byte[] imageBytes = webClient.DownloadData(url);
-
-                if (imageBytes != null && imageBytes.Length > 0)
-                {
-                    using (var ms = new System.IO.MemoryStream(imageBytes))
-                    {
-                        image = Image.FromStream(ms);
-                    }
-                }
-
-                if (image == null)
-                {
-                    image = Properties.Resources.Logo_JohnJohn_JJMixer;
-                }
+                // Generate and load HTML
+                await LoadChangelogHtml();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                image = Properties.Resources.Logo_JohnJohn_JJMixer;
-            }
+                Log.Insert("UpdateAppNotification", "Erro ao inicializar WebView2", ex);
 
-            return image;
+                // Fallback: Show error message in the webview
+                try
+                {
+                    string errorHtml = $@"
+<!DOCTYPE html>
+<html>
+<head><meta charset='UTF-8'></head>
+<body style='font-family: Roboto, sans-serif; padding: 20px; text-align: center;'>
+    <h2>Erro ao carregar changelog</h2>
+    <p>{ex.Message}</p>
+</body>
+</html>";
+                    webView2Changelog.NavigateToString(errorHtml);
+                }
+                catch
+                {
+                    // If even the error message fails, just log it
+                }
+            }
         }
 
-        private void FillChangeLog()
+        /// <summary>
+        /// Generates and loads the changelog HTML into WebView2
+        /// </summary>
+        private async Task LoadChangelogHtml()
         {
-            picChangeLog01.Image = GetImageFromWeb(_softwareUpdater.ChangeLog.ElementAt(0)[0]);
-            txtChangeLogTitle01.Text = _softwareUpdater.ChangeLog.ElementAt(0)[1];
-            txtChangeLogDesc01.Text = _softwareUpdater.ChangeLog.ElementAt(0)[2];
+            try
+            {
+                // Determine if dark theme is active
+                bool isDarkTheme = materialSkinManager.Theme == MaterialSkinManager.Themes.DARK;
 
-            picChangeLog02.Image = GetImageFromWeb(_softwareUpdater.ChangeLog.ElementAt(1)[0]);
-            txtChangeLogTitle02.Text = _softwareUpdater.ChangeLog.ElementAt(1)[1];
-            txtChangeLogDesc02.Text = _softwareUpdater.ChangeLog.ElementAt(1)[2];
+                // Generate HTML from changelog data
+                string html = Class.App.HtmlChangelogGenerator.GenerateHtml(
+                    _softwareUpdater.ChangeLog,
+                    isDarkTheme,
+                    materialSkinManager.ColorScheme
+                );
 
-            picChangeLog03.Image = GetImageFromWeb(_softwareUpdater.ChangeLog.ElementAt(2)[0]);
-            txtChangeLogTitle03.Text = _softwareUpdater.ChangeLog.ElementAt(2)[1];
-            txtChangeLogDesc03.Text = _softwareUpdater.ChangeLog.ElementAt(2)[2];
+                // Load HTML into WebView2
+                webView2Changelog.NavigateToString(html);
+
+                // Wait for navigation to complete
+                await Task.Delay(100);
+            }
+            catch (Exception ex)
+            {
+                Log.Insert("UpdateAppNotification", "Erro ao carregar HTML no WebView2", ex);
+                throw;
+            }
         }
 
         private void btnGoToUpdateScreen_Click(object sender, EventArgs e)

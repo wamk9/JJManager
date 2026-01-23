@@ -890,8 +890,9 @@ namespace JJManager.Class.Devices.Connections
 
                 using (var stream = _hidSharpDevice.Open())
                 {
-                    stream.ReadTimeout = 1000;
-                    stream.WriteTimeout = 1000;
+                    // Usa o timeout passado como parâmetro ao invés de valor fixo
+                    stream.ReadTimeout = Math.Max(timeout, 1000);
+                    stream.WriteTimeout = Math.Max(timeout, 1000);
 
                     int writeSize = _hidSharpDevice.GetMaxOutputReportLength(); // inclui o ReportID
                     int readSize = _hidSharpDevice.GetMaxInputReportLength(); // inclui o ReportID

@@ -39,6 +39,11 @@ namespace JJManager.Pages.Devices
         private bool _IsCreateProfileOpened = false;
         private int _lastInputSelected = -1;
         private MaterialForm _parent = null;
+        private bool _isLoadingData = false;
+        private bool _lastConnectionState = false;
+        private System.Windows.Forms.Timer _connectionMonitorTimer = null;
+        private bool _loadingProfiles = false; // Flag to prevent SelectedIndexChanged during dropdown load
+        private const string ACTIVE_PROFILE_NAME = "Perfil Ativo Ao Conectar"; // Temporary profile name (not in database)
 
         #region WinForms
         private MaterialSkinManager materialSkinManager = null;
@@ -46,11 +51,9 @@ namespace JJManager.Pages.Devices
         private AppModulesNotifyIcon notifyIcon = null;
         #endregion
 
-        private ChartValues<double> values = new ChartValues<double> { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40 };
+        private ChartValues<double> values = new ChartValues<double> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         private bool isDragging = false;
         private int selectedPointIndex = -1;
-        private static bool _updatedChart = false;
-        private static bool _updatedFineOffset = false;
         private double _actualPointValue = 0.0;
         private MaterialButton btnUp, btnDown;
         private MaterialTextBox txtValue;
@@ -72,7 +75,7 @@ namespace JJManager.Pages.Devices
 
             _device = device;
 
-            Text = $"JJLC-01 ({_device.ConnId}) - {(_device.IsConnected ? "Conectado" : "Desconectado")}";
+            Text = "JJLC-01";
 
             _parent = parent;
 
@@ -84,19 +87,21 @@ namespace JJManager.Pages.Devices
             TxtJJLC01Calibration.Text += Environment.NewLine;
             TxtJJLC01Calibration.Text += Environment.NewLine;
             TxtJJLC01Calibration.Text += "Mantenha sempre o 'Valor atual' abaixo, porém próximo de zero. Desta forma você não terá problema com acionamentos fantasmas da célula de carga.";
-            // Fill Forms
-            foreach (String Profile in ProfileClass.GetProfilesList(_device.ProductId))
-                CmbBoxSelectProfile.Items.Add(Profile);
 
-            if (CmbBoxSelectProfile.Items.Count == 0)
+            // Fill Forms with profiles
+            var allProfiles = ProfileClass.GetProfilesList(_device.ProductId);
+
+            // Always add active profile first (shows firmware raw data)
+            CmbBoxSelectProfile.Items.Add(ACTIVE_PROFILE_NAME);
+
+            // Add all profiles from database (presets for quick loading)
+            foreach (String profile in allProfiles)
             {
-                CmbBoxSelectProfile.Items.Add(new ProfileClass(_device, "Perfil Padrão", true));
-                CmbBoxSelectProfile.SelectedIndex = 0;
+                CmbBoxSelectProfile.Items.Add(profile);
             }
-            else
-            {
-                CmbBoxSelectProfile.SelectedIndex = CmbBoxSelectProfile.FindStringExact(_device.Profile.Name); ;
-            }
+
+            // Always start with active profile (firmware data)
+            CmbBoxSelectProfile.SelectedIndex = 0;
 
             // Events
             FormClosing += JJLC01_FormClosing; ;
@@ -190,6 +195,14 @@ namespace JJManager.Pages.Devices
 
             // Add mouse event for dragging points
             ChtLoadCell.MouseMove += OnMouseMove;
+            ChtLoadCell.MouseUp += (s, e) =>
+            {
+                if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+                {
+                    // Save automatically when user finishes dragging a point
+                    SaveConfig();
+                }
+            };
             //foreach (String Profile in ProfileClass.GetProfilesList(_device.ProductId))
             //    CmbBoxSelectProfile.Items.Add(Profile);
 
@@ -253,47 +266,201 @@ namespace JJManager.Pages.Devices
 
             Load += (s, e) =>
             {
-                ShowProfileConfigs();
+                // On form load, show active profile data
+                ProfileClass initialProfile = null;
+
+                if (!_device.IsConnected)
+                {
+                    // Device disconnected - create empty temporary profile
+                    initialProfile = new ProfileClass(_device, ACTIVE_PROFILE_NAME, true, true);
+                    _device.Profile = initialProfile;
+                }
+                else
+                {
+                    // Device connected - use device's temporary profile (with firmware data)
+                    initialProfile = _device.Profile;
+                }
+
+                ShowProfileConfigs(initialProfile);
             };
+
+            // Initialize connection monitor timer
+            _lastConnectionState = _device.IsConnected;
+            _connectionMonitorTimer = new System.Windows.Forms.Timer();
+            _connectionMonitorTimer.Interval = 1000; // Check every 1 second
+            _connectionMonitorTimer.Tick += ConnectionMonitorTimer_Tick;
+            _connectionMonitorTimer.Start();
+
+            UpdateConnectionStatus();
         }
 
 
         private void CmbBoxSelectProfile_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (CmbBoxSelectProfile.SelectedIndex == -1)
+            // Don't process if we're just loading the profile list
+            if (_loadingProfiles)
             {
-                CmbBoxSelectProfile.SelectedIndex = 0;
+                return;
             }
 
-            _device.Profile = new ProfileClass(_device, CmbBoxSelectProfile.SelectedItem.ToString(), true);
-            ShowProfileConfigs();
-        }
-        private void ShowProfileConfigs()
-        {
-            ResetPointsValues();
-
-            if (_device.Profile.Data.ContainsKey("jjlc01_data") &&
-                _device.Profile.Data["jjlc01_data"].AsObject().ContainsKey("adc"))
+            if (CmbBoxSelectProfile.SelectedIndex == -1)
             {
-                for (int i = 0; i < _device.Profile.Data["jjlc01_data"]["adc"].AsArray().Count; i++)
+                if (CmbBoxSelectProfile.Items.Count > 0)
                 {
-                    if (i > 10)
+                    CmbBoxSelectProfile.SelectedIndex = 0;
+                }
+                return;
+            }
+
+            string selectedProfileName = CmbBoxSelectProfile.SelectedItem.ToString();
+
+            // If selecting the active profile (firmware data)
+            if (selectedProfileName == ACTIVE_PROFILE_NAME)
+            {
+                ProfileClass activeProfile = null;
+
+                if (!_device.IsConnected)
+                {
+                    // Device disconnected - create empty temporary profile for UI
+                    activeProfile = new ProfileClass(_device, ACTIVE_PROFILE_NAME, true, true);
+                    _device.Profile = activeProfile; // Update device reference
+                }
+                else
+                {
+                    // Device connected - use the temporary profile from device (with firmware data)
+                    activeProfile = _device.Profile;
+                }
+
+                // Show data from active profile
+                ShowProfileConfigs(activeProfile);
+            }
+            else
+            {
+                // Load preset from database
+                ProfileClass presetProfile = new ProfileClass(_device, selectedProfileName, false);
+
+                // Load preset values into UI and send to firmware
+                LoadPresetIntoUI(presetProfile);
+            }
+        }
+        private void LoadPresetIntoUI(ProfileClass preset)
+        {
+            _isLoadingData = true;
+
+            // Load preset values into UI (not into device profile)
+            if (preset.Data.ContainsKey("jjlc01_data") &&
+                preset.Data["jjlc01_data"].AsObject().ContainsKey("adc"))
+            {
+                for (int i = 0; i < preset.Data["jjlc01_data"]["adc"].AsArray().Count; i++)
+                {
+                    if (i > 10) break;
+                    values[i] = preset.Data["jjlc01_data"]["adc"].AsArray()[i].GetValue<double>();
+                }
+            }
+            else
+            {
+                // No data in preset, use defaults
+                ResetPointsValues();
+            }
+
+            if (preset.Data.ContainsKey("jjlc01_data") &&
+                preset.Data["jjlc01_data"].AsObject().ContainsKey("fine_offset"))
+            {
+                SldFineOffsetJJLC01.Value = preset.Data["jjlc01_data"]["fine_offset"].GetValue<int>();
+                TxtJJLC01FineOffset.Text = $"Valor do ajuste fino: {(preset.Data["jjlc01_data"]["fine_offset"].GetValue<int>() - 150)}";
+            }
+            else
+            {
+                SldFineOffsetJJLC01.Value = 150;
+                TxtJJLC01FineOffset.Text = "Valor do ajuste fino: 0";
+            }
+
+            // Enable controls (preset data can be edited)
+            ChtLoadCell.IsEnabled = true;
+            SldFineOffsetJJLC01.Enabled = true;
+            TxtLCWeight.Enabled = true;
+            BtnSaveLoadCellPoint.Enabled = false;
+
+            ChtLoadCell.Update(false, true);
+            _isLoadingData = false;
+
+            // Automatically save to firmware (through device's active profile)
+            SaveConfig();
+        }
+
+        private void ShowProfileConfigs(ProfileClass profile)
+        {
+            _isLoadingData = true;
+
+            bool isConnected = _device.IsConnected;
+
+            // If disconnected: zero values and lock controls
+            if (!isConnected)
+            {
+                // Set ALL values to ZERO
+                for (int i = 0; i < values.Count; i++)
+                {
+                    values[i] = 0;
+                }
+
+                SldFineOffsetJJLC01.Value = 150;
+                TxtJJLC01FineOffset.Text = "Valor do ajuste fino: 0";
+
+                // Lock all controls (read-only when disconnected)
+                ChtLoadCell.IsEnabled = false;
+                SldFineOffsetJJLC01.Enabled = false;
+                TxtLCWeight.Enabled = false;
+                BtnSaveLoadCellPoint.Enabled = false;
+            }
+            else
+            {
+                // Device connected - show data from profile parameter (firmware data)
+                ChtLoadCell.IsEnabled = true;
+                SldFineOffsetJJLC01.Enabled = true;
+                TxtLCWeight.Enabled = true;
+                BtnSaveLoadCellPoint.Enabled = false;
+
+                // Reset to defaults first
+                ResetPointsValues();
+
+                // Load data from profile
+                if (profile != null && profile.Data != null && profile.Data.ContainsKey("jjlc01_data"))
+                {
+                    var jjlc01Data = profile.Data["jjlc01_data"].AsObject();
+
+                    // Load ADC curve points
+                    if (jjlc01Data.ContainsKey("adc"))
                     {
-                        break;
+                        var adcArray = jjlc01Data["adc"].AsArray();
+                        for (int i = 0; i < Math.Min(adcArray.Count, values.Count); i++)
+                        {
+                            values[i] = adcArray[i].GetValue<double>();
+                        }
                     }
 
-                    values[i] = _device.Profile.Data["jjlc01_data"]["adc"].AsArray()[i].GetValue<double>();
+                    // Load fine offset
+                    if (jjlc01Data.ContainsKey("fine_offset"))
+                    {
+                        int fineOffset = jjlc01Data["fine_offset"].GetValue<int>();
+                        SldFineOffsetJJLC01.Value = fineOffset;
+                        TxtJJLC01FineOffset.Text = $"Valor do ajuste fino: {(fineOffset - 150)}";
+                    }
+                    else
+                    {
+                        SldFineOffsetJJLC01.Value = 150;
+                        TxtJJLC01FineOffset.Text = "Valor do ajuste fino: 0";
+                    }
+                }
+                else
+                {
+                    // No data in profile - use defaults
+                    SldFineOffsetJJLC01.Value = 150;
+                    TxtJJLC01FineOffset.Text = "Valor do ajuste fino: 0";
                 }
             }
 
-            if (_device.Profile.Data.ContainsKey("jjlc01_data") &&
-                _device.Profile.Data["jjlc01_data"].AsObject().ContainsKey("fine_offset"))
-            {
-                SldFineOffsetJJLC01.Value = _device.Profile.Data["jjlc01_data"]["fine_offset"].GetValue<int>();
-                TxtJJLC01FineOffset.Text = $"Valor do ajuste fino: {(_device.Profile.Data["jjlc01_data"]["fine_offset"].GetValue<int>() - 150)}";
-            }
-
             ChtLoadCell.Update(false, true);
+            _isLoadingData = false;
         }
 
         private void ResetPointsValues()
@@ -306,20 +473,55 @@ namespace JJManager.Pages.Devices
 
         private void CmbBoxSelectProfile_DropDown(object sender, EventArgs e)
         {
-            int selectedIndex = CmbBoxSelectProfile.SelectedIndex;
+            // Set flag to prevent SelectedIndexChanged from triggering during load
+            _loadingProfiles = true;
+
+            string selectedProfileName = CmbBoxSelectProfile.SelectedIndex >= 0 ?
+                CmbBoxSelectProfile.SelectedItem.ToString() : null;
 
             CmbBoxSelectProfile.Items.Clear();
 
-            foreach (String Profile in ProfileClass.GetProfilesList(_device.ProductId))
-                CmbBoxSelectProfile.Items.Add(Profile);
+            // Always add temporary profile first (will be zeroed and locked if disconnected)
+            CmbBoxSelectProfile.Items.Add(ACTIVE_PROFILE_NAME);
 
-            CmbBoxSelectProfile.SelectedIndex = selectedIndex;
+            // Add all profiles from database
+            foreach (String profile in ProfileClass.GetProfilesList(_device.ProductId))
+            {
+                CmbBoxSelectProfile.Items.Add(profile);
+            }
+
+            // Restore selection by name if possible, otherwise select first
+            if (!string.IsNullOrEmpty(selectedProfileName))
+            {
+                int profileIndex = CmbBoxSelectProfile.FindStringExact(selectedProfileName);
+                if (profileIndex != -1)
+                {
+                    CmbBoxSelectProfile.SelectedIndex = profileIndex;
+                }
+                else if (CmbBoxSelectProfile.Items.Count > 0)
+                {
+                    CmbBoxSelectProfile.SelectedIndex = 0;
+                }
+            }
+            else if (CmbBoxSelectProfile.Items.Count > 0)
+            {
+                CmbBoxSelectProfile.SelectedIndex = 0;
+            }
+
+            // Reset flag after loading is complete
+            _loadingProfiles = false;
         }
 
         private void JJLC01_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _updatedFineOffset = false;
-            _updatedChart = false;
+            // Stop and dispose timer
+            if (_connectionMonitorTimer != null)
+            {
+                _connectionMonitorTimer.Stop();
+                _connectionMonitorTimer.Dispose();
+                _connectionMonitorTimer = null;
+            }
+
             _parent.Visible = true;
         }
 
@@ -358,48 +560,43 @@ namespace JJManager.Pages.Devices
 
         public static void UpdateFineOffset(int offset)
         {
-            if (_updatedFineOffset)
-            {
-                return;
-            }
-
             UIContext?.Post(_ =>
             {
                 if (System.Windows.Forms.Application.OpenForms["JJLC01"] is JJLC01 form)
                 {
-                    form.SldFineOffsetJJLC01.Value = offset;
-                    form.TxtJJLC01FineOffset.Text = $"Valor do ajuste fino: {(offset - 150)}";
-                    _updatedFineOffset = true;
+                    // Only update if not currently loading data
+                    if (!form._isLoadingData)
+                    {
+                        form.SldFineOffsetJJLC01.Value = offset;
+                        form.TxtJJLC01FineOffset.Text = $"Valor do ajuste fino: {(offset - 150)}";
+                    }
                 }
             }, null);
         }
 
         public static void UpdateSeries(double[] series)
         {
-            if (_updatedChart)
-            {
-                return;
-            }
-
             UIContext?.Post(_ =>
             {
                 if (System.Windows.Forms.Application.OpenForms["JJLC01"] is JJLC01 form)
                 {
-                    for (int i = 0; i < Math.Min(series.Length, form.ChtLoadCell.Series.Count); i++)
+                    // Only update if not currently loading data
+                    if (!form._isLoadingData)
                     {
-                        if (form.ChtLoadCell.Series[i].Values is ChartValues<double> values)
+                        for (int i = 0; i < Math.Min(series.Length, form.ChtLoadCell.Series.Count); i++)
                         {
-                            values.Clear(); // Clear existing points
-
-                            // Add ALL new points, not just one
-                            foreach (var point in series)
+                            if (form.ChtLoadCell.Series[i].Values is ChartValues<double> values)
                             {
-                                values.Add(point);
+                                values.Clear(); // Clear existing points
+
+                                // Add ALL new points, not just one
+                                foreach (var point in series)
+                                {
+                                    values.Add(point);
+                                }
+
+                                form.ChtLoadCell.Update(false, true);
                             }
-
-                            _updatedChart = true;
-
-                            form.ChtLoadCell.Update(false, true);
                         }
                     }
                 }
@@ -559,8 +756,19 @@ namespace JJManager.Pages.Devices
         {
             if (CmbBoxSelectProfile.SelectedIndex == -1)
             {
-                
+
                 Pages.App.MessageBox.Show(this, "Selecione um Perfil", "Selecione um perfil para excluí-lo.");
+                return;
+            }
+
+            string selectedProfileName = CmbBoxSelectProfile.SelectedItem.ToString();
+
+            // Check if trying to delete "Perfil Ativo Ao Conectar"
+            if (selectedProfileName == ACTIVE_PROFILE_NAME)
+            {
+                Pages.App.MessageBox.Show(this, "Perfil Não Pode Ser Excluído",
+                    "O 'Perfil Ativo Ao Conectar' é um perfil especial do sistema que captura automaticamente os dados do dispositivo ao conectar.\n\n" +
+                    "Este perfil não pode ser excluído pois é essencial para o funcionamento do JJLC-01.");
                 return;
             }
 
@@ -570,24 +778,34 @@ namespace JJManager.Pages.Devices
                 return;
             }
 
-            DialogResult dialogResult = Pages.App.MessageBox.Show(this, "Exclusão de Perfil", "Você está prestes a excluir o Perfil '" + CmbBoxSelectProfile.SelectedItem.ToString() + "', deseja continuar?", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = Pages.App.MessageBox.Show(this, "Exclusão de Perfil", "Você está prestes a excluir o Perfil '" + selectedProfileName + "', deseja continuar?", MessageBoxButtons.YesNo);
 
             if (dialogResult == DialogResult.Yes)
             {
-                string profileNameToExclude = CmbBoxSelectProfile.SelectedItem.ToString();
+                string profileNameToExclude = selectedProfileName;
 
-                CmbBoxSelectProfile.Items.Remove(CmbBoxSelectProfile.SelectedItem);
-
-                string profileNameToActive = CmbBoxSelectProfile.Items[(CmbBoxSelectProfile.Items[0] == CmbBoxSelectProfile.SelectedItem ? 1 : 0)].ToString();
-
-                _device.Profile = new ProfileClass(_device, profileNameToActive, true);
-
+                // Delete from database
                 ProfileClass.Delete(profileNameToExclude, _device.ProductId);
 
+                // Refresh dropdown completely to reflect database state
+                _loadingProfiles = true;
+                CmbBoxSelectProfile.Items.Clear();
+
+                // Add active profile first
+                CmbBoxSelectProfile.Items.Add(ACTIVE_PROFILE_NAME);
+
+                // Add all profiles from database (after deletion)
+                foreach (String profile in ProfileClass.GetProfilesList(_device.ProductId))
+                {
+                    CmbBoxSelectProfile.Items.Add(profile);
+                }
+
+                _loadingProfiles = false;
+
+                // Select active profile (first item in list)
                 CmbBoxSelectProfile.SelectedIndex = 0;
 
                 Pages.App.MessageBox.Show(this, "Perfil Excluído", "Perfil excluído com sucesso!");
-
             }
         }
 
@@ -625,13 +843,8 @@ namespace JJManager.Pages.Devices
 
         public static void NotifyDisconnectedDevice(string connId)
         {
-            UIContext?.Post(_ =>
-            {
-                if (System.Windows.Forms.Application.OpenForms["JJLC01"] is JJLC01 form)
-                {
-                    form.Text = $"JJLC-01 ({connId}) - Desconectado";
-                }
-            }, null);
+            // Title no longer shows connection status
+            // Connection status is now shown in the button
         }
 
         private void TbcJJLC01Calibration_Click(object sender, EventArgs e)
@@ -647,17 +860,111 @@ namespace JJManager.Pages.Devices
         private void SldFineOffsetJJLC01_onValueChanged(object sender, int newValue)
         {
             TxtJJLC01FineOffset.Text = $"Valor do ajuste fino: {(newValue - 150)}";
+            // Save automatically when fine offset changes
+            SaveConfig();
         }
 
         private void BtnSave_Click(object sender, EventArgs e)
         {
-            Save();
+            try
+            {
+                if (_device.IsConnected)
+                {
+                    // Disconnect
+                    if (_device.Disconnect())
+                    {
+                        UpdateConnectionStatus();
+                    }
+                }
+                else
+                {
+                    // Connect
+                    if (_device.Connect())
+                    {
+                        UpdateConnectionStatus();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Pages.App.MessageBox.Show(this, "Erro de Conexão", "Erro ao conectar/desconectar: " + ex.Message);
+            }
         }
 
         private void BtnClose_Click(object sender, EventArgs e)
         {
             Close();
         }
+
+        private void UpdateConnectionStatus()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(UpdateConnectionStatus));
+                return;
+            }
+
+            if (_device.AutoConnect)
+            {
+                BtnSave.Text = "Auto Conectar Habilitado";
+                BtnSave.Enabled = false;
+            }
+            else if (_device.IsConnected)
+            {
+                BtnSave.Text = "Desconectar";
+                BtnSave.Enabled = true;
+            }
+            else
+            {
+                BtnSave.Text = "Conectar";
+                BtnSave.Enabled = true;
+            }
+        }
+
+        private void ConnectionMonitorTimer_Tick(object sender, EventArgs e)
+        {
+            bool currentState = _device.IsConnected;
+
+            // Check if connection state changed
+            if (currentState != _lastConnectionState)
+            {
+                // If device disconnected and it was previously connected
+                if (!currentState && _lastConnectionState)
+                {
+                    // Disable auto connect to prevent continuous reconnection attempts
+                    // This happens when SimHub or other software takes control of the device
+                    _device.AutoConnect = false;
+
+                    // If currently viewing active profile, refresh UI to show zeroed/locked state
+                    string selectedProfileName = CmbBoxSelectProfile.SelectedItem?.ToString();
+                    if (selectedProfileName == ACTIVE_PROFILE_NAME)
+                    {
+                        // Create empty temporary profile for UI when disconnected
+                        ProfileClass emptyProfile = new ProfileClass(_device, ACTIVE_PROFILE_NAME, true, true);
+                        _device.Profile = emptyProfile;
+                        ShowProfileConfigs(emptyProfile);
+                    }
+                }
+
+                // If device just connected (was disconnected, now connected)
+                if (currentState && !_lastConnectionState)
+                {
+                    // Automatically select the temporary "Perfil Ativo Ao Conectar" when device connects
+                    int activeProfileIndex = CmbBoxSelectProfile.FindStringExact(ACTIVE_PROFILE_NAME);
+                    if (activeProfileIndex != -1)
+                    {
+                        CmbBoxSelectProfile.SelectedIndex = activeProfileIndex;
+                    }
+                    // Note: ShowProfileConfigs() will be called automatically by SelectedIndexChanged event
+                }
+
+                _lastConnectionState = currentState;
+
+                // Update button text based on connection status
+                UpdateConnectionStatus();
+            }
+        }
+
 
         private void TxtLCWeight_Leave(object sender, EventArgs e)
         {
@@ -679,10 +986,22 @@ namespace JJManager.Pages.Devices
             values[selectedPointIndex] = _actualPointValue;
             ChtLoadCell.Update(false, true);
             BtnSaveLoadCellPoint.Enabled = false;
+
+            // Save automatically when point is updated
+            SaveConfig();
         }
 
-        private void Save()
+        private void SaveConfig()
         {
+            // Don't save during initial data loading
+            if (_isLoadingData)
+                return;
+
+            // Don't save if temporary profile and disconnected (controls are locked)
+            bool isTemporaryProfile = _device.Profile.Id.StartsWith("temp_");
+            if (isTemporaryProfile && !_device.IsConnected)
+                return;
+
             JsonArray adcValues = new JsonArray();
 
             foreach (LineSeries lineSeries in ChtLoadCell.Series)
@@ -710,7 +1029,7 @@ namespace JJManager.Pages.Devices
                 {
                     "data",  new JsonObject
                     {
-                        { 
+                        {
                             "jjlc01_data", new JsonObject {
                                 {"adc", jsonObjectFromString.DeepClone() },
                                 {"fine_offset", SldFineOffsetJJLC01.Value }

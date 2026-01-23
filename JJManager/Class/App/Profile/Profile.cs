@@ -90,6 +90,55 @@ namespace JJManager.Class.App.Profile
         }
 
         /// <summary>
+        /// Constructor for temporary profile (not saved to database).
+        /// Used for "Perfil Ativo Ao Conectar" which is only in memory.
+        /// </summary>
+        /// <param name="device">JJManager device object.</param>
+        /// <param name="profileName">Temporary profile's name.</param>
+        /// <param name="isTemporary">Must be true to use this constructor.</param>
+        public Profile(JJDeviceClass device, string profileName, bool isTemporary, bool placeholder)
+        {
+            if (!isTemporary)
+            {
+                throw new ArgumentException("Use other constructor for non-temporary profiles");
+            }
+
+            // Initialize basic properties
+            _id = "temp_" + Guid.NewGuid().ToString(); // Temporary ID
+            _name = profileName;
+            _idProduct = device.ProductId;
+            _data = new JsonObject();
+            _dbConnection = new DatabaseConnection();
+
+            // Get input/output quantities from jj_products table
+            string sql = $"SELECT * FROM jj_products WHERE id = '{device.ProductId}'";
+
+            foreach (JsonObject obj in _dbConnection.RunSQLWithResults(sql))
+            {
+                _analogInputsQtd = obj.ContainsKey("analog_inputs_qtd") ? Int32.Parse(obj["analog_inputs_qtd"].GetValue<string>()) : 0;
+                _digitalInputsQtd = obj.ContainsKey("digital_inputs_qtd") ? Int32.Parse(obj["digital_inputs_qtd"].GetValue<string>()) : 0;
+                _analogOutputsQtd = obj.ContainsKey("analog_outputs_qtd") ? Int32.Parse(obj["analog_outputs_qtd"].GetValue<string>()) : 0;
+                _digitalOutputsQtd = obj.ContainsKey("digital_outputs_qtd") ? Int32.Parse(obj["digital_outputs_qtd"].GetValue<string>()) : 0;
+            }
+
+            _dbConnection = null; // Don't keep database connection for temporary profile
+
+            // Initialize inputs (no database, just in memory)
+            _inputs = new ObservableCollection<InputClass>();
+            for (uint j = 0; j < (_analogInputsQtd + _digitalInputsQtd); j++)
+            {
+                _inputs.Add(new InputClass(0, j)); // ID 0 for temporary
+            }
+
+            // Initialize outputs (no database, just in memory)
+            _outputs = new ObservableCollection<OutputClass>();
+            for (uint j = 0; j < (_analogOutputsQtd + _digitalOutputsQtd); j++)
+            {
+                _outputs.Add(new OutputClass(0, j)); // ID 0 for temporary
+            }
+        }
+
+        /// <summary>
         /// Get device's active profile
         /// </summary>
         /// <param name="device"></param>
@@ -383,12 +432,42 @@ namespace JJManager.Class.App.Profile
         public static void Delete(string profileNameToExclude, string productId)
         {
             DatabaseConnection dbConnection = new DatabaseConnection();
-            
-            string sql = $"DELETE FROM dbo.profiles WHERE name = '{profileNameToExclude}' AND id_product = '{productId}';";
 
-            //SetToActiveProfile(profileNameToActive);
+            // First, get the profile ID to be deleted
+            string getIdSql = $"SELECT id FROM dbo.profiles WHERE name = '{profileNameToExclude}' AND id_product = '{productId}';";
+            string profileIdToDelete = null;
 
-            if (!dbConnection.RunSQL(sql))
+            foreach (JsonObject obj in dbConnection.RunSQLWithResults(getIdSql))
+            {
+                if (obj.ContainsKey("id"))
+                {
+                    profileIdToDelete = obj["id"].GetValue<string>();
+                    break;
+                }
+            }
+
+            if (string.IsNullOrEmpty(profileIdToDelete))
+            {
+                // Profile not found, nothing to delete
+                return;
+            }
+
+            // Update user_products to remove references to this profile (set to NULL or another profile)
+            string updateReferenceSql = $"UPDATE dbo.user_products SET id_profile = NULL WHERE id_profile = '{profileIdToDelete}';";
+            dbConnection.RunSQL(updateReferenceSql);
+
+            // Delete inputs associated with this profile
+            string deleteInputsSql = $"DELETE FROM dbo.inputs WHERE id_profile = '{profileIdToDelete}';";
+            dbConnection.RunSQL(deleteInputsSql);
+
+            // Delete outputs associated with this profile
+            string deleteOutputsSql = $"DELETE FROM dbo.outputs WHERE id_profile = '{profileIdToDelete}';";
+            dbConnection.RunSQL(deleteOutputsSql);
+
+            // Now delete the profile itself
+            string deleteProfileSql = $"DELETE FROM dbo.profiles WHERE id = '{profileIdToDelete}';";
+
+            if (!dbConnection.RunSQL(deleteProfileSql))
             {
                 // TODO: Create LOGFILE
             }
@@ -397,8 +476,7 @@ namespace JJManager.Class.App.Profile
 
         public void Update(JsonObject dataToUpdate)
         {
-            _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
-
+            // Update in-memory data
             if (dataToUpdate.ContainsKey("name"))
             {
                 _name = dataToUpdate["name"].GetValue<string>();
@@ -407,9 +485,19 @@ namespace JJManager.Class.App.Profile
             if (dataToUpdate.ContainsKey("data"))
             {
                 _data = dataToUpdate["data"].AsObject();
+                _needsUpdate = true; // Sinaliza que dados foram alterados
             }
 
-            string sql = $@"UPDATE dbo.profiles SET 
+            // If this is a temporary profile, don't save to database
+            if (_id.StartsWith("temp_"))
+            {
+                return;
+            }
+
+            // Otherwise, save to database as normal
+            _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
+
+            string sql = $@"UPDATE dbo.profiles SET
                             name = '{_name}',
                             configs = '{_data.ToJsonString()}'
                         WHERE id = '{_id}';";
@@ -422,6 +510,12 @@ namespace JJManager.Class.App.Profile
 
         public void Restart()
         {
+            // If this is a temporary profile, don't try to reload from database
+            if (_id.StartsWith("temp_"))
+            {
+                return;
+            }
+
             _dbConnection = _dbConnection == null ? new DatabaseConnection() : _dbConnection;
             GetProfileIntoObject(_id);
             CreateRestartAllProfileFile();

@@ -12,7 +12,7 @@ namespace JJManager.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.13.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.14.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -37,30 +37,38 @@ namespace JJManager.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_app.json")]
-        public string LastVersionAppURL {
+        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/common/versioncontrol/softwares/")]
+        public string SoftwareUpdateUrlBase {
             get {
-                return ((string)(this["LastVersionAppURL"]));
+                return ((string)(this["SoftwareUpdateUrlBase"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_device.json")]
-        public string LastVersionDeviceURL {
+        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/common/versioncontrol/products/")]
+        public string DeviceUpdateUrlBase {
             get {
-                return ((string)(this["LastVersionDeviceURL"]));
+                return ((string)(this["DeviceUpdateUrlBase"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.WebServiceUrl)]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://johnjohn3d.com.br/jjmanager/versioncontrol/lastversions_plugin.json")]
-        public string LastVersionPluginURL {
+        [global::System.Configuration.DefaultSettingValueAttribute("available.json")]
+        public string ListUpdateFileName {
             get {
-                return ((string)(this["LastVersionPluginURL"]));
+                return ((string)(this["ListUpdateFileName"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool DevMode {
+            get {
+                return ((bool)(this["DevMode"]));
             }
         }
     }

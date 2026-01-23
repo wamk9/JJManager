@@ -46,37 +46,67 @@ namespace JJManager.Class.App
             try
             {
                 _device = device;
-                
+
                 SetDeviceInfo();
 
                 using (WebClient wc = new WebClient())
                 {
-                    byte[] jsonData = wc.DownloadData(Properties.Settings.Default.LastVersionDeviceURL);
+                    // Step 1: Download available.json index
+                    string indexBaseUrl = Properties.Settings.Default.DevMode
+                        ? Properties.Settings.Default.DeviceUpdateUrlBase.Replace("versioncontrol", "versioncontrol_dev")
+                        : Properties.Settings.Default.DeviceUpdateUrlBase;
+                    byte[] indexData = wc.DownloadData(indexBaseUrl + Properties.Settings.Default.ListUpdateFileName);
                     string charset = wc.ResponseHeaders["charset"];
                     Encoding encoding = Encoding.GetEncoding(charset ?? "utf-8");
-                    string jsonString = encoding.GetString(jsonData);
-                    JsonDocument Json = JsonDocument.Parse(jsonString);
+                    string indexJson = encoding.GetString(indexData);
+                    JsonDocument indexDoc = JsonDocument.Parse(indexJson);
 
-                    if (Json != null)
+                    if (indexDoc != null && indexDoc.RootElement.ValueKind == JsonValueKind.Array)
                     {
-                        Console.WriteLine($"[DeviceUpdater] Searching for device: '{_Name}' in {Json.RootElement.GetArrayLength()} entries");
+                        // Find the device entry by matching id (using ProductId as lowercase)
+                        string deviceId = _device.ProductId.ToLowerInvariant().Replace("-", "").Replace(" ", "_");
+                        string deviceType = null;
 
-                        for (int i = 0; i < Json.RootElement.GetArrayLength(); i++)
+                        Console.WriteLine($"[DeviceUpdater] Searching for device ID: '{deviceId}' in {indexDoc.RootElement.GetArrayLength()} entries");
+
+                        for (int i = 0; i < indexDoc.RootElement.GetArrayLength(); i++)
                         {
-                            string deviceNameFromJson = Json.RootElement[i].GetProperty("device_name").ToString();
-                            Console.WriteLine($"[DeviceUpdater] Comparing '{_Name}' with '{deviceNameFromJson}'");
-
-                            if (_Name == deviceNameFromJson)
+                            var entry = indexDoc.RootElement[i];
+                            if (entry.TryGetProperty("id", out JsonElement idElement) &&
+                                idElement.GetString() == deviceId)
                             {
-                                Console.WriteLine($"[DeviceUpdater] MATCH FOUND! Setting updater info...");
-                                SetUpdaterInfo(Json.RootElement[i]);
+                                if (entry.TryGetProperty("type", out JsonElement typeElement))
+                                {
+                                    deviceType = typeElement.GetString();
+                                }
+                                Console.WriteLine($"[DeviceUpdater] MATCH FOUND! Type: {deviceType}");
                                 break;
                             }
                         }
 
-                        if (_LastVersion == null)
+                        // Step 2: Download specific device JSON if found in index
+                        if (!string.IsNullOrEmpty(deviceType))
                         {
-                            Console.WriteLine($"[DeviceUpdater] WARNING: No match found for device '{_Name}'");
+                            string baseUrl = Properties.Settings.Default.DevMode
+                                ? Properties.Settings.Default.DeviceUpdateUrlBase.Replace("versioncontrol", "versioncontrol_dev")
+                                : Properties.Settings.Default.DeviceUpdateUrlBase;
+                            string deviceUrl = $"{baseUrl}{deviceType}/{deviceId}.json";
+                            Console.WriteLine($"[DeviceUpdater] Downloading device details from: {deviceUrl}");
+
+                            byte[] deviceData = wc.DownloadData(deviceUrl);
+                            charset = wc.ResponseHeaders["charset"];
+                            encoding = Encoding.GetEncoding(charset ?? "utf-8");
+                            string deviceJson = encoding.GetString(deviceData);
+                            JsonDocument deviceDoc = JsonDocument.Parse(deviceJson);
+
+                            if (deviceDoc != null)
+                            {
+                                ParseDeviceDetails(deviceDoc.RootElement);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[DeviceUpdater] WARNING: No match found for device '{deviceId}'");
                         }
                     }
                 }
@@ -105,23 +135,44 @@ namespace JJManager.Class.App
             }).Wait(10000);
         }
 
-        private void SetUpdaterInfo(JsonElement json)
+        /// <summary>
+        /// Parses the device details JSON and extracts version info and changelog
+        /// </summary>
+        private void ParseDeviceDetails(JsonElement root)
         {
-            _Name = json.GetProperty("device_name").ToString();
-            _LastVersion = new Version(json.GetProperty("last_version").ToString());
-            _DownloadURL = json.GetProperty("download_link").ToString();
-            _DownloadFileName = json.GetProperty("file_name").ToString();
-
-            // Process changelog if it exists
-            if (json.TryGetProperty("changelog", out JsonElement changelogElement) &&
-                changelogElement.ValueKind == JsonValueKind.Array)
+            // New format: { "id": "...", "name": "...", "items": { "firmware": [...] } }
+            if (root.TryGetProperty("items", out JsonElement itemsElement) &&
+                itemsElement.TryGetProperty("firmware", out JsonElement firmwareArray))
             {
-                for (int i = 0; i < changelogElement.GetArrayLength(); i++)
+                // Get the first (latest) firmware entry
+                if (firmwareArray.GetArrayLength() > 0)
                 {
-                    _ChangeLog.Add(new string[] {
-                        changelogElement[i].GetProperty("title").ToString(),
-                        changelogElement[i].GetProperty("description").ToString()
-                    });
+                    var latestFirmware = firmwareArray[0];
+
+                    _LastVersion = new Version(latestFirmware.GetProperty("last_version").ToString());
+                    _DownloadURL = latestFirmware.GetProperty("download_link").ToString();
+                    _DownloadFileName = latestFirmware.GetProperty("file_name").ToString();
+
+                    // Process changelog if it exists
+                    if (latestFirmware.TryGetProperty("change_log", out JsonElement changeLogArray))
+                    {
+                        for (int j = 0; j < changeLogArray.GetArrayLength(); j++)
+                        {
+                            var logEntry = changeLogArray[j];
+                            // Support both formats: with img_url and without
+                            string imgUrl = logEntry.TryGetProperty("img_url", out JsonElement imgElement) ? imgElement.GetString() : "#";
+                            string changeType = logEntry.TryGetProperty("type", out JsonElement typeElement) ? typeElement.GetString() : "";
+
+                            _ChangeLog.Add(new string[] {
+                                imgUrl,
+                                logEntry.GetProperty("title").ToString(),
+                                logEntry.GetProperty("description").ToString(),
+                                changeType
+                            });
+                        }
+                    }
+
+                    Console.WriteLine($"[DeviceUpdater] Parsed device: LastVersion={_LastVersion}, DownloadURL={_DownloadURL}");
                 }
             }
         }

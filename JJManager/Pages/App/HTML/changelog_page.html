@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Changelog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: {{BACKGROUND_COLOR}};
+            color: {{TEXT_PRIMARY_COLOR}};
+            padding: 16px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .changelog-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .changelog-card {
+            background-color: {{CARD_BACKGROUND_COLOR}};
+            border-radius: 8px;
+            box-shadow: 0 2px 8px {{SHADOW_COLOR}};
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            min-height: 140px;
+        }
+
+        .changelog-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px {{SHADOW_COLOR}};
+        }
+
+        .changelog-image-container {
+            width: 200px;
+            min-width: 200px;
+            height: 140px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .changelog-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .changelog-content {
+            padding: 16px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .changelog-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .changelog-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: {{TEXT_PRIMARY_COLOR}};
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .changelog-description {
+            font-size: 13px;
+            color: {{TEXT_SECONDARY_COLOR}};
+            line-height: 1.5;
+            margin-top: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .badge-new {
+            background-color: {{BADGE_NEW_COLOR}};
+            color: {{BADGE_NEW_TEXT_COLOR}};
+        }
+
+        .badge-fix {
+            background-color: {{BADGE_FIX_COLOR}};
+            color: {{BADGE_FIX_TEXT_COLOR}};
+        }
+
+        .badge-default {
+            background-color: {{PRIMARY_COLOR}};
+            color: white;
+        }
+
+        .no-image-container {
+            width: 200px;
+            min-width: 200px;
+            height: 140px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, {{PRIMARY_COLOR}} 0%, {{ACCENT_COLOR}} 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: 300;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: {{BACKGROUND_COLOR}};
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: {{DIVIDER_COLOR}};
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: {{TEXT_SECONDARY_COLOR}};
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .changelog-card {
+            animation: fadeIn 0.3s ease forwards;
+            opacity: 0;
+        }
+
+        .changelog-card:nth-child(1) { animation-delay: 0s; }
+        .changelog-card:nth-child(2) { animation-delay: 0.1s; }
+        .changelog-card:nth-child(3) { animation-delay: 0.2s; }
+        .changelog-card:nth-child(4) { animation-delay: 0.3s; }
+        .changelog-card:nth-child(5) { animation-delay: 0.4s; }
+        .changelog-card:nth-child(n+6) { animation-delay: 0.5s; }
+
+        /* Responsive - hide image on very small screens */
+        @media (max-width: 500px) {
+            .changelog-image-container,
+            .no-image-container {
+                display: none;
+            }
+
+            .changelog-card {
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='changelog-list'>
+            {{CARDS_HTML}}
+        </div>
+    </div>
+</body>
+</html>

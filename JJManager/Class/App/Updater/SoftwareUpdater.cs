@@ -28,30 +28,52 @@ namespace JJManager.Class.App
 
                 using (WebClient wc = new WebClient())
                 {
-                    byte[] jsonData = wc.DownloadData(Properties.Settings.Default.LastVersionAppURL);
+                    // Step 1: Download available.json index
+                    string indexBaseUrl = Properties.Settings.Default.DevMode
+                        ? Properties.Settings.Default.SoftwareUpdateUrlBase.Replace("versioncontrol", "versioncontrol_dev")
+                        : Properties.Settings.Default.SoftwareUpdateUrlBase;
+                    byte[] indexData = wc.DownloadData(indexBaseUrl + Properties.Settings.Default.ListUpdateFileName);
                     string charset = wc.ResponseHeaders["charset"];
                     Encoding encoding = Encoding.GetEncoding(charset ?? "utf-8");
-                    string jsonString = encoding.GetString(jsonData);
-                    JsonDocument Json = JsonDocument.Parse(jsonString);
+                    string indexJson = encoding.GetString(indexData);
+                    JsonDocument indexDoc = JsonDocument.Parse(indexJson);
 
-                    if (Json != null)
+                    if (indexDoc != null && indexDoc.RootElement.ValueKind == JsonValueKind.Array)
                     {
-                        for (int i = 0; i < Json.RootElement.GetArrayLength(); i++)
-                        {
-                            if (appName == Json.RootElement[i].GetProperty("app_name").ToString())
-                            {
-                                _LastVersion = new Version(Json.RootElement[i].GetProperty("last_version").ToString());
-                                _DownloadURL = Json.RootElement[i].GetProperty("download_link").ToString();
-                                _DownloadFileName = Json.RootElement[i].GetProperty("file_name").ToString();
+                        // Find the app entry by matching id (lowercase app name)
+                        string appId = appName.ToLowerInvariant();
+                        string appType = null;
 
-                                for (int j = 0; j < Json.RootElement[i].GetProperty("change_log").GetArrayLength(); j++)
+                        for (int i = 0; i < indexDoc.RootElement.GetArrayLength(); i++)
+                        {
+                            var entry = indexDoc.RootElement[i];
+                            if (entry.TryGetProperty("id", out JsonElement idElement) &&
+                                idElement.GetString() == appId)
+                            {
+                                if (entry.TryGetProperty("type", out JsonElement typeElement))
                                 {
-                                    _ChangeLog.Add(new string[] {
-                                        Json.RootElement[i].GetProperty("change_log")[j].GetProperty("img_url").ToString(),
-                                        Json.RootElement[i].GetProperty("change_log")[j].GetProperty("title").ToString(),
-                                        Json.RootElement[i].GetProperty("change_log")[j].GetProperty("description").ToString()
-                                    });
+                                    appType = typeElement.GetString();
                                 }
+                                break;
+                            }
+                        }
+
+                        // Step 2: Download specific app JSON if found in index
+                        if (!string.IsNullOrEmpty(appType))
+                        {
+                            string baseUrl = Properties.Settings.Default.DevMode
+                                ? Properties.Settings.Default.SoftwareUpdateUrlBase.Replace("versioncontrol", "versioncontrol_dev")
+                                : Properties.Settings.Default.SoftwareUpdateUrlBase;
+                            string appUrl = $"{baseUrl}{appType}/{appId}.json";
+                            byte[] appData = wc.DownloadData(appUrl);
+                            charset = wc.ResponseHeaders["charset"];
+                            encoding = Encoding.GetEncoding(charset ?? "utf-8");
+                            string appJson = encoding.GetString(appData);
+                            JsonDocument appDoc = JsonDocument.Parse(appJson);
+
+                            if (appDoc != null)
+                            {
+                                ParseAppDetails(appDoc.RootElement, appName);
                             }
                         }
                     }
@@ -60,6 +82,47 @@ namespace JJManager.Class.App
             catch (Exception)
             {
 
+            }
+        }
+
+        /// <summary>
+        /// Parses the app details JSON and extracts version info and changelog
+        /// </summary>
+        private void ParseAppDetails(JsonElement root, string appName)
+        {
+            // New format: { "id": "...", "name": "...", "items": { "software": [...] } }
+            if (root.TryGetProperty("name", out JsonElement nameElement) &&
+                nameElement.GetString() == appName &&
+                root.TryGetProperty("items", out JsonElement itemsElement) &&
+                itemsElement.TryGetProperty("software", out JsonElement softwareArray))
+            {
+                // Get the first (latest) software entry
+                if (softwareArray.GetArrayLength() > 0)
+                {
+                    var latestSoftware = softwareArray[0];
+
+                    _LastVersion = new Version(latestSoftware.GetProperty("last_version").ToString());
+                    _DownloadURL = latestSoftware.GetProperty("download_link").ToString();
+                    _DownloadFileName = latestSoftware.GetProperty("file_name").ToString();
+
+                    if (latestSoftware.TryGetProperty("change_log", out JsonElement changeLogArray))
+                    {
+                        for (int j = 0; j < changeLogArray.GetArrayLength(); j++)
+                        {
+                            var logEntry = changeLogArray[j];
+                            string changeType = logEntry.TryGetProperty("type", out JsonElement typeElement)
+                                ? typeElement.GetString()
+                                : "";
+
+                            _ChangeLog.Add(new string[] {
+                                logEntry.GetProperty("img_url").ToString(),
+                                logEntry.GetProperty("title").ToString(),
+                                logEntry.GetProperty("description").ToString(),
+                                changeType
+                            });
+                        }
+                    }
+                }
             }
         }
 

@@ -303,6 +303,15 @@
     <Reference Include="Microsoft.SqlServer.WmiEnum, Version=17.100.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.172.52.0\lib\net472\Microsoft.SqlServer.WmiEnum.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Core, Version=1.0.3650.58, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.3650.58\lib\net462\Microsoft.Web.WebView2.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.WinForms, Version=1.0.3650.58, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.3650.58\lib\net462\Microsoft.Web.WebView2.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Wpf, Version=1.0.3650.58, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.3650.58\lib\net462\Microsoft.Web.WebView2.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Win32.Registry, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Win32.Registry.5.0.0\lib\net461\Microsoft.Win32.Registry.dll</HintPath>
       <Private>True</Private>
@@ -619,6 +628,8 @@
       <DependentUpon>DrawImage.cs</DependentUpon>
     </Compile>
     <Compile Include="Class\App\Fonts\FontAwesome.cs" />
+    <Compile Include="Class\App\HtmlChangelogGenerator.cs" />
+    <Compile Include="Class\App\HtmlTemplateEngine.cs" />
     <Compile Include="Class\App\Input\AudioController\AudioController.cs" />
     <Compile Include="Class\App\Input\AudioController\AudioMonitor.cs" />
     <Compile Include="Class\App\Input\AudioController\AudioSession.cs" />
@@ -974,6 +985,18 @@
     </Content>
     <Content Include="JJManagerrIcon.ico" />
     <Content Include="MigrateQuerys\1_1_14.sql" />
+    <Content Include="Pages\App\HTML\changelog_page.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Pages\App\HTML\Modules\changelog_card.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Pages\App\HTML\Modules\changelog_image.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Pages\App\HTML\Modules\changelog_no_image.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="MigrateQuerys\1_3_0 .sql" />
     <None Include="MigrateQuerys\1_2_9 .sql" />
     <None Include="Resources\JJB-Slim_A_hover.png" />
@@ -1008,6 +1031,17 @@
     <None Include="Resources\Logo JohnJohn JJMixer.png" />
     <None Include="Resources\JJManagerIcon_256.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Pages\App\HTML\*.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Pages\App\HTML\Modules\*.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Pages\App\HTML\*.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -1018,6 +1052,7 @@
     <Error Condition="!Exists('..\packages\Avalonia.11.1.3\build\Avalonia.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Avalonia.11.1.3\build\Avalonia.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Data.SqlClient.SNI.6.0.1\build\net462\Microsoft.Data.SqlClient.SNI.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Data.SqlClient.SNI.6.0.1\build\net462\Microsoft.Data.SqlClient.SNI.targets'))" />
     <Error Condition="!Exists('..\packages\Avalonia.11.1.3\build\Avalonia.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Avalonia.11.1.3\build\Avalonia.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Web.WebView2.1.0.3650.58\build\Microsoft.Web.WebView2.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Web.WebView2.1.0.3650.58\build\Microsoft.Web.WebView2.targets'))" />
   </Target>
   <PropertyGroup>
     <PostBuildEvent>if not exist "$(TargetDir)lib" mkdir "$(TargetDir)lib"
@@ -1032,4 +1067,5 @@ move /Y "$(TargetDir)*.pdb" "$(TargetDir)lib\"
   <Import Project="..\packages\Avalonia.BuildServices.0.0.29\build\Avalonia.BuildServices.targets" Condition="Exists('..\packages\Avalonia.BuildServices.0.0.29\build\Avalonia.BuildServices.targets')" />
   <Import Project="..\packages\Avalonia.11.1.3\build\Avalonia.targets" Condition="Exists('..\packages\Avalonia.11.1.3\build\Avalonia.targets')" />
   <Import Project="..\packages\Microsoft.Data.SqlClient.SNI.6.0.1\build\net462\Microsoft.Data.SqlClient.SNI.targets" Condition="Exists('..\packages\Microsoft.Data.SqlClient.SNI.6.0.1\build\net462\Microsoft.Data.SqlClient.SNI.targets')" />
+  <Import Project="..\packages\Microsoft.Web.WebView2.1.0.3650.58\build\Microsoft.Web.WebView2.targets" Condition="Exists('..\packages\Microsoft.Web.WebView2.1.0.3650.58\build\Microsoft.Web.WebView2.targets')" />
 </Project>
