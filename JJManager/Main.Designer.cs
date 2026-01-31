@@ -597,8 +597,8 @@
             this.ClientSize = new System.Drawing.Size(715, 521);
             this.Controls.Add(this.tbsMainMenu);
             this.Controls.Add(this.tabMain);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "Main";
             this.Sizable = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

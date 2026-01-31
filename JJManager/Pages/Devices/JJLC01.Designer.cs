@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJLC01));
             this.ChtLoadCellJJLC01 = new System.Windows.Forms.Integration.ElementHost();
             this.ChtLoadCell = new LiveCharts.Wpf.CartesianChart();
             this.BtnClose = new MaterialSkin.Controls.MaterialButton();
@@ -452,10 +451,10 @@
             this.Controls.Add(this.BtnClose);
             this.Controls.Add(this.materialDivider2);
             this.Controls.Add(this.BtnSave);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "JJLC01";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "JJLC-01";
+            this.Text = "Load Cell JJLC-01";
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.TbcJJLC01.ResumeLayout(false);

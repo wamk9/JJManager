@@ -123,6 +123,7 @@
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(860, 450);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "UpdateAppNotification";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

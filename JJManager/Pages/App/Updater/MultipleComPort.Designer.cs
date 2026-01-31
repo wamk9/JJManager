@@ -101,6 +101,7 @@
             this.Controls.Add(this.txtPortInfo);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "MultipleComPort";
             this.ShowInTaskbar = false;
             this.Sizable = false;

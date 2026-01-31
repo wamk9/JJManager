@@ -63,8 +63,8 @@ namespace JJManager.Class.App
 
                     if (indexDoc != null && indexDoc.RootElement.ValueKind == JsonValueKind.Array)
                     {
-                        // Find the device entry by matching id (using ProductId as lowercase)
-                        string deviceId = _device.ProductId.ToLowerInvariant().Replace("-", "").Replace(" ", "_");
+                        // Find the device entry by matching id (using class name as lowercase)
+                        string deviceId = _device.GetType().Name.ToLowerInvariant();
                         string deviceType = null;
 
                         Console.WriteLine($"[DeviceUpdater] Searching for device ID: '{deviceId}' in {indexDoc.RootElement.GetArrayLength()} entries");

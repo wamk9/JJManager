@@ -1,17 +1,6 @@
-﻿using AudioSwitcher.AudioApi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
+﻿using System;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using LedsOutput = JJManager.Class.App.Output.Leds.Leds;
-//using AudioControllerOutput = JJManager.Class.App.Output.AudioController.AudioController;
-//using AudioPlayerOutput = JJManager.Class.App.Output.AudioPlayer.AudioPlayer;
-using AudioSwitcher.AudioApi.CoreAudio;
-using JJManager.Class.App.Profile;
-using Newtonsoft.Json.Linq;
 namespace JJManager.Class.App.Output
 {
     public class Output

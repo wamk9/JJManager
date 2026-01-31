@@ -1,18 +1,10 @@
-﻿using AudioSwitcher.AudioApi.CoreAudio;
-using HidSharp;
-using JJManager.Class.App.Input;
+﻿using HidSharp;
 using NAudio.CoreAudioApi;
-using NAudio.Wave;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Navigation;
 using HIDClass = JJManager.Class.Devices.Connections.HID;
 namespace JJManager.Class.Devices
 {

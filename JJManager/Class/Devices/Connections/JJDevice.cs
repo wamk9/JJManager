@@ -1,7 +1,5 @@
-﻿using AudioSwitcher.AudioApi;
-using HidSharp;
+﻿using HidSharp;
 using MaterialSkin.Controls;
-using NAudio.CoreAudioApi;
 using SharpDX.DirectInput;
 using System;
 using System.Collections.Generic;
@@ -15,8 +13,6 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using BluetoothClass = JJManager.Class.Devices.Connections.Bluetooth;
-using HIDClass = JJManager.Class.Devices.Connections.HID;
 using JoystickClass = JJManager.Class.Devices.Connections.Joystick;
 using ProfileClass = JJManager.Class.App.Profile.Profile;
 namespace JJManager.Class.Devices

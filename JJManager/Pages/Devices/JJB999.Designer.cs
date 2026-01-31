@@ -493,10 +493,10 @@
             this.Controls.Add(this.CmbBoxSelectProfile);
             this.Controls.Add(this.ImgJJB999Off);
             this.Controls.Add(this.ImgJJB999On);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(1000, 700);
             this.MinimumSize = new System.Drawing.Size(1000, 700);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "JJB999";
             this.Sizable = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

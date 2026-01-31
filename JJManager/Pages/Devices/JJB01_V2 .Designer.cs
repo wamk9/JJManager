@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJB01_V2));
             this.CmbBoxSelectProfile = new MaterialSkin.Controls.MaterialComboBox();
             this.BtnAddProfile = new MaterialSkin.Controls.MaterialButton();
             this.BtnRemoveProfile = new MaterialSkin.Controls.MaterialButton();
@@ -493,7 +492,7 @@
             this.Controls.Add(this.CmbBoxSelectProfile);
             this.Controls.Add(this.ImgJJB01V2Off);
             this.Controls.Add(this.ImgJJB01V2On);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(1000, 700);
             this.MinimumSize = new System.Drawing.Size(1000, 700);

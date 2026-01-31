@@ -191,6 +191,7 @@
             this.Controls.Add(this.BtnCancel);
             this.Controls.Add(this.BtnSave);
             this.Controls.Add(this.materialDivider1);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "LedAction";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Criando/Editando Ação Do Led";

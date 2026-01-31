@@ -24,6 +24,17 @@ namespace JJManager.Pages.Devices
         private bool _IsCreateProfileOpened = false;
         private int _lastInputSelected = -1;
         private MaterialForm _parent = null;
+        private bool _lastConnectionState = false;
+        private System.Windows.Forms.Timer _connectionMonitorTimer = null;
+        private readonly object cmbFunctionItems = new[]
+        {
+            new { Text = "Sem função", Value = Input.InputMode.None },
+            new { Text = "MacroKey", Value = Input.InputMode.MacroKey },
+            new { Text = "AudioPlayer", Value = Input.InputMode.AudioPlayer }
+        };
+        private int inputValueToAdd = 0; // Necessário para identificar qual valor adicionar ao input ao clicar nos botões de ação.
+
+
         #region WinForms
         private MaterialSkinManager materialSkinManager = null;
         private AppModulesTimer JoystickReceiver = null;
@@ -76,10 +87,97 @@ namespace JJManager.Pages.Devices
             FormClosing += new FormClosingEventHandler(JJSD01_FormClosing);
             //FormClosed += new FormClosedEventHandler(JJB01_V2_FormClosed);
 
+            CmbFunction.DataSource = cmbFunctionItems;
+            CmbFunction.DisplayMember = "Text";
+            CmbFunction.ValueMember = "Value";
+            CmbFunction.SelectedValue = Input.InputType.None;
+            CmbFunction.SelectedIndexChanged += (s, e) =>
+            {
+                if (_lastInputSelected < 0)
+                    return;
+
+                int inputSelected = _lastInputSelected + inputValueToAdd;
+                Input.InputMode selectedMode = (Input.InputMode)CmbFunction.SelectedValue;
+
+                if (_device.Profile.Inputs[inputSelected].Mode != selectedMode)
+                {
+                    if (selectedMode == Input.InputMode.None)
+                    {
+                        BtnEditFunction.Enabled = false;
+                    }
+                    else
+                    {
+                        BtnEditFunction.Enabled = true;
+                    }
+
+                    switch (selectedMode)
+                    {
+                        case Input.InputMode.None:
+                            _device.Profile.Inputs[inputSelected].RemoveFunction();
+                            break;
+                        case Input.InputMode.MacroKey:
+                            _device.Profile.Inputs[inputSelected].SetToMacroKey();
+                            break;
+                        case Input.InputMode.AudioPlayer:
+                            _device.Profile.Inputs[inputSelected].SetToAudioPlayer();
+                            break;
+                    }
+                    _device.Profile.Inputs[inputSelected].Save();
+                }
+            };
+            CmbFunction.Refresh();
+            
+            if ((CmbFunction?.SelectedValue ?? Input.InputMode.None).Equals(Input.InputMode.None))
+            {
+                BtnEditFunction.Enabled = false;
+            }
+            else
+            {
+                BtnEditFunction.Enabled = true;
+            }
+
+            BtnEditFunction.Click += (s, e) =>
+            {
+                if (_lastInputSelected < 0)
+                    return;
+
+                var selectedMode = (Input.InputMode)CmbFunction.SelectedValue;
+                if (selectedMode == Input.InputMode.MacroKey)
+                {
+                    MacroKeyMain macroKey = new MacroKeyMain(this, _device.Profile, (uint)(_lastInputSelected + inputValueToAdd));
+                    Visible = false;
+                    macroKey.ShowDialog();
+                }
+                else if (selectedMode == Input.InputMode.AudioPlayer)
+                {
+                    AudioPlayer audioPlayer = new AudioPlayer(this, _device.Profile, (_lastInputSelected + inputValueToAdd));
+                    Visible = false;
+                    audioPlayer.ShowDialog();
+                }
+            };
+
+            BtnPress.Tag = (int)Class.Devices.JJSD01.InputState.Press;
+            BtnContinuous.Tag = (int)Class.Devices.JJSD01.InputState.Continuous;
+            BtnHold.Tag = (int)Class.Devices.JJSD01.InputState.Hold;
+
+            BtnPress.Click += BtnFunctions_Click;
+            BtnContinuous.Click += BtnFunctions_Click;
+            BtnHold.Click += BtnFunctions_Click;
+            
             SelectInput();
 
             CmbBoxSelectProfile.DropDown += new EventHandler(CmbBoxSelectProfile_DropDown);
             CmbBoxSelectProfile.SelectedIndexChanged += new EventHandler(CmbBoxSelectProfile_SelectedIndexChanged);
+
+            // Initialize connection monitor timer
+            _lastConnectionState = _device.IsConnected;
+            _connectionMonitorTimer = new System.Windows.Forms.Timer();
+            _connectionMonitorTimer.Interval = 500;
+            _connectionMonitorTimer.Tick += ConnectionMonitorTimer_Tick;
+            _connectionMonitorTimer.Start();
+
+            // Update initial connection status
+            UpdateConnectionStatus();
         }
 
         private void BtnRemoveProfile_Click(object sender, EventArgs e)
@@ -149,103 +247,60 @@ namespace JJManager.Pages.Devices
             thr.Start();
         }
 
-
-        private void GetActualOption()
+        private void ChangeInputVisibility(bool visibility = false)
         {
-            if (_lastInputSelected < 0)
-            {
-                return;
-            }
+            BtnPress.Enabled = visibility;
+            BtnContinuous.Enabled = visibility;
+            BtnHold.Enabled = visibility;
 
-            switch (_device.Profile.Inputs[_lastInputSelected].Mode)
-            {
-                case Input.InputMode.MacroKey:
-                    ((MaterialRadioButton)flpInput.Controls["rdbMacroKeyMode"]).Checked = true;
-                    break;
-                case Input.InputMode.AudioPlayer:
-                    ((MaterialRadioButton)flpInput.Controls["rdbAudioPlayerMode"]).Checked = true;
-                    break;
-                default:
-                    ((MaterialRadioButton)flpInput.Controls["rdbNoneMode"]).Checked = true;
-                    break;
-            }
+            FlpFunction.Visible = visibility;
         }
 
         private void SelectInput()
         {
             if (_lastInputSelected < 0)
             {
-                flpInput.Controls.Clear();
+                ChangeInputVisibility();
 
-                MaterialLabel label = new MaterialLabel();
-                label.Name = "txtUnselectedInput";
-                label.Text = "Nenhum Botão Selecionado";
-                label.TextAlign = ContentAlignment.MiddleCenter;
-                label.AutoSize = false;
-                label.Width = flpInput.Width;
-
-                // Assuming you have a control named "myControl" that you want to center
-                label.Anchor = AnchorStyles.None;
-                label.Margin = new Padding(
-                    (flpInput.ClientSize.Width - label.Width) / 2,  // Center horizontally
-                    (flpInput.ClientSize.Height - label.Height) / 2,  // Center vertically
-                    0,
-                    0
-                );
-
-                flpInput.Controls.Add(label);
+                foreach (Control control in FlpPressMode.Controls)
+                {
+                    if (control is MaterialButton btn && btn.Type == MaterialButton.MaterialButtonType.Contained)
+                    {
+                        btn.Type = MaterialButton.MaterialButtonType.Outlined;
+                    }
+                }
             }
             else
             {
-                flpInput.Controls.Clear();
+                ChangeInputVisibility(true);
 
-                MaterialLabel label = new MaterialLabel();
-                label.Name = "txtSelectedInput";
-                label.Text = "Botão " + (_lastInputSelected + 1) + " Selecionado";
-                label.TextAlign = ContentAlignment.MiddleCenter;
-                label.AutoSize = false;
-                label.Width = flpInput.Width;
+                bool hasAnyPressModeSelected = false;
 
-                MaterialRadioButton withoutMode = new MaterialRadioButton();
-                withoutMode.Name = "rdbNoneMode";
-                withoutMode.Text = "Sem função";
-                withoutMode.TextAlign = ContentAlignment.MiddleCenter;
-                withoutMode.AutoSize = false;
-                withoutMode.Width = flpInput.Width;
-                withoutMode.CheckedChanged += Mode_CheckedChanged;
+                foreach (Control control in FlpPressMode.Controls)
+                {
+                    if (control is MaterialButton btn && btn.Type == MaterialButton.MaterialButtonType.Contained)
+                    {
+                        hasAnyPressModeSelected = true;
+                        break;
+                    }
+                }
 
-                MaterialRadioButton macroKey = new MaterialRadioButton();
-                macroKey.Name = "rdbMacroKeyMode";
-                macroKey.Text = "Macrokey";
-                macroKey.TextAlign = ContentAlignment.MiddleCenter;
-                macroKey.AutoSize = false;
-                macroKey.Width = flpInput.Width;
-                macroKey.CheckedChanged += Mode_CheckedChanged;
+                if (!hasAnyPressModeSelected)
+                {
+                    BtnPress.PerformClick();
+                }
+                CmbFunction.SelectedValue = _device.Profile.Inputs[_lastInputSelected + inputValueToAdd]?.Mode ?? Input.InputMode.None;
+                CmbFunction.Refresh();
 
-                MaterialRadioButton audioPlayer = new MaterialRadioButton();
-                audioPlayer.Name = "rdbAudioPlayerMode";
-                audioPlayer.Text = "Tocar áudio";
-                audioPlayer.TextAlign = ContentAlignment.MiddleCenter;
-                audioPlayer.AutoSize = false;
-                audioPlayer.Width = flpInput.Width;
-                audioPlayer.CheckedChanged += Mode_CheckedChanged;
+                if ((CmbFunction?.SelectedValue ?? Input.InputMode.None).Equals(Input.InputMode.None))
+                {
+                    BtnEditFunction.Enabled = false;
+                }
+                else
+                {
+                    BtnEditFunction.Enabled = true;
+                }
 
-
-                MaterialButton editInput = new MaterialButton();
-                editInput.Name = "btnEditInput";
-                editInput.Text = "Editar Botão Selecionado";
-                editInput.TextAlign = ContentAlignment.MiddleCenter;
-                editInput.AutoSize = false;
-                editInput.Width = flpInput.Width;
-                editInput.Click += EditInput_Click;
-
-                flpInput.Controls.Add(label);
-                flpInput.Controls.Add(withoutMode);
-                flpInput.Controls.Add(macroKey);
-                flpInput.Controls.Add(audioPlayer);
-                flpInput.Controls.Add(editInput);
-
-                GetActualOption();
             }
         }
 
@@ -291,6 +346,14 @@ namespace JJManager.Pages.Devices
 
         private void JJSD01_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // Stop and dispose the connection monitor timer
+            if (_connectionMonitorTimer != null)
+            {
+                _connectionMonitorTimer.Stop();
+                _connectionMonitorTimer.Dispose();
+                _connectionMonitorTimer = null;
+            }
+
             _parent.Visible = true;
         }
 
@@ -401,6 +464,103 @@ namespace JJManager.Pages.Devices
             foreach (Control ctrl in flpInput.Controls)
             {
                 ctrl.Width = flpInput.ClientSize.Width;
+            }
+        }
+
+        private void BtnFunctions_Click(object sender, EventArgs e)
+        {
+            foreach (Control control in FlpPressMode.Controls)
+            {
+                if (control is MaterialButton)
+                {
+                    ((MaterialButton)control).Type = MaterialButton.MaterialButtonType.Outlined;
+                    ((MaterialButton)control).Refresh();
+                }
+            }
+
+            if (_lastInputSelected < 0)
+            {
+                inputValueToAdd = 0;
+                return;
+            }
+
+            ((MaterialButton)sender).Type = MaterialButton.MaterialButtonType.Contained;
+            ((MaterialButton)sender).Refresh();
+            inputValueToAdd = Class.Devices.JJSD01.ButtonCount * (int) ((MaterialButton) sender).Tag;
+            CmbFunction.SelectedValue = _device.Profile.Inputs[_lastInputSelected + inputValueToAdd]?.Mode ?? Input.InputMode.None;
+            CmbFunction.Refresh();
+
+            if ((CmbFunction?.SelectedValue ?? Input.InputMode.None).Equals(Input.InputMode.None))
+            {
+                BtnEditFunction.Enabled = false;
+            }
+            else
+            {
+                BtnEditFunction.Enabled = true;
+            }
+        }
+
+        private void BtnConnect_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_device.IsConnected)
+                {
+                    // Disconnect
+                    if (_device.Disconnect())
+                    {
+                        UpdateConnectionStatus();
+                    }
+                }
+                else
+                {
+                    // Connect
+                    if (_device.Connect())
+                    {
+                        UpdateConnectionStatus();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Pages.App.MessageBox.Show(this, "Erro de Conexão", "Erro ao conectar/desconectar: " + ex.Message);
+            }
+        }
+
+        private void UpdateConnectionStatus()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(UpdateConnectionStatus));
+                return;
+            }
+
+            if (_device.AutoConnect)
+            {
+                BtnConnect.Text = "Auto Conectar Habilitado";
+                BtnConnect.Enabled = false;
+            }
+            else if (_device.IsConnected)
+            {
+                BtnConnect.Text = "Desconectar";
+                BtnConnect.Enabled = true;
+            }
+            else
+            {
+                BtnConnect.Text = "Conectar";
+                BtnConnect.Enabled = true;
+            }
+        }
+
+        private void ConnectionMonitorTimer_Tick(object sender, EventArgs e)
+        {
+            bool currentState = _device.IsConnected;
+
+            // Check if connection state changed
+            if (currentState != _lastConnectionState)
+            {
+                _lastConnectionState = currentState;
+                UpdateConnectionStatus();
             }
         }
     }

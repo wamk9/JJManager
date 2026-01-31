@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJSD01));
+            this.BtnConnect = new MaterialSkin.Controls.MaterialButton();
             this.BtnRemoveProfile = new MaterialSkin.Controls.MaterialButton();
             this.BtnAddProfile = new MaterialSkin.Controls.MaterialButton();
             this.CmbBoxSelectProfile = new MaterialSkin.Controls.MaterialComboBox();
@@ -48,6 +49,14 @@
             this.ImgJJSD01Input02 = new System.Windows.Forms.PictureBox();
             this.ImgJJSD01Input01 = new System.Windows.Forms.PictureBox();
             this.flpInput = new System.Windows.Forms.FlowLayoutPanel();
+            this.FlpPressMode = new System.Windows.Forms.FlowLayoutPanel();
+            this.BtnPress = new MaterialSkin.Controls.MaterialButton();
+            this.BtnContinuous = new MaterialSkin.Controls.MaterialButton();
+            this.BtnHold = new MaterialSkin.Controls.MaterialButton();
+            this.materialDivider3 = new MaterialSkin.Controls.MaterialDivider();
+            this.FlpFunction = new System.Windows.Forms.FlowLayoutPanel();
+            this.CmbFunction = new MaterialSkin.Controls.MaterialComboBox();
+            this.BtnEditFunction = new MaterialSkin.Controls.MaterialButton();
             this.materialDivider2 = new MaterialSkin.Controls.MaterialDivider();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJB01V2Off)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input09)).BeginInit();
@@ -62,7 +71,32 @@
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input03)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input02)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input01)).BeginInit();
+            this.flpInput.SuspendLayout();
+            this.FlpPressMode.SuspendLayout();
+            this.FlpFunction.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // BtnConnect
+            // 
+            this.BtnConnect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtnConnect.AutoSize = false;
+            this.BtnConnect.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnConnect.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.BtnConnect.Depth = 0;
+            this.BtnConnect.HighEmphasis = true;
+            this.BtnConnect.Icon = null;
+            this.BtnConnect.Location = new System.Drawing.Point(684, 554);
+            this.BtnConnect.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.BtnConnect.MouseState = MaterialSkin.MouseState.HOVER;
+            this.BtnConnect.Name = "BtnConnect";
+            this.BtnConnect.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.BtnConnect.Size = new System.Drawing.Size(218, 36);
+            this.BtnConnect.TabIndex = 37;
+            this.BtnConnect.Text = "Conectar";
+            this.BtnConnect.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.BtnConnect.UseAccentColor = false;
+            this.BtnConnect.UseVisualStyleBackColor = true;
+            this.BtnConnect.Click += new System.EventHandler(this.BtnConnect_Click);
             // 
             // BtnRemoveProfile
             // 
@@ -376,6 +410,9 @@
             this.flpInput.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.flpInput.Controls.Add(this.FlpPressMode);
+            this.flpInput.Controls.Add(this.materialDivider3);
+            this.flpInput.Controls.Add(this.FlpFunction);
             this.flpInput.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.flpInput.Location = new System.Drawing.Point(548, 129);
             this.flpInput.Name = "flpInput";
@@ -383,6 +420,142 @@
             this.flpInput.TabIndex = 35;
             this.flpInput.WrapContents = false;
             this.flpInput.SizeChanged += new System.EventHandler(this.flpInput_SizeChanged);
+            // 
+            // FlpPressMode
+            // 
+            this.FlpPressMode.Controls.Add(this.BtnPress);
+            this.FlpPressMode.Controls.Add(this.BtnContinuous);
+            this.FlpPressMode.Controls.Add(this.BtnHold);
+            this.FlpPressMode.Location = new System.Drawing.Point(3, 3);
+            this.FlpPressMode.Name = "FlpPressMode";
+            this.FlpPressMode.Size = new System.Drawing.Size(441, 100);
+            this.FlpPressMode.TabIndex = 0;
+            this.FlpPressMode.WrapContents = false;
+            // 
+            // BtnPress
+            // 
+            this.BtnPress.AutoSize = false;
+            this.BtnPress.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnPress.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.BtnPress.Depth = 0;
+            this.BtnPress.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.BtnPress.HighEmphasis = true;
+            this.BtnPress.Icon = null;
+            this.BtnPress.Location = new System.Drawing.Point(4, 6);
+            this.BtnPress.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.BtnPress.MouseState = MaterialSkin.MouseState.HOVER;
+            this.BtnPress.Name = "BtnPress";
+            this.BtnPress.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.BtnPress.Size = new System.Drawing.Size(139, 91);
+            this.BtnPress.TabIndex = 0;
+            this.BtnPress.Text = "Pressionar";
+            this.BtnPress.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+            this.BtnPress.UseAccentColor = false;
+            this.BtnPress.UseVisualStyleBackColor = true;
+            // 
+            // BtnContinuous
+            // 
+            this.BtnContinuous.AutoSize = false;
+            this.BtnContinuous.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnContinuous.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.BtnContinuous.Depth = 0;
+            this.BtnContinuous.FlatAppearance.BorderSize = 5;
+            this.BtnContinuous.HighEmphasis = true;
+            this.BtnContinuous.Icon = null;
+            this.BtnContinuous.Location = new System.Drawing.Point(151, 6);
+            this.BtnContinuous.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.BtnContinuous.MouseState = MaterialSkin.MouseState.HOVER;
+            this.BtnContinuous.Name = "BtnContinuous";
+            this.BtnContinuous.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.BtnContinuous.Size = new System.Drawing.Size(139, 91);
+            this.BtnContinuous.TabIndex = 1;
+            this.BtnContinuous.Text = "Segurar";
+            this.BtnContinuous.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+            this.BtnContinuous.UseAccentColor = false;
+            this.BtnContinuous.UseVisualStyleBackColor = true;
+            // 
+            // BtnHold
+            // 
+            this.BtnHold.AutoSize = false;
+            this.BtnHold.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnHold.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.BtnHold.Depth = 0;
+            this.BtnHold.HighEmphasis = true;
+            this.BtnHold.Icon = null;
+            this.BtnHold.Location = new System.Drawing.Point(298, 6);
+            this.BtnHold.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.BtnHold.MouseState = MaterialSkin.MouseState.HOVER;
+            this.BtnHold.Name = "BtnHold";
+            this.BtnHold.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.BtnHold.Size = new System.Drawing.Size(139, 91);
+            this.BtnHold.TabIndex = 2;
+            this.BtnHold.Text = "Soltar";
+            this.BtnHold.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
+            this.BtnHold.UseAccentColor = false;
+            this.BtnHold.UseVisualStyleBackColor = true;
+            // 
+            // materialDivider3
+            // 
+            this.materialDivider3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.materialDivider3.Depth = 0;
+            this.materialDivider3.Location = new System.Drawing.Point(3, 109);
+            this.materialDivider3.MouseState = MaterialSkin.MouseState.HOVER;
+            this.materialDivider3.Name = "materialDivider3";
+            this.materialDivider3.Size = new System.Drawing.Size(441, 1);
+            this.materialDivider3.TabIndex = 2;
+            this.materialDivider3.Text = "materialDivider3";
+            // 
+            // FlpFunction
+            // 
+            this.FlpFunction.Controls.Add(this.CmbFunction);
+            this.FlpFunction.Controls.Add(this.BtnEditFunction);
+            this.FlpFunction.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.FlpFunction.Location = new System.Drawing.Point(3, 116);
+            this.FlpFunction.Name = "FlpFunction";
+            this.FlpFunction.Size = new System.Drawing.Size(441, 286);
+            this.FlpFunction.TabIndex = 1;
+            // 
+            // CmbFunction
+            // 
+            this.CmbFunction.AutoResize = false;
+            this.CmbFunction.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.CmbFunction.Depth = 0;
+            this.CmbFunction.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
+            this.CmbFunction.DropDownHeight = 174;
+            this.CmbFunction.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.CmbFunction.DropDownWidth = 121;
+            this.CmbFunction.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.CmbFunction.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.CmbFunction.FormattingEnabled = true;
+            this.CmbFunction.IntegralHeight = false;
+            this.CmbFunction.ItemHeight = 43;
+            this.CmbFunction.Location = new System.Drawing.Point(3, 3);
+            this.CmbFunction.MaxDropDownItems = 4;
+            this.CmbFunction.MouseState = MaterialSkin.MouseState.OUT;
+            this.CmbFunction.Name = "CmbFunction";
+            this.CmbFunction.Size = new System.Drawing.Size(436, 49);
+            this.CmbFunction.StartIndex = 0;
+            this.CmbFunction.TabIndex = 0;
+            // 
+            // BtnEditFunction
+            // 
+            this.BtnEditFunction.AutoSize = false;
+            this.BtnEditFunction.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnEditFunction.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.BtnEditFunction.Depth = 0;
+            this.BtnEditFunction.HighEmphasis = true;
+            this.BtnEditFunction.Icon = null;
+            this.BtnEditFunction.Location = new System.Drawing.Point(120, 61);
+            this.BtnEditFunction.Margin = new System.Windows.Forms.Padding(120, 6, 4, 6);
+            this.BtnEditFunction.MouseState = MaterialSkin.MouseState.HOVER;
+            this.BtnEditFunction.Name = "BtnEditFunction";
+            this.BtnEditFunction.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.BtnEditFunction.Size = new System.Drawing.Size(200, 36);
+            this.BtnEditFunction.TabIndex = 1;
+            this.BtnEditFunction.Text = "Editar Função";
+            this.BtnEditFunction.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.BtnEditFunction.UseAccentColor = false;
+            this.BtnEditFunction.UseVisualStyleBackColor = true;
             // 
             // materialDivider2
             // 
@@ -399,11 +572,11 @@
             // 
             // JJSD01
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.ClientSize = new System.Drawing.Size(1000, 597);
             this.Controls.Add(this.materialDivider2);
             this.Controls.Add(this.flpInput);
+            this.Controls.Add(this.BtnConnect);
             this.Controls.Add(this.btnCloseConfig);
             this.Controls.Add(this.materialDivider1);
             this.Controls.Add(this.BtnRemoveProfile);
@@ -422,9 +595,15 @@
             this.Controls.Add(this.ImgJJSD01Input10);
             this.Controls.Add(this.ImgJJSD01Input09);
             this.Controls.Add(this.ImgJJB01V2Off);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(1000, 597);
+            this.MinimumSize = new System.Drawing.Size(1000, 597);
             this.Name = "JJSD01";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "JJSD-01";
+            this.Sizable = false;
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "Streamdeck JJSD-01";
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJB01V2Off)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input09)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input10)).EndInit();
@@ -438,6 +617,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input03)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input02)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJSD01Input01)).EndInit();
+            this.flpInput.ResumeLayout(false);
+            this.FlpPressMode.ResumeLayout(false);
+            this.FlpFunction.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -445,6 +627,7 @@
 
         #endregion
 
+        private MaterialSkin.Controls.MaterialButton BtnConnect;
         private MaterialSkin.Controls.MaterialButton BtnRemoveProfile;
         private MaterialSkin.Controls.MaterialButton BtnAddProfile;
         private MaterialSkin.Controls.MaterialComboBox CmbBoxSelectProfile;
@@ -465,5 +648,13 @@
         private System.Windows.Forms.PictureBox ImgJJSD01Input01;
         private System.Windows.Forms.FlowLayoutPanel flpInput;
         private MaterialSkin.Controls.MaterialDivider materialDivider2;
+        private System.Windows.Forms.FlowLayoutPanel FlpPressMode;
+        private MaterialSkin.Controls.MaterialButton BtnPress;
+        private MaterialSkin.Controls.MaterialButton BtnContinuous;
+        private MaterialSkin.Controls.MaterialButton BtnHold;
+        private System.Windows.Forms.FlowLayoutPanel FlpFunction;
+        private MaterialSkin.Controls.MaterialDivider materialDivider3;
+        private MaterialSkin.Controls.MaterialComboBox CmbFunction;
+        private MaterialSkin.Controls.MaterialButton BtnEditFunction;
     }
 }

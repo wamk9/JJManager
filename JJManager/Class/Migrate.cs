@@ -1,16 +1,9 @@
 ﻿using JJManager.Properties;
-using Microsoft.SqlServer.Management.Smo;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Resources;
-using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace JJManager.Class
 {
@@ -63,7 +56,8 @@ namespace JJManager.Class
             _versions.Add(new Version(1, 2, 6, 1));
             _versions.Add(new Version(1, 2, 7));
             _versions.Add(new Version(1, 2, 8));
-            _versions.Add(new Version(1, 2, 9)); // Last Version
+            _versions.Add(new Version(1, 2, 9));
+            _versions.Add(new Version(1, 3, 0)); // Last Version
         }
 
         private void ExecuteMigration (Version actual_version)

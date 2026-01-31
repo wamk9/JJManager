@@ -78,10 +78,10 @@
             this.ClientSize = new System.Drawing.Size(400, 210);
             this.Controls.Add(this.TxtProfileName);
             this.Controls.Add(this.BtnSaveProfile);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(400, 210);
             this.MinimumSize = new System.Drawing.Size(400, 210);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "CreateProfile";
             this.Sizable = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

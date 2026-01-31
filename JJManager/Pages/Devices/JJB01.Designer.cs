@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJB01));
             this.ImgJJB01 = new System.Windows.Forms.PictureBox();
             this.BtnInput01JJB01 = new System.Windows.Forms.PictureBox();
             this.BtnInput02JJB01 = new System.Windows.Forms.PictureBox();
@@ -141,7 +140,7 @@
             this.BtnRemoveProfile.UseVisualStyleBackColor = true;
             this.BtnRemoveProfile.Click += new System.EventHandler(this.BtnRemoveProfile_Click);
             // 
-            // JJB_01
+            // JJB01
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -152,14 +151,14 @@
             this.Controls.Add(this.BtnInput02JJB01);
             this.Controls.Add(this.BtnInput01JJB01);
             this.Controls.Add(this.ImgJJB01);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(500, 660);
             this.MinimumSize = new System.Drawing.Size(500, 660);
-            this.Name = "JJB_01";
+            this.Name = "JJB01";
             this.Sizable = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "JJB-01";
+            this.Text = "ButtonBox JJB-01";
             ((System.ComponentModel.ISupportInitialize)(this.ImgJJB01)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput01JJB01)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.BtnInput02JJB01)).EndInit();

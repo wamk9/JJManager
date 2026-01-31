@@ -616,8 +616,8 @@
             this.Controls.Add(this.BtnRemoveProfile);
             this.Controls.Add(this.BtnAddProfile);
             this.Controls.Add(this.CmbBoxSelectProfile);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(1280, 700);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "JJDB01";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "JJDB01";

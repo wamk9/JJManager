@@ -138,6 +138,7 @@
             this.Controls.Add(this.btnAddExecutable);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "AudioSession";
             this.Sizable = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

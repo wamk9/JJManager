@@ -64,7 +64,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.flpDragDrop.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flpDragDrop.Location = new System.Drawing.Point(6, 171);
+            this.flpDragDrop.Location = new System.Drawing.Point(6, 173);
             this.flpDragDrop.Name = "flpDragDrop";
             this.flpDragDrop.Size = new System.Drawing.Size(617, 275);
             this.flpDragDrop.TabIndex = 9;
@@ -194,7 +194,12 @@
             this.Controls.Add(this.btnPlayActualAudio);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.TxtInputName);
+            this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(630, 500);
+            this.MinimumSize = new System.Drawing.Size(630, 500);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "AudioPlayer";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "AudioPlayer";
             this.ResumeLayout(false);
 

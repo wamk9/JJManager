@@ -53,7 +53,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.TxtMessageBox.AutoEllipsis = true;
             this.TxtMessageBox.Depth = 0;
-            this.TxtMessageBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.TxtMessageBox.Font = new System.Drawing.Font("Roboto", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
             this.TxtMessageBox.Location = new System.Drawing.Point(13, 68);
             this.TxtMessageBox.MouseState = MaterialSkin.MouseState.HOVER;
             this.TxtMessageBox.Name = "TxtMessageBox";
@@ -79,10 +79,12 @@
             this.Controls.Add(this.materialDivider1);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "MessageBox";
             this.Sizable = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "MessageBox";
+            this.TopMost = true;
             this.ResumeLayout(false);
 
         }

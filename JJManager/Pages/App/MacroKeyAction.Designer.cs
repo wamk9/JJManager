@@ -483,6 +483,7 @@
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.tbcAction);
             this.KeyPreview = true;
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "MacroKeyAction";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MacroKeyAction";

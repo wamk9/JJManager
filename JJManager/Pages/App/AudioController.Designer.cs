@@ -307,10 +307,10 @@
             this.Controls.Add(this.TxtInputName);
             this.Controls.Add(this.BtnCancelInputConf);
             this.Controls.Add(this.BtnSaveInputConf);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(700, 600);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "AudioController";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Input 1 - Configurações";

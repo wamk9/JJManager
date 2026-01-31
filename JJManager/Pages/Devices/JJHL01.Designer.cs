@@ -180,6 +180,7 @@
             this.Controls.Add(this.BtnRemoveProfile);
             this.Controls.Add(this.BtnAddProfile);
             this.Controls.Add(this.CmbBoxSelectProfile);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "JJHL01";
             this.Text = "JJHL01";
             this.ResumeLayout(false);

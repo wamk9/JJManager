@@ -611,7 +611,7 @@
             this.Controls.Add(this.BtnConnect);
             this.Controls.Add(this.BtnClose);
             this.Controls.Add(this.materialDivider1);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "JJBSlim_A";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "ButtonBox JJB-Slim Type A";

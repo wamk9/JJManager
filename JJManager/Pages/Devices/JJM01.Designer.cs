@@ -265,10 +265,10 @@
             this.Controls.Add(this.BtnInput02JJM01);
             this.Controls.Add(this.BtnInput01JJM01);
             this.Controls.Add(this.ImgJJM01);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(750, 430);
             this.MinimumSize = new System.Drawing.Size(750, 430);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "JJM_01";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "JJM-01";

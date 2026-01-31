@@ -57,6 +57,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 650);
             this.Controls.Add(this.materialButton1);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "JJQ01";
             this.Text = "JJQ-01";
             this.ResumeLayout(false);

@@ -255,6 +255,7 @@
             this.Controls.Add(this.txtInputName);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnSaveAndClose);
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "MacroKeyMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "KeyBind";

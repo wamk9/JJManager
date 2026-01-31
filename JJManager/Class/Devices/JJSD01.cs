@@ -12,8 +12,17 @@ namespace JJManager.Class.Devices
     /// 12-button StreamDeck with byte-based HID protocol
     /// Supports 3 button states: Pressed, Continuous, Hold
     /// </summary>
-    internal class JJSD01 : HIDClass
+    public class JJSD01 : HIDClass
     {
+        public enum InputState
+        {
+            Hold = 0,
+            Press = 1,
+            Continuous = 2
+        }
+
+        public static int ButtonCount { get => BUTTON_COUNT; }
+
         // =====================================================================
         // Constants
         // =====================================================================
@@ -280,15 +289,15 @@ namespace JJManager.Class.Devices
 
             switch (state)
             {
-                case KEY_STATE_PRESSED:
+                case KEY_STATE_HOLD:
                     inputIndex = keyId;  // 0-11
                     break;
 
-                case KEY_STATE_CONTINUOUS:
+                case KEY_STATE_PRESSED:
                     inputIndex = keyId + BUTTON_COUNT;  // 12-23
                     break;
 
-                case KEY_STATE_HOLD:
+                case KEY_STATE_CONTINUOUS:
                     inputIndex = keyId + (BUTTON_COUNT * 2);  // 24-35
                     break;
 

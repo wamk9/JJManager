@@ -38,6 +38,7 @@
             this.ClientSize = new System.Drawing.Size(400, 63);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "WaitForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

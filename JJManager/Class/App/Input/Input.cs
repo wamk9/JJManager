@@ -1,17 +1,8 @@
-﻿using AudioSwitcher.AudioApi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
+﻿using System;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using MacroKeyInput = JJManager.Class.App.Input.MacroKey.MacroKey;
 using AudioControllerInput = JJManager.Class.App.Input.AudioController.AudioController;
 using AudioPlayerInput = JJManager.Class.App.Input.AudioPlayer.AudioPlayer;
-using AudioSwitcher.AudioApi.CoreAudio;
-using JJManager.Class.App.Profile;
-using Newtonsoft.Json.Linq;
 namespace JJManager.Class.App.Input
 {
     public class Input
