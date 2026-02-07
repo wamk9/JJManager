@@ -2,6 +2,7 @@
 using JJManager.Class.App;
 using JJManager.Class.App.Output;
 using JJManager.Class.App.Output.Leds;
+using JJManager.Class.Devices.Connections;
 using JJManager.Properties;
 using Newtonsoft.Json.Linq;
 using STBootLib;
@@ -43,6 +44,17 @@ namespace JJManager.Class.Devices
         private Task _sendTask;
         private List<string> jsonsToSend = new List<string>();
 
+        // Keep-alive tracking
+        private DateTime _lastKeepAlive = DateTime.MinValue;
+        private readonly TimeSpan _keepAliveInterval = TimeSpan.FromSeconds(3);
+
+        // Change tracking - LEDs (16 LEDs x 3 bytes RGB)
+        private byte[] _lastSentLedColors = new byte[16 * 3];
+        private bool _ledsNeedUpdate = true;
+
+        // Change tracking - Global settings
+        private int _lastSentBrightness = -1;
+
 
         public JJDB01(HidDevice hidDevice) : base(hidDevice)
         {
@@ -50,11 +62,13 @@ namespace JJManager.Class.Devices
 
             _cmds = new HashSet<ushort>
             {
-                0x0000, // Send LED Data
                 0x0001, // Request/Send Dashboard Data
                 0x0002, // Receive Actual Dashboard Layout
                 0x0003, // Receive Actual Dashboard Page
-                0xffff  // Request/Send Device Info
+                0x0010, // Send LED Data (1 LED: [LED_IDX][R][G][B])
+                0x0011, // Set LED Brightness (0-255)
+                0x0012, // Keep-Alive
+                0x00FF  // Request/Send Device Info
             };
 
             RestartClass();
@@ -65,7 +79,13 @@ namespace JJManager.Class.Devices
             _DashboardPagesVariables = JsonNode.Parse(Properties.Resources.JJDB01_dashboard_vars).AsArray();
             _actionSendingData = () => { Task.Run(async () => await ActionSendingData()); };
             _actionResetParams = () => { Task.Run(() => RestartClass()); };
-            
+
+            // Reset change tracking variables
+            _lastKeepAlive = DateTime.MinValue;
+            _lastSentBrightness = -1;
+            Array.Clear(_lastSentLedColors, 0, _lastSentLedColors.Length);
+            _ledsNeedUpdate = true;
+
             if (_cts != null)
             {
                 _cts.Cancel();
@@ -94,332 +114,100 @@ namespace JJManager.Class.Devices
             return jsonsToSend;
         }
 
-        private async Task ProcessSendQueue(CancellationToken token)
-        {
-
-            try
-            {
-                List<string> jsons = GetFIFOJson().ToList();
-
-                if (jsons.Count == 0)
-                {
-                    return;
-                }
-
-                foreach (var jsonString in jsons)
-                {
-                    if (jsonString.StartsWith("{\"led_data\":"))
-                    {
-                        Console.WriteLine("Enviou Led");
-                        await SendHIDData(jsonString, false, 0, 50, 0).ContinueWith((result) =>
-                        {
-                            if (!result.Result)
-                            {
-                                throw new Exception($"Falha ao enviar '{jsonString}' via HID para o dashboard JJDB-01 de ID '{_connId}'");
-                            }
-                        });
-                        Console.WriteLine("ok");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Enviou Dash");
-                        string requestedJsonString = await RequestHIDData(jsonString, false, 0, 2000, 0);
-                        if (!string.IsNullOrEmpty(requestedJsonString))
-                        {
-                            Console.WriteLine("Recebeu resposta");
-                            try
-                            {
-                                JsonObject requestedJson = JsonObject.Parse(requestedJsonString).AsObject();
-
-                                _dashboardId = requestedJson.ContainsKey("id") ? requestedJson["id"].GetValue<string>() : "default";
-                                _dashboardActualPage = requestedJson.ContainsKey("pag") ? requestedJson["pag"].GetValue<int>() : 0;
-                                _sendAllDashData = requestedJson.ContainsKey("data") && requestedJson["data"].GetValue<uint>() == 1;
-                            }
-                            catch (Exception)
-                            {
-                                // JsonObject Failed
-                            }
-                        }
-                        Console.WriteLine("OK");
-                    }
-                }
-                Console.WriteLine("Enviou");
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[Send] Error: {ex}");
-            }
-        }
-
         private async Task ActionSendingData()
         {
             while (_isConnected)
             {
                 await SendData();
+                await Task.Delay(2); // Wait 2ms between iterations to reduce CPU usage
             }
         }
 
         public async Task SendData()
         {
             bool forceDisconnection = false;
-            Console.WriteLine("Entrou");
+
             try
             {
+                // 1. Profile update check
                 if (_profile.NeedsUpdate)
                 {
                     _profile.Restart();
                     _profile.NeedsUpdate = false;
+                    // Force resend of all data
+                    Array.Clear(_lastSentLedColors, 0, _lastSentLedColors.Length);
+                    _lastSentBrightness = -1;
+                    _ledsNeedUpdate = true;
                 }
 
-                bool needsSimHub = true;//_profile.Outputs.Any(x => x.Led?.Mode == -1);
-
-                if (needsSimHub)
+                // 2. SimHub connection + request data
+                if (_simHubSync == null)
                 {
-                    if (_simHubSync == null)
-                    {
-                        _simHubSync = new SimHubWebsocket(2920, "JJDB01_" + _connId);
-                    }
+                    _simHubSync = new SimHubWebsocket(2920, "JJDB01_" + _connId);
+                }
 
-                    if (!_simHubSync.IsConnected)
-                    {
-                        _simHubSync.StartCommunication();
-                    }
+                if (!_simHubSync.IsConnected)
+                {
+                    _simHubSync.StartCommunication();
+                }
 
-                    var (success, message) = _simHubSync.RequestMessage(
-                        new JsonObject {
-                        {
-                            "request", new JsonArray {
-                                { "SimHubLastData" }
-                            }
+                var (success, message) = _simHubSync.RequestMessage(
+                    new JsonObject {
+                    {
+                        "request", new JsonArray {
+                            { "SimHubLastData" }
                         }
-                        }.ToJsonString(),
-                        0
-                    );
-
-                    if (!success)
-                    {
-                        throw new WebSocketException("Falha ao fazer requisição ao plugin 'JJManager Sync' do SimHub");
                     }
-                }
+                    }.ToJsonString(),
+                    0
+                );
 
-                if (!needsSimHub && _simHubSync != null)
+                if (!success)
                 {
-                    _simHubSync.StopCommunication();
-                    _simHubSync = null;
+                    throw new WebSocketException("Falha ao fazer requisição ao plugin 'JJManager Sync' do SimHub");
                 }
 
+                // 3. Keep-alive (every 3 seconds)
+                if ((DateTime.Now - _lastKeepAlive) >= _keepAliveInterval)
+                {
+                    // FLAGS are added automatically by SendHIDBytes
+                    await SendHIDBytes(new List<byte> { 0x00, 0x12, 0x01 }, false, 0, 2000, 5);
+                    _lastKeepAlive = DateTime.Now;
+                }
 
-
-
-
-
-
-
-
-
-
-
-
-                JsonArray ledsData = new JsonArray();
+                // 4. Brightness (only if changed)
                 int brightness = (_profile.Data.ContainsKey("brightness") ? _profile.Data["brightness"].GetValue<int>() : 100);
-
-                Dictionary<string, int> ledModeList = new Dictionary<string, int>
+                if (_lastSentBrightness != brightness)
                 {
-                    { "simhub", -1 },
-                    { "off", 0 },
-                    { "on", 1 },
-                    { "blink", 2 },
-                    { "pulse", 3 }
-                };
+                    // FLAGS are added automatically by SendHIDBytes
+                    await SendHIDBytes(new List<byte> { 0x00, 0x11, (byte)brightness }, false, 0, 2000, 5);
+                    _lastSentBrightness = brightness;
+                }
 
+                // 5. LED Data (envia apenas LEDs alterados, 1 por vez)
+                byte[] newColors = CalculateLedColors(_simHubSync?.LastValues);
                 for (int i = 0; i < 16; i++)
                 {
-                    _profile.OrderOutputsBy(Output.OutputMode.Leds, i);
-                }
-
-                Dictionary<int, bool> ledIsActivated = new Dictionary<int, bool>();
-
-                List<List<byte>> ledsToSend = new List<List<byte>>();
-
-                foreach (Output output in _profile.Outputs.Where(x => x.Led != null).OrderByDescending(x => x.Led.Order))
-                {
-                    bool lastIsActive = output.Led.Active;
-
-                    output.Led.SetActivatedValue(_simHubSync?.LastValues?[output.Led.Property]?.GetValue<dynamic>() ?? false);
-
-                    if (!lastIsActive || ledsToSend.Any(x => x[2] == (byte)output.Led.LedsGrouped.FirstOrDefault()))
+                    int offset = i * 3;
+                    // Force send all LEDs on first connection or profile change
+                    if (_ledsNeedUpdate || LedChanged(i, newColors))
                     {
-                        continue;
-                    }
-
-                    var ledBytes = new List<byte>
-                    {
-                        (byte)(0x0000 >> 8),    // High byte
-                        (byte)(0x0000 & 0xFF)  // Low byte
-                    };
-
-                    ledBytes.AddRange(Encoding.ASCII.GetBytes(output.Led.LedsGrouped.FirstOrDefault().ToString("D2")));
-
-                    // Adiciona a string de cor como bytes (ex: "#FF00FF")
-                    ledBytes.AddRange(Encoding.ASCII.GetBytes(output.Led.GetActualLedColor));
-
-                    // Terminador (nova linha)
-                    ledBytes.Add(0x0A);
-
-                    ledsToSend.Add(ledBytes);
-                }
-
-                for (int i = 0; i < 16; i++) // Actual LEDs on JJDB-01
-                {
-                    byte[] iStr = Encoding.ASCII.GetBytes(i.ToString("D2"));
-
-                    if (!ledsToSend.Any(x =>
-                        x[2] == iStr[0] &&
-                        x[3] == iStr[1]))
-                    {
-                        var ledBytes = new List<byte>
-                        {
-                            (byte)(0x0000 >> 8),    // High byte
-                            (byte)(0x0000 & 0xFF),  // Low byte
-                        };
-
-                        ledBytes.AddRange(Encoding.ASCII.GetBytes(i.ToString("D2")));
-
-                        // Adiciona a string de cor como bytes (ex: "#FF00FF")
-                        ledBytes.AddRange(Encoding.ASCII.GetBytes("#000000"));
-
-                        // Terminador (nova linha)
-                        ledBytes.Add(0x0A);
-
-                        ledsToSend.Add(ledBytes);
+                        await SendLed(i, newColors[offset], newColors[offset + 1], newColors[offset + 2]);
+                        UpdateLedTracking(i, newColors);
                     }
                 }
+                _ledsNeedUpdate = false;
 
 
-                //foreach (var (output, ledDataTranslated) in _profile.Outputs
-                //    .Where(x => x.Led != null)
-                //    .OrderByDescending(x => x.Led.Order)
-                //    .SelectMany(output => output.Led.TranslateToDevice(ledModeList, _simHubSync?.LastValues ?? null).Select(ledData => (output, ledData)))
 
-                //)
-                //{
-                //    JsonArray ledArray = ledDataTranslated.AsArray();
-                //    if (ledArray.Count != 3) continue;
 
-                //    int ledIndex = ledArray[1].GetValue<int>();
-                //    bool isActivated = output.Led.CheckIfIsActivated(
-                //        _simHubSync?.LastValues[output.Led.Property]?.GetValue<dynamic>() ?? false
-                //    );
 
-                //    if (isActivated)
-                //    {
-                //        ledsData.Add(ledArray.DeepClone().AsArray());
-                //    }
 
-                //    ledIsActivated[ledIndex] = ledIsActivated.TryGetValue(ledIndex, out bool existing)
-                //        ? existing || isActivated
-                //        : isActivated;
-                //}
 
-                //HashSet<int> inactiveLedIndices = ledIsActivated
-                //    .Where(kvp => !kvp.Value)
-                //    .Select(kvp => kvp.Key)
-                //    .ToHashSet();
 
-                //for (short i = 0; i < 16; i++)
-                //{
-                //    var latestLed = _profile.Outputs
-                //        .Where(x => x.Led != null && x.Led.Order == i)
-                //        .OrderByDescending(x => x.) // or use Order / Index
-                //        .Select(x => x.Led)
-                //        .FirstOrDefault();
-                //}
 
-                //foreach (var output in _profile.Outputs.Where(x => x.Led != null))
-                //{
-                //    var ledType = output.Led.Type.ToString().ToLower();
 
-                //    foreach (int ledPos in output.Led.LedsGrouped)
-                //    {
-                //        if (!inactiveLedIndices.Contains(ledPos))
-                //            continue;
-
-                //        var offValue = output.Led.Type == Leds.LedType.PWM ? (object) 0 : "#000000";
-                //        ledsData.Add(new JsonArray { ledType, ledPos, offValue });
-                //    }
-                //}
-
-                //JsonObject data = new JsonObject
-                //{
-                //    {
-                //        "led_data" , new JsonObject
-                //        {
-                //            { "config", new JsonObject
-                //                {
-                //                    { "brightness", brightness},
-                //                }
-                //            },
-                //            { "leds", new JsonArray() }
-                //        }
-                //    }
-                //};
-
-                //JsonObject dataToCount = data.DeepClone().AsObject();
-                //JsonObject dataToConvert = null;
-
-                //string jsonTmp = string.Empty;
-                //bool lastNeedsSave = false;
-
-                //for (int i = 0; i < ledsData.Count; i++)
-                //{
-                //    var currentLed = ledsData[i].DeepClone().AsArray();
-                //    dataToCount["led_data"]["leds"].AsArray().Add(currentLed);
-
-                //    string serialized = JsonSerializer.Serialize(dataToCount);
-
-                //    if (serialized.Length < HIDInfoLimit)
-                //    {
-                //        dataToConvert = dataToCount.DeepClone().AsObject();
-                //        lastNeedsSave = true;
-                //    }
-                //    else
-                //    {
-                //        // Remove last added LED (rollback)
-                //        dataToCount["led_data"]["leds"].AsArray().RemoveAt(
-                //            dataToCount["led_data"]["leds"].AsArray().Count - 1
-                //        );
-
-                //        // Send previous valid set
-                //        jsonsToSend.Add(JsonSerializer.Serialize(dataToConvert));
-
-                //        // Start new set
-                //        dataToCount = data.DeepClone().AsObject();
-                //        dataToCount["led_data"]["leds"].AsArray().Add(currentLed);
-                //    }
-
-                //    if ((i + 1) == ledsData.Count && lastNeedsSave)
-                //    {
-                //        jsonsToSend.Add(JsonSerializer.Serialize(dataToConvert));
-                //    }
-                //}
-
-                // Isso é ref a pegada de ID e paginação
-                //string dashboardActualId = await RequestHIDBytes(new List<byte>
-                //{
-                //    (byte)(0x0002 >> 8),    // High byte
-                //    (byte)(0x0002 & 0xFF),  // Low byte
-                //    0x0A
-                //}, false, 0, 20, 0);
-
-                //int.TryParse(await RequestHIDBytes(new List<byte>
-                //    {
-                //        (byte)(0x0003 >> 8),    // High byte
-                //        (byte)(0x0003 & 0xFF),  // Low byte
-                //        0x0A
-                //    }, false, 0, 20, 0), out int dashboardActualPage);
-
-                // Check if GameRunning changed from 0 to 1 (game started/resumed)
+                // 6. Check if GameRunning changed from 0 to 1 (game started/resumed)
                 bool currentGameRunningState = false;
                 if (_simHubSync?.LastValues != null && _simHubSync.LastValues.ContainsKey("GameRunning"))
                 {
@@ -435,84 +223,18 @@ namespace JJManager.Class.Devices
                 }
                 _lastGameRunningState = currentGameRunningState;
 
-                //if (dashboardActualId != _dashboardId || _dashboardActualPage != dashboardActualPage)
-                //{
-                //    _sendAllDashData = true;
-                //    _qtdPassedAllData = 0;
-                //    _dashboardId = dashboardActualId.Count(x => (byte) x != 0x00) > 0 ? dashboardActualId : _dashboardId;
-                //    _dashboardActualPage = dashboardActualPage;
-                //}
-
                 _sendAllDashData = _sendAllDashData && _limitPassedAllData > _qtdPassedAllData;
                 _qtdPassedAllData = _sendAllDashData ? _qtdPassedAllData + 1 : 0;
 
-                // MODIFIED: Always send ALL updated data, regardless of current page
-                // This ensures the screen has all telemetry data cached and available
+                // 7. Dashboard Data (existing logic - already works)
                 TranslateToDeviceScreen(
-                    _simHubSync?.LastValuesUpdated ?? new JsonObject(),  // Always send updated values
-                    null,  // null = send all properties (don't filter by page)
-                    out List<List<byte>> translatedDashMessage,
+                    _simHubSync?.LastValuesUpdated ?? new JsonObject(),
+                    null,
+                    out List<HIDMessage> translatedDashMessage,
                     HIDInfoLimit
                 );
 
-                Console.WriteLine("VaiEnviar");
-
-                await SendHIDBytes(ledsToSend, false, 0, 2000, 5);
-                await SendHIDBytes(translatedDashMessage, false, 0, 2000, 5);
-
-                //await SendHIDBytes(new List<byte>
-                //{
-                //    (byte)(0x0005 >> 8),    // High byte
-                //    (byte)(0x0005 & 0xFF),  // Low byte
-                //    0x0A
-                //}, false, 0, 0, 0);
-
-                Console.WriteLine("Enviei Tudo");
-
-
-
-                //_sendAllDashData = false;
-                //jsonsToSend.AddRange(translatedDashMessage);
-                //Console.WriteLine("Vai enviar");
-                //foreach (string jsonString in jsonsToSend)
-                //{
-                //    if (jsonString.StartsWith("{\"led_data\":"))
-                //    {
-                //        Console.WriteLine("Enviou Led");
-                //        await SendHIDData(jsonString, false, 0, 50, 0).ContinueWith((result) =>
-                //        {
-                //            if (!result.Result)
-                //            {
-                //                throw new Exception($"Falha ao enviar '{jsonString}' via HID para o dashboard JJDB-01 de ID '{_connId}'");
-                //            }
-                //        });
-                //        Console.WriteLine("ok");
-                //    }
-                //    else
-                //    {
-                //        Console.WriteLine("Enviou Dash");
-                //        string requestedJsonString = await RequestHIDData(jsonString, false, 0, 2000, 0);
-                //        if (!string.IsNullOrEmpty(requestedJsonString))
-                //        {
-                //            Console.WriteLine("Recebeu resposta");
-                //            try
-                //            {
-                //                JsonObject requestedJson = JsonObject.Parse(requestedJsonString).AsObject();
-
-                //                _dashboardId = requestedJson.ContainsKey("id") ? requestedJson["id"].GetValue<string>() : "default";
-                //                _dashboardActualPage = requestedJson.ContainsKey("pag") ? requestedJson["pag"].GetValue<int>() : 0;
-                //                _sendAllDashData = requestedJson.ContainsKey("data") && requestedJson["data"].GetValue<uint>() == 1;
-                //            }
-                //            catch (Exception)
-                //            {
-                //                // JsonObject Failed
-                //            }
-                //        }
-                //        Console.WriteLine("OK");
-                //    }
-
-                //}
-                Console.WriteLine("Enviou");
+                await SendHIDBytes(translatedDashMessage, false, 5, 2000, 5);
             }
             catch (WebSocketException)
             {
@@ -538,12 +260,112 @@ namespace JJManager.Class.Devices
             }
         }
 
-        public bool TranslateToDeviceScreen(JsonObject messageReceived, JsonArray varsToUse, out List<List<byte>> translatedMessage, int limitChars = 64 * 7)
+        #region LED Helper Methods
+
+        /// <summary>
+        /// Sends a single LED color to the device
+        /// Format: [CMD_H=0x00][CMD_L=0x10][LED_IDX][R][G][B]
+        /// Note: FLAGS are added automatically by SendHIDBytes
+        /// </summary>
+        private async Task SendLed(int ledIndex, byte r, byte g, byte b)
         {
-            translatedMessage = new List<List<byte>>();
+            List<byte> payload = new List<byte>
+            {
+                (byte)ledIndex,     // LED index (0-15)
+                r,                  // Red
+                g,                  // Green
+                b                   // Blue
+            };
+            await SendHIDBytes(new List<HIDMessage> { new HIDMessage(0x0010, payload.ToArray()) }, false, 5, 2000, 5);
+        }
+
+        /// <summary>
+        /// Checks if a LED color has changed from the last sent value
+        /// </summary>
+        private bool LedChanged(int ledIndex, byte[] newColors)
+        {
+            int offset = ledIndex * 3;
+            return _lastSentLedColors[offset] != newColors[offset] ||
+                   _lastSentLedColors[offset + 1] != newColors[offset + 1] ||
+                   _lastSentLedColors[offset + 2] != newColors[offset + 2];
+        }
+
+        /// <summary>
+        /// Updates the tracking array for a specific LED
+        /// </summary>
+        private void UpdateLedTracking(int ledIndex, byte[] newColors)
+        {
+            int offset = ledIndex * 3;
+            _lastSentLedColors[offset] = newColors[offset];
+            _lastSentLedColors[offset + 1] = newColors[offset + 1];
+            _lastSentLedColors[offset + 2] = newColors[offset + 2];
+        }
+
+        /// <summary>
+        /// Calculates the color for all 16 LEDs based on profile outputs and SimHub data
+        /// </summary>
+        private byte[] CalculateLedColors(JsonObject simHubValues)
+        {
+            byte[] colors = new byte[16 * 3]; // 16 LEDs x 3 bytes (RGB)
+
+            // Initialize all to black (off)
+            Array.Clear(colors, 0, colors.Length);
+
+            // Track which LEDs have been set (last active output wins)
+            bool[] ledSet = new bool[16];
+
+            // Process outputs in descending order (highest Order first, so last active wins)
+            foreach (Output output in _profile.Outputs
+                .Where(x => x.Led != null)
+                .OrderByDescending(x => x.Led.Order))
+            {
+                if (string.IsNullOrEmpty(output?.Led?.Property))
+                {
+                    continue;
+                }
+
+                // Check if output is active based on SimHub value
+                bool isActive = output?.Led?.SetActivatedValue(
+                    simHubValues?[output.Led.Property]?.GetValue<dynamic>() ?? false
+                );
+
+                if (isActive)
+                {
+                    // Parse hex color (e.g., "#FF00FF")
+                    string hexColor = output.Led.GetActualLedColor ?? "#000000";
+                    if (hexColor.StartsWith("#") && hexColor.Length >= 7)
+                    {
+                        byte r = Convert.ToByte(hexColor.Substring(1, 2), 16);
+                        byte g = Convert.ToByte(hexColor.Substring(3, 2), 16);
+                        byte b = Convert.ToByte(hexColor.Substring(5, 2), 16);
+
+                        // Apply to all LEDs in this output's group
+                        foreach (int ledIdx in output.Led.LedsGrouped)
+                        {
+                            if (ledIdx >= 0 && ledIdx < 16 && !ledSet[ledIdx])
+                            {
+                                int offset = ledIdx * 3;
+                                colors[offset] = r;
+                                colors[offset + 1] = g;
+                                colors[offset + 2] = b;
+                                ledSet[ledIdx] = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return colors;
+        }
+
+        #endregion
+
+        public bool TranslateToDeviceScreen(JsonObject messageReceived, JsonArray varsToUse, out List<HIDMessage> translatedMessage, int limitChars = 64 * 7)
+        {
+            translatedMessage = new List<HIDMessage>();
 
             if (messageReceived.Count == 0)
-            {    
+            {
                 return true;
             }
 
@@ -560,38 +382,24 @@ namespace JJManager.Class.Devices
                     // SKIP if property not found in dictionary
                     if (match.Key == null)
                     {
+                        Console.WriteLine($"[JJDB01] Property NOT in dictionary: '{propertyName}' = {value}");
                         continue;  // Ignore properties not in JJPropertyDictionary
                     }
 
                     // parse hex like "0x0001"
                     ushort cmdJJProperty = Convert.ToUInt16(match.Key, 16);
-
+                    ushort cmdDashboardRequest = 0x0001;
                     byte[] message = System.Text.Encoding.ASCII.GetBytes(value?.DeepClone().ToString().Trim());
-                    int chunkSize = 27;
-                    int numberChunks = (message.Length + chunkSize - 1) / chunkSize;
 
-                    for (int i = 0; i < numberChunks; i++)
+                    // Build payload: [PROP_ID_H][PROP_ID_L][Data...]
+                    List<byte> payload = new List<byte>
                     {
-                        List<byte> splittedMessage = message.Skip(chunkSize * i).Take(chunkSize).ToList();
+                        (byte)(cmdJJProperty >> 8),    // Property ID High byte
+                        (byte)(cmdJJProperty & 0xFF)   // Property ID Low byte
+                    };
+                    payload.AddRange(message);
 
-                        List<byte> messageConverted = new List<byte>
-                        {
-                            (byte)(_cmds.ElementAt(1) >> 8),    // High byte
-                            (byte)(_cmds.ElementAt(1) & 0xFF),  // Low byte
-                            (byte)(cmdJJProperty >> 8),    // High byte
-                            (byte)(cmdJJProperty & 0xFF)  // Low byte
-                        };
-
-
-                        messageConverted.AddRange(splittedMessage);
-
-                        // Flags: 0x2001 = END, 0x1001 = CONTINUE
-                        ushort flag = (i + 1) == numberChunks ? (ushort)0x2001 : (ushort)0x1001;
-                        messageConverted.Add((byte)(flag >> 8));   // FLAG_H
-                        messageConverted.Add((byte)(flag & 0xFF)); // FLAG_L
-
-                        translatedMessage.Add(messageConverted);
-                    }
+                    translatedMessage.Add(new HIDMessage(cmdDashboardRequest, payload));
                 }
             }
 

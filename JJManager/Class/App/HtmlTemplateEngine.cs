@@ -1,7 +1,9 @@
+using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JJManager.Class.App
 {
@@ -13,15 +15,17 @@ namespace JJManager.Class.App
         private readonly string _basePath;
         private readonly Dictionary<string, string> _templateCache;
         private readonly bool _enableCache;
+        private static Task<CoreWebView2Environment> _environmentTask;
 
+        
         /// <summary>
         /// Creates a new HtmlTemplateEngine instance
         /// </summary>
         /// <param name="basePath">Base directory path for templates (relative to AppDomain.BaseDirectory)</param>
         /// <param name="enableCache">Enable template caching (default: true)</param>
-        public HtmlTemplateEngine(string basePath, bool enableCache = true)
+        public HtmlTemplateEngine(string basePath, bool enableCache = false)
         {
-            _basePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, basePath);
+            _basePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, basePath.ToLower());
             _enableCache = enableCache;
             _templateCache = new Dictionary<string, string>();
         }
@@ -66,6 +70,22 @@ namespace JJManager.Class.App
                 Log.Insert("HtmlTemplateEngine", $"Erro ao carregar template '{templatePath}'", ex);
                 throw;
             }
+        }
+
+        public static Task<CoreWebView2Environment> GetAsync()
+        {
+            if (_environmentTask != null)
+                return _environmentTask;
+
+            _environmentTask = CoreWebView2Environment.CreateAsync(
+                userDataFolder: Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "JJManager",
+                    "WebView2"
+                )
+            );
+
+            return _environmentTask;
         }
 
         /// <summary>

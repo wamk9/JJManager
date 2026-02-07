@@ -32,7 +32,7 @@
 
 ### Informações Básicas
 
-- **Versão Atual:** 1.2.9.0
+- **Versão Atual:** 1.3.0.1
 - **Framework:** .NET Framework 4.7.2
 - **Plataforma:** x64 (Any CPU na solution)
 - **Tipo:** Windows Forms Application (WinExe)

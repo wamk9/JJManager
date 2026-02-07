@@ -535,6 +535,32 @@ namespace JJManager
             }
         }
 
+        /// <summary>
+        /// Forces a device to be removed and re-added to the list, refreshing its firmware version.
+        /// Used after firmware updates to show the new version.
+        /// </summary>
+        public void RefreshDevice(string connId)
+        {
+            // Find and remove the device from the list
+            for (int i = 0; i < _DevicesList.Count; i++)
+            {
+                if (_DevicesList[i].ConnId == connId)
+                {
+                    // Disconnect if connected
+                    if (_DevicesList[i].IsConnected)
+                    {
+                        _DevicesList[i].Disconnect();
+                    }
+
+                    _DevicesList.RemoveAt(i);
+                    break;
+                }
+            }
+
+            // CheckDevicesList will detect the device as new and add it with the updated version
+            CheckDevicesList();
+        }
+
         public bool ChangeDeviceConnection(string connId, bool connectionStatus, bool updateListStatusOnly = false)
         {
             int selectedLvDevicesIndex = -1;

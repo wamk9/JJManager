@@ -61,6 +61,10 @@ namespace JJManager.Pages.Devices
         private System.Drawing.Point pointLocation = new System.Drawing.Point();
         public static SynchronizationContext UIContext { get; private set; } // Store UI context
 
+        // Original firmware data captured on connection (read-only snapshot)
+        private double[] _originalFirmwareAdc = null;
+        private int _originalFirmwareFineOffset = 150;
+
         public JJLC01(MaterialForm parent, JJDeviceClass device)
         {
             InitializeComponent();
@@ -79,6 +83,9 @@ namespace JJManager.Pages.Devices
 
             _parent = parent;
 
+            // Clean up any existing profile with the reserved name from database (legacy fix)
+            CleanupReservedProfileFromDatabase();
+
             TxtJJLC01Calibration.Text = string.Empty;
             TxtJJLC01Calibration.Text += "Sempre que você ligar o volante ou o cabo USB, a Load Cell JJLC-01 irá realizar uma calibração automática, buscando sempre a sua zona sem pressão do pedal.";
             TxtJJLC01Calibration.Text += Environment.NewLine;
@@ -95,9 +102,13 @@ namespace JJManager.Pages.Devices
             CmbBoxSelectProfile.Items.Add(ACTIVE_PROFILE_NAME);
 
             // Add all profiles from database (presets for quick loading)
+            // Filter out any profile with the reserved name to prevent duplicates
             foreach (String profile in allProfiles)
             {
-                CmbBoxSelectProfile.Items.Add(profile);
+                if (profile != ACTIVE_PROFILE_NAME)
+                {
+                    CmbBoxSelectProfile.Items.Add(profile);
+                }
             }
 
             // Always start with active profile (firmware data)
@@ -119,7 +130,7 @@ namespace JJManager.Pages.Devices
                     Values = values,
                     PointGeometry = DefaultGeometries.Circle,
                     PointGeometrySize = 15,
-                    Title = "KG da Célula de Carga"
+                    Title = "Quilos da Célula de Carga"
                 }
             };
 
@@ -132,10 +143,10 @@ namespace JJManager.Pages.Devices
 
             ChtLoadCell.AxisY.Add(new Axis
             {
-                Title = "KG da Célula de Carga",
+                Title = "Quilos da Célula de Carga",
                 MinValue = 0, // Minimum Y-axis value
                 MaxValue = 100, // Maximum Y-axis value
-                LabelFormatter = value => $"{value} KG"  // Format labels as needed
+                LabelFormatter = value => $"{value} kg"  // Format labels as needed
             });
 
             ChtLoadCell.DataTooltip = null;
@@ -163,7 +174,7 @@ namespace JJManager.Pages.Devices
                 if (chartPoint != null)
                 {
                     // Set the tooltip content based on the hovered point (e.g., the Y value)
-                    customTooltip.Text = $"{chartPoint.X * 10}% de potênciometro em {chartPoint.Y} kg";  // Display Y value with a unit (kg)
+                    customTooltip.Text = $"{chartPoint.X * 10}% de potenciômetro em {chartPoint.Y} kg";  // Display Y value with a unit (kg)
                     // Calculate the position where you want the tooltip
                     var closestPoint = ChtLoadCell.Series[0].ClosestPointTo(hoveredPointIndex, AxisOrientation.X);
                     var tooltipX = closestPoint.ChartLocation.X + ChtLoadCellJJLC01.Location.X + 49 - 5; // X offset to the right
@@ -317,22 +328,18 @@ namespace JJManager.Pages.Devices
             // If selecting the active profile (firmware data)
             if (selectedProfileName == ACTIVE_PROFILE_NAME)
             {
-                ProfileClass activeProfile = null;
-
                 if (!_device.IsConnected)
                 {
                     // Device disconnected - create empty temporary profile for UI
-                    activeProfile = new ProfileClass(_device, ACTIVE_PROFILE_NAME, true, true);
-                    _device.Profile = activeProfile; // Update device reference
+                    ProfileClass emptyProfile = new ProfileClass(_device, ACTIVE_PROFILE_NAME, true, true);
+                    _device.Profile = emptyProfile;
+                    ShowProfileConfigs(emptyProfile);
                 }
                 else
                 {
-                    // Device connected - use the temporary profile from device (with firmware data)
-                    activeProfile = _device.Profile;
+                    // Device connected - restore original firmware data captured at connection time
+                    RestoreOriginalFirmwareData();
                 }
-
-                // Show data from active profile
-                ShowProfileConfigs(activeProfile);
             }
             else
             {
@@ -463,6 +470,80 @@ namespace JJManager.Pages.Devices
             _isLoadingData = false;
         }
 
+        /// <summary>
+        /// Restores the original firmware data captured when the device first connected.
+        /// This ensures "Perfil Ativo Ao Conectar" always shows the data from connection time,
+        /// not the last preset that was loaded.
+        /// </summary>
+        private void RestoreOriginalFirmwareData()
+        {
+            _isLoadingData = true;
+
+            // Restore ADC curve from original firmware data
+            if (_originalFirmwareAdc != null && _originalFirmwareAdc.Length > 0)
+            {
+                for (int i = 0; i < Math.Min(_originalFirmwareAdc.Length, values.Count); i++)
+                {
+                    values[i] = _originalFirmwareAdc[i];
+                }
+            }
+            else
+            {
+                // No original data captured yet - use defaults
+                ResetPointsValues();
+            }
+
+            // Restore fine offset from original firmware data
+            SldFineOffsetJJLC01.Value = _originalFirmwareFineOffset;
+            TxtJJLC01FineOffset.Text = $"Valor do ajuste fino: {(_originalFirmwareFineOffset - 150)}";
+
+            // Enable controls (device is connected)
+            ChtLoadCell.IsEnabled = true;
+            SldFineOffsetJJLC01.Enabled = true;
+            TxtLCWeight.Enabled = true;
+            BtnSaveLoadCellPoint.Enabled = false;
+
+            ChtLoadCell.Update(false, true);
+            _isLoadingData = false;
+
+            // Update device profile with original firmware data
+            // This ensures the firmware receives the original data, not preset data
+            JsonArray adcArray = new JsonArray();
+            if (_originalFirmwareAdc != null)
+            {
+                foreach (double val in _originalFirmwareAdc)
+                {
+                    adcArray.Add(val);
+                }
+            }
+            else
+            {
+                // Use current values if no original data
+                foreach (double val in values)
+                {
+                    adcArray.Add(val);
+                }
+            }
+
+            JsonObject jsonToUpdate = new JsonObject
+            {
+                {
+                    "data", new JsonObject
+                    {
+                        {
+                            "jjlc01_data", new JsonObject
+                            {
+                                {"adc", adcArray },
+                                {"fine_offset", _originalFirmwareFineOffset }
+                            }
+                        }
+                    }
+                }
+            };
+
+            _device.Profile.Update(jsonToUpdate);
+        }
+
         private void ResetPointsValues()
         {
             for (int i = 0; i < values.Count; i++ )
@@ -484,10 +565,13 @@ namespace JJManager.Pages.Devices
             // Always add temporary profile first (will be zeroed and locked if disconnected)
             CmbBoxSelectProfile.Items.Add(ACTIVE_PROFILE_NAME);
 
-            // Add all profiles from database
+            // Add all profiles from database (filter out reserved name to prevent duplicates)
             foreach (String profile in ProfileClass.GetProfilesList(_device.ProductId))
             {
-                CmbBoxSelectProfile.Items.Add(profile);
+                if (profile != ACTIVE_PROFILE_NAME)
+                {
+                    CmbBoxSelectProfile.Items.Add(profile);
+                }
             }
 
             // Restore selection by name if possible, otherwise select first
@@ -531,7 +615,7 @@ namespace JJManager.Pages.Devices
             {
                 if (System.Windows.Forms.Application.OpenForms["JJLC01"] is JJLC01 form)
                 {
-                    form.TxtPotDataJJLC01.Text = $"Potênciometro Press.: {percent}%";
+                    form.TxtPotDataJJLC01.Text = $"Potenciômetro Press.: {percent}%";
                 }
             }, null);
         }
@@ -542,7 +626,7 @@ namespace JJManager.Pages.Devices
             {
                 if (System.Windows.Forms.Application.OpenForms["JJLC01"] is JJLC01 form)
                 {
-                    form.TxtLoadCellDataJJLC01.Text = $"Kilos Press.: {kgValue} KG";
+                    form.TxtLoadCellDataJJLC01.Text = $"Quilos Press.: {kgValue:F1} kg";
                 }
             }, null);
         }
@@ -558,12 +642,18 @@ namespace JJManager.Pages.Devices
             }, null);
         }
 
-        public static void UpdateFineOffset(int offset)
+        public static void UpdateFineOffset(int offset, bool isOriginalFirmwareData = false)
         {
             UIContext?.Post(_ =>
             {
                 if (System.Windows.Forms.Application.OpenForms["JJLC01"] is JJLC01 form)
                 {
+                    // Capture original firmware data on first connection
+                    if (isOriginalFirmwareData)
+                    {
+                        form._originalFirmwareFineOffset = offset;
+                    }
+
                     // Only update if not currently loading data
                     if (!form._isLoadingData)
                     {
@@ -574,12 +664,18 @@ namespace JJManager.Pages.Devices
             }, null);
         }
 
-        public static void UpdateSeries(double[] series)
+        public static void UpdateSeries(double[] series, bool isOriginalFirmwareData = false)
         {
             UIContext?.Post(_ =>
             {
                 if (System.Windows.Forms.Application.OpenForms["JJLC01"] is JJLC01 form)
                 {
+                    // Capture original firmware data on first connection
+                    if (isOriginalFirmwareData || form._originalFirmwareAdc == null)
+                    {
+                        form._originalFirmwareAdc = (double[])series.Clone();
+                    }
+
                     // Only update if not currently loading data
                     if (!form._isLoadingData)
                     {
@@ -794,10 +890,13 @@ namespace JJManager.Pages.Devices
                 // Add active profile first
                 CmbBoxSelectProfile.Items.Add(ACTIVE_PROFILE_NAME);
 
-                // Add all profiles from database (after deletion)
+                // Add all profiles from database (after deletion, filter out reserved name)
                 foreach (String profile in ProfileClass.GetProfilesList(_device.ProductId))
                 {
-                    CmbBoxSelectProfile.Items.Add(profile);
+                    if (profile != ACTIVE_PROFILE_NAME)
+                    {
+                        CmbBoxSelectProfile.Items.Add(profile);
+                    }
                 }
 
                 _loadingProfiles = false;
@@ -845,6 +944,28 @@ namespace JJManager.Pages.Devices
         {
             // Title no longer shows connection status
             // Connection status is now shown in the button
+        }
+
+        /// <summary>
+        /// Removes any profile with the reserved name from database (legacy cleanup)
+        /// </summary>
+        private void CleanupReservedProfileFromDatabase()
+        {
+            try
+            {
+                // Check if there's a profile with the reserved name in the database
+                var profiles = ProfileClass.GetProfilesList(_device.ProductId);
+                if (profiles.Contains(ACTIVE_PROFILE_NAME))
+                {
+                    // Delete it from database
+                    ProfileClass.Delete(ACTIVE_PROFILE_NAME, _device.ProductId);
+                    Log.Insert("JJLC01", $"Removed legacy profile '{ACTIVE_PROFILE_NAME}' from database");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Insert("JJLC01", "Error cleaning up reserved profile from database", ex);
+            }
         }
 
         private void TbcJJLC01Calibration_Click(object sender, EventArgs e)
@@ -921,6 +1042,22 @@ namespace JJManager.Pages.Devices
             }
         }
 
+        /// <summary>
+        /// Enables chart and slider controls when device connects while viewing active profile.
+        /// The firmware data will be populated through UpdateSeries/UpdateFineOffset callbacks.
+        /// </summary>
+        private void EnableControlsForConnectedDevice()
+        {
+            // Enable all controls (device just connected)
+            ChtLoadCell.IsEnabled = true;
+            SldFineOffsetJJLC01.Enabled = true;
+            TxtLCWeight.Enabled = true;
+            BtnSaveLoadCellPoint.Enabled = false;
+
+            // Note: The actual data will come through UpdateSeries() and UpdateFineOffset()
+            // which are called by the device class when it receives data from firmware
+        }
+
         private void ConnectionMonitorTimer_Tick(object sender, EventArgs e)
         {
             bool currentState = _device.IsConnected;
@@ -949,13 +1086,21 @@ namespace JJManager.Pages.Devices
                 // If device just connected (was disconnected, now connected)
                 if (currentState && !_lastConnectionState)
                 {
-                    // Automatically select the temporary "Perfil Ativo Ao Conectar" when device connects
+                    // Check current profile selection
+                    string selectedProfileName = CmbBoxSelectProfile.SelectedItem?.ToString();
                     int activeProfileIndex = CmbBoxSelectProfile.FindStringExact(ACTIVE_PROFILE_NAME);
-                    if (activeProfileIndex != -1)
+
+                    if (selectedProfileName == ACTIVE_PROFILE_NAME)
                     {
+                        // Already on active profile - SelectedIndexChanged won't fire
+                        // Manually enable controls and let firmware data come through callbacks
+                        EnableControlsForConnectedDevice();
+                    }
+                    else if (activeProfileIndex != -1)
+                    {
+                        // Switch to active profile (this will trigger SelectedIndexChanged)
                         CmbBoxSelectProfile.SelectedIndex = activeProfileIndex;
                     }
-                    // Note: ShowProfileConfigs() will be called automatically by SelectedIndexChanged event
                 }
 
                 _lastConnectionState = currentState;

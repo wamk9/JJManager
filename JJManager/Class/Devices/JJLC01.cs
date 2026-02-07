@@ -59,6 +59,7 @@ namespace JJManager.Class.Devices
                         _profile.Restart();
                         await SendData();
                         _profile.NeedsUpdate = false;
+                        await Task.Delay(1000);
                     }
 
                     // Requisita dados do dispositivo (pot_percent, kg_pressed, raw, etc.)
@@ -105,9 +106,8 @@ namespace JJManager.Class.Devices
                         {
                             0x00, 0x01,          // CMD: 0x0001 (Set Fine Offset)
                             (byte)fineOffset,    // Fine Offset value (0-255, with offset +150)
-                            0x20, 0x01           // FLAGS (0x20, CMD_L)
                         };
-                        await SendHIDBytes(fineOffsetData, false, 0, 2000, 5);
+                        await SendHIDBytes(fineOffsetData, false, 20, 2000, 5);
                     }
 
                     // Send ADC Points (11 floats = 44 bytes)
@@ -130,11 +130,7 @@ namespace JJManager.Class.Devices
                                 adcData.AddRange(floatBytes);
                             }
 
-                            // Add FLAGS
-                            adcData.Add(0x20);
-                            adcData.Add(0x02);  // FLAG_L = CMD_L
-
-                            await SendHIDBytes(adcData, false, 0, 2000, 5);
+                            await SendHIDBytes(adcData, false, 20, 2000, 5);
                         }
                     }
                 }
@@ -165,7 +161,7 @@ namespace JJManager.Class.Devices
                         0x20, 0x04   // FLAGS (0x20, CMD_L)
                     };
 
-                    List<byte> response = await RequestHIDBytes(requestData, false, 0, 2000, 5);
+                    List<byte> response = await RequestHIDBytes(requestData, false, 10, 2000, 5);
 
                     // RequestHIDBytes already validates CMD and strips header/flags
                     // Response contains only payload: pot_percent(1) + kg_pressed(4) + raw(2) + fine_offset(1) + adc[11](44) = 52 bytes
@@ -203,8 +199,9 @@ namespace JJManager.Class.Devices
                         if (sendToActualProfile)
                         {
                             // Update UI with firmware data (chart and fine offset) only on first connection
-                            Pages.Devices.JJLC01.UpdateSeries(adcValues);
-                            Pages.Devices.JJLC01.UpdateFineOffset(fineOffset);
+                            // Mark as original firmware data so it can be restored when switching back to active profile
+                            Pages.Devices.JJLC01.UpdateSeries(adcValues, true);
+                            Pages.Devices.JJLC01.UpdateFineOffset(fineOffset, true);
 
                             JsonArray adcArray = new JsonArray();
                             foreach (double val in adcValues)

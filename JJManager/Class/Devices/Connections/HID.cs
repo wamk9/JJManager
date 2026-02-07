@@ -420,102 +420,38 @@ namespace JJManager.Class.Devices.Connections
 
         public async Task<bool> SendHIDBytes(List<List<byte>> data, bool forceConnection = false, int delay = 1500, int timeout = 2000, int delayBetweenChunks = 10, bool ignoreSemaphore = false)
         {
-            // Removed initial delay - will delay after each complete message instead
+            if (data == null || data.Count == 0)
+                return false;
+
             if (!ignoreSemaphore)
             {
-                await _hidSemaphore.WaitAsync(); // Ensure only one request runs at a time
+                await _hidSemaphore.WaitAsync();
             }
-            bool result = false;
+
+            bool allSuccess = true;
 
             try
             {
-                if (!_isConnected && !forceConnection)
+                foreach (List<byte> toSend in data)
                 {
-                    throw HidSharp.DeviceException.CreateIOException(_hidSharpDevice, "Device isn't connected on JJManager");
-                }
-
-                _sendInProgress = true;
-
-                HidStream stream = null;
-                try
-                {
-                    if (!_hidSharpDevice.TryOpen(out stream))
+                    // Call the single List<byte> overload which adds FLAGS automatically
+                    bool success = await SendHIDBytes(toSend, forceConnection, delay, timeout, delayBetweenChunks, true);
+                    if (!success)
                     {
-                        throw HidSharp.DeviceException.CreateIOException(_hidSharpDevice, "Failed to open HID device");
-                    }
-
-                    stream.ReadTimeout = Math.Max(timeout, 5000);
-                    stream.WriteTimeout = Math.Max(timeout, 5000);
-
-                    int writeSize = _hidSharpDevice.GetMaxOutputReportLength(); // inclui o ReportID
-
-                    foreach (List<byte> toSend in data)
-                    {
-                        // Build packet
-                        byte[] bytes = new byte[writeSize];
-                        bytes[0] = _reportId;  // 0x00
-
-                        // Copy chunk payload
-                        Array.Copy(toSend.ToArray(), 0, bytes, 1, toSend.Count);
-
-                        // Write SYNCHRONOUS (fast!)
-                        stream.Write(bytes, 0, bytes.Length);
-
-                        // Check if this is the end of a complete message (flag 0x20XX)
-                        bool isEndOfMessage = false;
-                        if (toSend.Count >= 2)
-                        {
-                            byte flagH = toSend[toSend.Count - 2];
-                            byte flagL = toSend[toSend.Count - 1];
-                            isEndOfMessage = (flagH == 0x20); // Flag 0x20XX indicates end of message
-                        }
-
-                        // Delay after complete message OR between chunks
-                        if (isEndOfMessage && delay > 0)
-                        {
-                            await Task.Delay(delay);  // Delay after complete message
-                        }
-                        else if (delayBetweenChunks > 0)
-                        {
-                            await Task.Delay(delayBetweenChunks);  // Delay between chunks
-                        }
+                        allSuccess = false;
+                        break;
                     }
                 }
-                finally
-                {
-                    stream?.Close();
-                    stream?.Dispose();
-                }
-
-                result = true;
-            }
-            catch (TaskCanceledException)
-            {
-                // Do Nothing...
-            }
-            catch (TimeoutException ex)
-            {
-                Log.Insert("HID", "Timeout ao enviar dados para o dispositivo - dispositivo pode estar ocupado", ex);
-                result = false;
-                // Não dispara exception - permite retry
-            }
-            catch (Exception ex)
-            {
-                Log.Insert("HID", "Ocorreu um problema com o dispositivo ao realizar o envio de dados", ex);
-                result = false;
-                // Não dispara exception - permite retry
             }
             finally
             {
-                _sendInProgress = false;
-
                 if (!ignoreSemaphore)
                 {
-                    _hidSemaphore.Release(); // Release the semaphore
+                    _hidSemaphore.Release();
                 }
             }
 
-            return result;
+            return allSuccess;
         }
 
 

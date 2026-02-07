@@ -104,6 +104,11 @@ namespace JJManager.Class.App.Output.Leds
 
         public bool SetActivatedValue(dynamic value)
         {
+            if (string.IsNullOrEmpty(_propertyName))
+            {
+                return false;
+            }
+
             // Return false if either value or _valueToActivate is null
             if (_valueToActivate.Equals(null) || value.Equals(null))
             {

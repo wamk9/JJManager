@@ -47,6 +47,14 @@ namespace JJManager.Pages
                 return;
             }
 
+            // Check for reserved profile name
+            if (TxtProfileName.Text.Trim() == "Perfil Ativo Ao Conectar")
+            {
+                Pages.App.MessageBox.Show(this, "Nome Reservado", "Este nome de perfil é reservado pelo sistema. Por favor, escolha outro nome.");
+                TxtProfileName.SetErrorState(true);
+                return;
+            }
+
             ProfileClass newProfile = new ProfileClass(_device, TxtProfileName.Text);
             _created = (newProfile != null);
             Close();

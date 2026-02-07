@@ -1,4 +1,5 @@
 ﻿using JJManager.Class;
+using JJManager.Class.App;
 using MaterialSkin;
 using MaterialSkin.Controls;
 using System;
@@ -12,6 +13,8 @@ namespace JJManager.Pages.App
     public partial class UpdateAppNotification : MaterialForm
     {
         JJManager.Class.App.SoftwareUpdater _softwareUpdater = null;
+        private bool _webViewInitialized = false;
+        private Task _webViewInitTask;
         MaterialForm _parent = null;
 
         #region WinForms
@@ -35,7 +38,11 @@ namespace JJManager.Pages.App
             materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
             // Initialize and load changelog
-            InitializeWebView();
+            Shown += async (_, __) =>
+            {
+                await EnsureWebViewInitializedAsync();
+                await LoadChangelogHtml();
+            };
 
             FormClosing += UpdateAppNotification_FormClosing;
         }
@@ -63,7 +70,11 @@ namespace JJManager.Pages.App
             materialSkinManager.ColorScheme = ConfigClass.Theme.SelectedColorScheme;
 
             // Initialize and load changelog
-            InitializeWebView();
+            Shown += async (_, __) =>
+            {
+                await EnsureWebViewInitializedAsync();
+                await LoadChangelogHtml();
+            };
 
             FormClosing += UpdateAppNotification_FormClosing;
 
@@ -85,14 +96,20 @@ namespace JJManager.Pages.App
         /// <summary>
         /// Initializes the WebView2 control and loads the changelog HTML
         /// </summary>
-        private async void InitializeWebView()
+        private async Task InitializeWebViewAsync()
         {
+            if (_webViewInitialized)
+                return;
+
+            _webViewInitialized = true;
+
             try
             {
-                // Ensure WebView2 runtime is initialized
-                await webView2Changelog.EnsureCoreWebView2Async(null);
+                if (webView2Changelog.CoreWebView2 == null)
+                {
+                    await webView2Changelog.EnsureCoreWebView2Async();
+                }
 
-                // Generate and load HTML
                 await LoadChangelogHtml();
             }
             catch (Exception ex)
@@ -120,6 +137,21 @@ namespace JJManager.Pages.App
             }
         }
 
+        private async Task EnsureWebViewInitializedAsync()
+        {
+            if (_webViewInitTask != null)
+                return;
+
+            _webViewInitTask = InitializeInternalAsync();
+            await _webViewInitTask;
+        }
+
+        private async Task InitializeInternalAsync()
+        {
+            var env = await HtmlTemplateEngine.GetAsync();
+            await webView2Changelog.EnsureCoreWebView2Async(env);
+        }
+
         /// <summary>
         /// Generates and loads the changelog HTML into WebView2
         /// </summary>
@@ -137,6 +169,8 @@ namespace JJManager.Pages.App
                     materialSkinManager.ColorScheme
                 );
 
+                await EnsureWebViewInitializedAsync();
+                
                 // Load HTML into WebView2
                 webView2Changelog.NavigateToString(html);
 

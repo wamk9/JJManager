@@ -354,15 +354,18 @@ namespace JJManager.Class.App
                                 _MainForm.progressBarDownload.Value = 0;
                             });
 
+                            // Wait for device to reconnect after firmware flash
+                            System.Threading.Thread.Sleep(2000);
+
                             _MainForm.Invoke((MethodInvoker)delegate
                             {
+                                // Refresh the device in the list to show updated firmware version
+                                _MainForm.RefreshDevice(deviceUpdater.ConnId);
+
                                 Pages.App.MessageBox.Show(_MainForm, "Atualização Concluída", "Atualização de '" + _Name + "' realizada com sucesso!");
-                                _MainForm.Invoke((MethodInvoker)delegate
-                                {
-                                    _MainForm.EnableAllForms();
-                                    _MainForm.UpdateUpdaterList();
-                                    _MainForm.txtStatusUpdate.Text = "";
-                                });
+                                _MainForm.EnableAllForms();
+                                _MainForm.UpdateUpdaterList();
+                                _MainForm.txtStatusUpdate.Text = "";
                             });
                             break;
                         case UpdaterType.Program:
