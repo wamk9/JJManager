@@ -48,6 +48,7 @@ namespace JJManager.Pages.Devices
         private int _ledSelected = -1;
         private int _outputIdSelected = -1;
         private bool _isCreateProfileOpened = false;
+        private DrawImage _currentHoveredLed = null;
 
         #region WinForms
         private MaterialSkinManager materialSkinManager = null;
@@ -117,6 +118,7 @@ namespace JJManager.Pages.Devices
             dgvActions.MouseMove += DgvActions_MouseMove;
             SetEvents();
             LoadFormData();
+            UpdateConnectionStatus();
         }
 
         public void SetEvents()
@@ -130,16 +132,24 @@ namespace JJManager.Pages.Devices
 
             #region GeneralForms
             SldLedBrightness.onValueChanged += SldLedBrightness_onValueChanged;
+            BtnConnect.Click += BtnConnect_Click;
 
             BtnAddLedAction.Click += BtnAddLedAction_Click;
+
+            // Eventos do painel e imagem de fundo para rastrear hover dos LEDs
+            PnlJJDB01.MouseMove += PnlJJDB01_MouseMove;
+            PnlJJDB01.MouseLeave += PnlJJDB01_MouseLeave;
+            ImgJJB999Off.MouseMove += (s, ev) => UpdateLedHoverState();
+            ImgJJB999Off.MouseLeave += PnlJJDB01_MouseLeave;
 
             foreach (Control control in PnlJJDB01.Controls)
             {
                 if (control is DrawImage && control.Name.StartsWith("ImgJJDB01Input"))
                 {
                     ((DrawImage)control).Click += ImgJJDB01Input_Click;
-                    ((DrawImage)control).MouseEnter += ImgJJDB01Input_MouseEnter; ;
-                    ((DrawImage)control).MouseLeave += ImgJJDB01Input_MouseLeave; ;
+                    // MouseMove nos LEDs para garantir detecção mesmo sobre controles filhos
+                    ((DrawImage)control).MouseMove += (s, ev) => UpdateLedHoverState();
+                    ((DrawImage)control).MouseLeave += ImgJJDB01Input_MouseLeave;
                 }
             }
             #endregion
@@ -250,16 +260,17 @@ namespace JJManager.Pages.Devices
             JsonObject profileData = _device.Profile.Data;
             int brightness = ((MaterialSlider)sender).Value;
 
-            if (!profileData.ContainsKey("brightness"))
+            if (!profileData.ContainsKey("led_brightness"))
             {
-                profileData.Add("brightness", brightness);
+                profileData.Add("led_brightness", brightness);
             }
             else
             {
-                profileData["brightness"] = brightness;
+                profileData["led_brightness"] = brightness;
             }
 
             _device.Profile.Update(profileData);
+            _device.Profile.NeedsUpdate = true;
         }
         #endregion
 
@@ -285,6 +296,56 @@ namespace JJManager.Pages.Devices
         private void BtnClose_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void BtnConnect_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_device.IsConnected)
+                {
+                    if (_device.Disconnect())
+                    {
+                        UpdateConnectionStatus();
+                    }
+                }
+                else
+                {
+                    if (_device.Connect())
+                    {
+                        UpdateConnectionStatus();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Pages.App.MessageBox.Show(this, "Erro de Conexão", "Erro ao conectar/desconectar: " + ex.Message);
+            }
+        }
+
+        private void UpdateConnectionStatus()
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke((MethodInvoker)delegate { UpdateConnectionStatus(); });
+                return;
+            }
+
+            if (_device.AutoConnect)
+            {
+                BtnConnect.Text = "Auto Conectar Habilitado";
+                BtnConnect.Enabled = false;
+            }
+            else if (_device.IsConnected)
+            {
+                BtnConnect.Text = "Desconectar";
+                BtnConnect.Enabled = true;
+            }
+            else
+            {
+                BtnConnect.Text = "Conectar";
+                BtnConnect.Enabled = true;
+            }
         }
         #endregion
 
@@ -395,47 +456,99 @@ namespace JJManager.Pages.Devices
         #region Event Functions (Img Buttons)
         private void ImgJJDB01Input_MouseLeave(object sender, EventArgs e)
         {
-            if (int.TryParse(((DrawImage)sender).Tag?.ToString(), out int index) && _ledSelected != index)
-            {
-                ((DrawImage)sender).Image = Resources.JJDB01_led;
-            }
+            // Não faz nada aqui - o controle é gerenciado pelo MouseMove do painel
         }
 
         private void ImgJJDB01Input_MouseEnter(object sender, EventArgs e)
         {
-            ((DrawImage)sender).Image = Resources.JJDB01_led_hover;
+            // Não faz nada aqui - o controle é gerenciado pelo MouseMove do painel
+        }
+
+        private void PnlJJDB01_MouseMove(object sender, MouseEventArgs e)
+        {
+            UpdateLedHoverState();
+        }
+
+        private void UpdateLedHoverState()
+        {
+            // Obtém a posição do mouse relativa ao painel
+            Point mousePos = PnlJJDB01.PointToClient(Cursor.Position);
+
+            DrawImage hoveredControl = null;
+
+            // Encontra qual LED está sob o cursor
+            foreach (Control control in PnlJJDB01.Controls)
+            {
+                if (control is DrawImage drawImage && control.Name.StartsWith("ImgJJDB01Input"))
+                {
+                    if (control.Bounds.Contains(mousePos))
+                    {
+                        hoveredControl = drawImage;
+                        break;
+                    }
+                }
+            }
+
+            // Se mudou o LED em hover
+            if (hoveredControl != _currentHoveredLed)
+            {
+                // Limpa o hover anterior (se não for o selecionado)
+                if (_currentHoveredLed != null)
+                {
+                    if (int.TryParse(_currentHoveredLed.Tag?.ToString(), out int previousIndex) && _ledSelected != previousIndex)
+                    {
+                        _currentHoveredLed.Image = Resources.JJDB01_led;
+                    }
+                }
+
+                // Aplica hover no novo (se houver)
+                if (hoveredControl != null)
+                {
+                    hoveredControl.Image = Resources.JJDB01_led_hover;
+                }
+
+                _currentHoveredLed = hoveredControl;
+            }
+        }
+
+        private void PnlJJDB01_MouseLeave(object sender, EventArgs e)
+        {
+            // Limpa hover quando mouse sai do painel
+            if (_currentHoveredLed != null)
+            {
+                if (int.TryParse(_currentHoveredLed.Tag?.ToString(), out int index) && _ledSelected != index)
+                {
+                    _currentHoveredLed.Image = Resources.JJDB01_led;
+                }
+                _currentHoveredLed = null;
+            }
         }
 
         private void ImgJJDB01Input_Click(object sender, EventArgs e)
         {
             _saveData = false;
+            DrawImage clickedControl = (DrawImage)sender;
+
+            // Limpa o LED anteriormente selecionado
             foreach (Control control in PnlJJDB01.Controls)
             {
-                if (control is DrawImage picture && control.Name.StartsWith("ImgJJDB01Input") && int.TryParse(((DrawImage)picture).Tag?.ToString(), out int pictureIndex) && pictureIndex == _ledSelected)
+                if (control is DrawImage picture && control.Name.StartsWith("ImgJJDB01Input") && int.TryParse(picture.Tag?.ToString(), out int pictureIndex) && pictureIndex == _ledSelected)
                 {
                     picture.Image = Resources.JJDB01_led;
                 }
             }
 
-            if (int.TryParse(((DrawImage)sender).Tag?.ToString(), out int led) && _ledSelected != led && led > -1)
+            if (int.TryParse(clickedControl.Tag?.ToString(), out int led) && _ledSelected != led && led > -1)
             {
-                //for (int i = 0; i < _device.Profile.Outputs.Count; i++)
-                //{
-                //    if (_device.Profile.Outputs[i]?.Led?.LedsGrouped.Contains(led) == true)
-                //    {
-                //        CmbSimHubProps.SelectedValue = _device.Profile.Outputs[i]?.Led?.Property ?? string.Empty;
-                //        break;
-                //    }
-                //}
-
                 _ledSelected = led;
+                _currentHoveredLed = clickedControl; // Mantém como hover pois está selecionado
                 LoadFormData();
-                ((DrawImage)sender).Image = Resources.JJDB01_led_hover;
-
+                clickedControl.Image = Resources.JJDB01_led_hover;
             }
             else
             {
                 _ledSelected = -1;
+                _currentHoveredLed = null;
             }
             _saveData = true;
         }

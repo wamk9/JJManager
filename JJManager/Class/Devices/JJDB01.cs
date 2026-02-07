@@ -176,7 +176,7 @@ namespace JJManager.Class.Devices
                 }
 
                 // 4. Brightness (only if changed)
-                int brightness = (_profile.Data.ContainsKey("brightness") ? _profile.Data["brightness"].GetValue<int>() : 100);
+                int brightness = (_profile.Data.ContainsKey("led_brightness") ? _profile.Data["led_brightness"].GetValue<int>() : 50);
                 if (_lastSentBrightness != brightness)
                 {
                     // FLAGS are added automatically by SendHIDBytes

@@ -30,6 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(JJDB01));
             this.BtnClose = new MaterialSkin.Controls.MaterialButton();
+            this.BtnConnect = new MaterialSkin.Controls.MaterialButton();
             this.materialDivider1 = new MaterialSkin.Controls.MaterialDivider();
             this.BtnRemoveProfile = new MaterialSkin.Controls.MaterialButton();
             this.BtnAddProfile = new MaterialSkin.Controls.MaterialButton();
@@ -92,7 +93,28 @@
             this.BtnClose.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
             this.BtnClose.UseAccentColor = false;
             this.BtnClose.UseVisualStyleBackColor = true;
-            // 
+            //
+            // BtnConnect
+            //
+            this.BtnConnect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.BtnConnect.AutoSize = false;
+            this.BtnConnect.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.BtnConnect.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.BtnConnect.Depth = 0;
+            this.BtnConnect.HighEmphasis = true;
+            this.BtnConnect.Icon = null;
+            this.BtnConnect.Location = new System.Drawing.Point(965, 655);
+            this.BtnConnect.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.BtnConnect.MouseState = MaterialSkin.MouseState.HOVER;
+            this.BtnConnect.Name = "BtnConnect";
+            this.BtnConnect.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.BtnConnect.Size = new System.Drawing.Size(219, 36);
+            this.BtnConnect.TabIndex = 40;
+            this.BtnConnect.Text = "Conectar";
+            this.BtnConnect.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.BtnConnect.UseAccentColor = false;
+            this.BtnConnect.UseVisualStyleBackColor = true;
+            //
             // materialDivider1
             // 
             this.materialDivider1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
@@ -611,6 +633,7 @@
             this.ClientSize = new System.Drawing.Size(1280, 700);
             this.Controls.Add(this.PnlConfigs);
             this.Controls.Add(this.PnlJJDB01);
+            this.Controls.Add(this.BtnConnect);
             this.Controls.Add(this.BtnClose);
             this.Controls.Add(this.materialDivider1);
             this.Controls.Add(this.BtnRemoveProfile);
@@ -620,7 +643,7 @@
             this.Icon = global::JJManager.Properties.Resources.JJManagerIcon_256;
             this.Name = "JJDB01";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "JJDB01";
+            this.Text = "Dashboard JJDB-01";
             ((System.ComponentModel.ISupportInitialize)(this.dgvActions)).EndInit();
             this.PnlConfigs.ResumeLayout(false);
             this.PnlConfigs.PerformLayout();
@@ -634,6 +657,7 @@
         #endregion
 
         private MaterialSkin.Controls.MaterialButton BtnClose;
+        private MaterialSkin.Controls.MaterialButton BtnConnect;
         private MaterialSkin.Controls.MaterialDivider materialDivider1;
         private MaterialSkin.Controls.MaterialButton BtnRemoveProfile;
         private MaterialSkin.Controls.MaterialButton BtnAddProfile;
