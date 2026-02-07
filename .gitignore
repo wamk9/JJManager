@@ -479,3 +479,4 @@ $RECYCLE.BIN/
 # Claude
 nul
 .claude
+!.claude/skills/
