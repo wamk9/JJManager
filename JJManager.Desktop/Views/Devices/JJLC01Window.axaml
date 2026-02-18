@@ -1,0 +1,285 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:JJManager.Desktop.ViewModels.Devices"
+        xmlns:mi="using:Material.Icons.Avalonia"
+        x:Class="JJManager.Desktop.Views.Devices.JJLC01Window"
+        x:DataType="vm:JJLC01ViewModel"
+        Title="{DynamicResource JJLC01_Title}"
+        Width="850"
+        Height="650"
+        MinWidth="700"
+        MinHeight="550"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackgroundBrush}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <mi:MaterialIcon Kind="{Binding IconName}" Width="32" Height="32"
+                                 Foreground="{DynamicResource AccentBrush}"/>
+                <TextBlock Text="{DynamicResource JJLC01_Title}" FontSize="24" FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Text="{DynamicResource JJLC01_Subtitle}"
+                       Opacity="0.7" Margin="44,4,0,0"/>
+        </StackPanel>
+
+        <!-- Main Content - TabControl -->
+        <TabControl Grid.Row="1">
+
+            <!-- Tab: Ajustes (Curve) -->
+            <TabItem Header="{DynamicResource JJLC01_Tab_Adjustments}">
+                <Grid ColumnDefinitions="*,220" Margin="0,16,0,0">
+
+                    <!-- Left: Chart Area -->
+                    <Border Grid.Column="0"
+                            Background="{DynamicResource CardBackgroundBrush}"
+                            CornerRadius="12"
+                            Padding="16"
+                            Margin="0,0,16,0">
+                        <Grid RowDefinitions="*,Auto">
+
+                            <!-- Chart Canvas -->
+                            <Border Grid.Row="0"
+                                    Background="{DynamicResource OverlayBrush}"
+                                    CornerRadius="8"
+                                    ClipToBounds="True">
+                                <Canvas Name="ChartCanvas"
+                                        Width="500" Height="300"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"/>
+                            </Border>
+
+                            <!-- Point Editor -->
+                            <StackPanel Grid.Row="1" Orientation="Horizontal"
+                                        Spacing="12" Margin="0,16,0,0"
+                                        HorizontalAlignment="Center"
+                                        IsEnabled="{Binding CanEditConfiguration}">
+                                <TextBlock Text="{DynamicResource JJLC01_SelectedPoint}"
+                                           VerticalAlignment="Center" Opacity="0.7"/>
+                                <TextBlock Text="{Binding SelectedPointLabel}"
+                                           VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <Button Command="{Binding DecreasePointCommand}"
+                                        Content="-" Width="36" Height="36"
+                                        HorizontalContentAlignment="Center"
+                                        IsEnabled="{Binding CanEditPoint}"/>
+                                <TextBox Text="{Binding SelectedPointValue, StringFormat={}{0:F1} kg}"
+                                         Width="100" TextAlignment="Center"
+                                         IsEnabled="{Binding CanEditPoint}"/>
+                                <Button Command="{Binding IncreasePointCommand}"
+                                        Content="+" Width="36" Height="36"
+                                        HorizontalContentAlignment="Center"
+                                        IsEnabled="{Binding CanEditPoint}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Right: Real-time Data -->
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource CardBackgroundBrush}"
+                            CornerRadius="12"
+                            Padding="16">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="{DynamicResource JJLC01_RealtimeData}"
+                                       FontWeight="SemiBold" FontSize="14"/>
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                            <!-- Pot Percent -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{DynamicResource JJLC01_Potentiometer}" Opacity="0.7" FontSize="12"/>
+                                <TextBlock Text="{Binding PotPercent, StringFormat={}{0}%}"
+                                           FontSize="24" FontWeight="Bold"
+                                           Foreground="{DynamicResource AccentBrush}"/>
+                            </StackPanel>
+
+                            <!-- Kg Pressed -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{DynamicResource JJLC01_ForceApplied}" Opacity="0.7" FontSize="12"/>
+                                <TextBlock Text="{Binding KgPressed, StringFormat={}{0:F1} kg}"
+                                           FontSize="24" FontWeight="Bold"
+                                           Foreground="{DynamicResource AccentBrush}"/>
+                            </StackPanel>
+
+                            <!-- Raw Value -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{DynamicResource JJLC01_RawValue}" Opacity="0.7" FontSize="12"/>
+                                <TextBlock Text="{Binding RawValue}"
+                                           FontSize="18" FontWeight="SemiBold"/>
+                            </StackPanel>
+
+                            <!-- Connection Status -->
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"
+                                    Margin="0,8,0,0"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                        ToolTip.Tip="{Binding ConnectionTooltip}">
+                                <Ellipse Width="10" Height="10">
+                                    <Ellipse.Fill>
+                                        <SolidColorBrush Color="{Binding IsConnected, Converter={x:Static vm:JJLC01ViewModel.BoolToColorConverter}}"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <TextBlock Text="{Binding ConnectionStatus}" Opacity="0.7"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab: Calibracao -->
+            <TabItem Header="{DynamicResource JJLC01_Tab_Calibration}">
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        CornerRadius="12"
+                        Padding="24"
+                        Margin="0,16,0,0">
+                    <StackPanel Spacing="24" MaxWidth="600" HorizontalAlignment="Center">
+
+                        <!-- Instructions -->
+                        <TextBlock Text="{DynamicResource JJLC01_Calibration_Intro1}"
+                                   TextWrapping="Wrap" LineHeight="24" Opacity="0.8"/>
+                        <TextBlock Text="{DynamicResource JJLC01_Calibration_Intro2}"
+                                   TextWrapping="Wrap" LineHeight="24" Opacity="0.8"/>
+                        <TextBlock Text="{DynamicResource JJLC01_Calibration_Intro3}"
+                                   TextWrapping="Wrap" LineHeight="24" Opacity="0.8" FontWeight="SemiBold"/>
+
+                        <!-- Fine Offset Slider -->
+                        <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{DynamicResource JJLC01_FineAdjustment}" FontWeight="SemiBold" FontSize="16"/>
+
+                            <Slider Minimum="0" Maximum="255"
+                                    Value="{Binding FineOffset}"
+                                    IsEnabled="{Binding CanEditConfiguration}"/>
+
+                            <StackPanel Orientation="Horizontal" Spacing="24"
+                                        HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding FineOffsetDisplayText}"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding RawValueDisplayText}"
+                                           Opacity="0.7"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Calibrate Button -->
+                        <Button Command="{Binding CalibrateCommand}"
+                                HorizontalAlignment="Center"
+                                Classes="accent"
+                                IsEnabled="{Binding IsConnected}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <mi:MaterialIcon Kind="Refresh" Width="20" Height="20"/>
+                                <TextBlock Text="{DynamicResource JJLC01_Btn_Recalibrate}"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <!-- Tab: Perfis -->
+            <TabItem Header="{DynamicResource JJLC01_Tab_Profiles}">
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        CornerRadius="12"
+                        Padding="24"
+                        Margin="0,16,0,0">
+                    <Grid ColumnDefinitions="*,Auto,*">
+
+                        <!-- Left: Profile List -->
+                        <StackPanel Grid.Column="0" Spacing="16">
+                            <TextBlock Text="{DynamicResource JJLC01_AvailableProfiles}" FontWeight="SemiBold" FontSize="16"/>
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                            <ListBox ItemsSource="{Binding Profiles}"
+                                     SelectedItem="{Binding SelectedProfile}"
+                                     MinHeight="200"
+                                     MaxHeight="300">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="8,4">
+                                            <mi:MaterialIcon Kind="FileDocument" Width="18" Height="18"
+                                                             Foreground="{DynamicResource AccentBrush}"/>
+                                            <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <!-- Profile Actions -->
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                <Button Command="{Binding DuplicateProfileCommand}"
+                                        ToolTip.Tip="{DynamicResource JJLC01_Tip_DuplicateProfile}"
+                                        Width="40" Height="40"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center">
+                                    <mi:MaterialIcon Kind="ContentCopy" Width="20" Height="20"/>
+                                </Button>
+                                <Button Command="{Binding DeleteProfileCommand}"
+                                        IsEnabled="{Binding CanDeleteProfile}"
+                                        ToolTip.Tip="{DynamicResource JJLC01_Tip_DeleteProfile}"
+                                        Width="40" Height="40"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center">
+                                    <mi:MaterialIcon Kind="Delete" Width="20" Height="20"/>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Divider -->
+                        <Border Grid.Column="1" Width="1" Background="{DynamicResource BorderAltBrush}"
+                                Margin="24,0"/>
+
+                        <!-- Right: Create Profile -->
+                        <StackPanel Grid.Column="2" Spacing="16">
+                            <TextBlock Text="{DynamicResource JJLC01_CreateNewProfile}" FontWeight="SemiBold" FontSize="16"/>
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{DynamicResource JJLC01_ProfileName}" Opacity="0.7"/>
+                                <TextBox Text="{Binding NewProfileName}"
+                                         Watermark="{DynamicResource JJLC01_ProfileName_Placeholder}"
+                                         MaxLength="50"/>
+
+                                <Button Command="{Binding CreateProfileCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Classes="accent">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <mi:MaterialIcon Kind="Plus" Width="20" Height="20"/>
+                                        <TextBlock Text="{DynamicResource JJLC01_Btn_CreateProfile}"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}" Margin="0,16,0,0"/>
+
+                            <!-- Profile Info -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{DynamicResource JJLC01_ProfileInfo_Title}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{DynamicResource JJLC01_ProfileInfo_Desc1}"
+                                           TextWrapping="Wrap" LineHeight="22" Opacity="0.7" FontSize="12"/>
+                                <TextBlock Text="{DynamicResource JJLC01_ProfileInfo_Desc2}"
+                                           TextWrapping="Wrap" LineHeight="22" Opacity="0.7" FontSize="12"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
+
+        <!-- Footer Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="12" Margin="0,16,0,0">
+            <Button Command="{Binding ToggleConnectionCommand}"
+                    Width="180"
+                    HorizontalContentAlignment="Center">
+                <TextBlock Text="{Binding ConnectionButtonText}"/>
+            </Button>
+            <Button Command="{Binding CloseCommand}"
+                    Classes="accent"
+                    Width="100"
+                    HorizontalContentAlignment="Center">
+                <TextBlock Text="{DynamicResource Dialog_Close}"/>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>

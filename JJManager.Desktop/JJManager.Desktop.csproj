@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<!-- Para desenvolvimento use: dotnet build -f net9.0-windows -->
+		<!-- Para release cross-platform use: dotnet publish -f net9.0 -r linux-x64 -->
+		<TargetFrameworks>net9.0-windows;net9.0</TargetFrameworks>
+
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+		<!-- Assembly Info -->
+		<AssemblyName>JJManager</AssemblyName>
+		<RootNamespace>JJManager.Desktop</RootNamespace>
+		<Version>2.0.0</Version>
+
+		<!-- Assets -->
+		<!--<ApplicationIcon>Assets\icon.ico</ApplicationIcon>-->
+
+		<!-- RIDs -->
+		<RuntimeIdentifiers>win-x64;linux-x64;linux-arm64</RuntimeIdentifiers>
+	</PropertyGroup>
+
+	<!-- 🔗 Referências comuns -->
+	<ItemGroup>
+		<ProjectReference Include="..\JJManager.Core\JJManager.Core.csproj" />
+		<ProjectReference Include="..\JJManager.Infrastructure\JJManager.Infrastructure.csproj" />
+	</ItemGroup>
+
+	<!-- 🪟 Windows -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows'">
+		<ProjectReference Include="..\JJManager.Platform.Windows\JJManager.Platform.Windows.csproj" />
+	</ItemGroup>
+
+	<!-- 🐧 Linux -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+		<ProjectReference Include="..\JJManager.Platform.Linux\JJManager.Platform.Linux.csproj" />
+	</ItemGroup>
+
+	<!-- Avalonia -->
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="11.2.0" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.2.0" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.0" />
+		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.0" />
+		<PackageReference Include="Material.Icons.Avalonia" Version="2.1.10" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+		<PackageReference Include="Avalonia.Diagnostics" Version="11.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="Assets\**" Exclude="Assets\i18n\**" />
+	</ItemGroup>
+
+	<!-- i18n resources -->
+	<ItemGroup>
+		<EmbeddedResource Include="Assets\i18n\*.json" />
+		<Content Include="Assets\i18n\*.json" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<!-- Config files -->
+
+</Project>

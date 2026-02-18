@@ -1,0 +1,152 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:JJManager.Desktop.ViewModels"
+             xmlns:mi="using:Material.Icons.Avalonia"
+             x:Class="JJManager.Desktop.Views.UpdatesView"
+             x:DataType="vm:UpdatesViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Atualizações" FontSize="28" FontWeight="Bold"/>
+                <TextBlock Text="Mantenha seu software e dispositivos atualizados"
+                           Opacity="0.7"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Command="{Binding CheckForUpdatesCommand}"
+                    IsEnabled="{Binding !IsCheckingForUpdates}"
+                    Classes="accent"
+                    Padding="16,8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <mi:MaterialIcon Kind="CloudDownload" Width="20" Height="20"/>
+                    <TextBlock Text="Verificar Atualizações" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="16">
+                <!-- Software Update Card -->
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        CornerRadius="8"
+                        Padding="20">
+                    <Grid RowDefinitions="Auto,Auto,Auto">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
+                            <Border Background="{DynamicResource AccentBrush}"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                <mi:MaterialIcon Kind="Application" Width="24" Height="24" Foreground="White"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="JJManager" FontWeight="SemiBold" FontSize="16"/>
+                                <TextBlock Text="{Binding CurrentSoftwareVersion, StringFormat='Versão atual: {0}'}"
+                                           Opacity="0.7"
+                                           FontSize="12"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Margin="0,16,0,0" IsVisible="{Binding HasUpdates}">
+                            <TextBlock Text="{Binding LatestSoftwareVersion, StringFormat='Nova versão disponível: {0}'}"
+                                       Foreground="{DynamicResource SuccessBrush}"
+                                       FontWeight="SemiBold"/>
+                            <ProgressBar Margin="0,8,0,0"
+                                         Value="{Binding DownloadProgress}"
+                                         IsVisible="{Binding IsDownloading}"
+                                         ShowProgressText="True"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Margin="0,16,0,0" IsVisible="{Binding !HasUpdates}">
+                            <TextBlock Text="Você está usando a versão mais recente"
+                                       Opacity="0.7"/>
+                        </StackPanel>
+
+                        <Button Grid.Row="2"
+                                Command="{Binding DownloadUpdateCommand}"
+                                IsVisible="{Binding HasUpdates}"
+                                IsEnabled="{Binding !IsDownloading}"
+                                Classes="accent"
+                                Margin="0,16,0,0"
+                                HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <mi:MaterialIcon Kind="Download" Width="16" Height="16"/>
+                                <TextBlock Text="Baixar Atualização"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Device Updates Section -->
+                <TextBlock Text="Atualizações de Firmware" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,0"/>
+
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        CornerRadius="8"
+                        Padding="20">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding DeviceUpdates}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:DeviceUpdateViewModel">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,8">
+                                        <mi:MaterialIcon Grid.Column="0" Kind="Chip" Width="24" Height="24"
+                                                         Foreground="{DynamicResource AccentBrush}"
+                                                         Margin="0,0,12,0"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DeviceName}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding CurrentVersion, StringFormat='Atual: {0}'}"
+                                                       FontSize="11"
+                                                       Opacity="0.7"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding LatestVersion, StringFormat='Disponível: {0}'}"
+                                                   IsVisible="{Binding HasUpdate}"
+                                                   Foreground="{DynamicResource SuccessBrush}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,16,0"/>
+                                        <Button Grid.Column="3" IsVisible="{Binding HasUpdate}" Classes="accent">
+                                            <TextBlock Text="Atualizar"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty State -->
+                        <StackPanel IsVisible="{Binding !DeviceUpdates.Count}"
+                                    HorizontalAlignment="Center"
+                                    Spacing="8"
+                                    Margin="0,16">
+                            <mi:MaterialIcon Kind="CheckCircle" Width="48" Height="48"
+                                             Opacity="0.5"
+                                             HorizontalAlignment="Center"/>
+                            <TextBlock Text="Todos os dispositivos estão atualizados"
+                                       Opacity="0.7"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource CardBackgroundBrush}"
+                CornerRadius="8"
+                Padding="16,12"
+                Margin="0,16,0,0">
+            <Grid ColumnDefinitions="Auto,*">
+                <mi:MaterialIcon Grid.Column="0"
+                                 Kind="InformationOutline"
+                                 Width="20" Height="20"
+                                 Opacity="0.7"
+                                 Margin="0,0,12,0"/>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding StatusMessage}"
+                           Opacity="0.7"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

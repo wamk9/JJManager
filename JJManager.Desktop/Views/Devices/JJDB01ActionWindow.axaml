@@ -1,0 +1,260 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:JJManager.Desktop.ViewModels.Devices"
+        xmlns:mi="using:Material.Icons.Avalonia"
+        x:Class="JJManager.Desktop.Views.Devices.JJDB01ActionWindow"
+        x:DataType="vm:JJDB01ActionViewModel"
+        Title="{Binding WindowTitle}"
+        Width="500"
+        Height="620"
+        MinWidth="450"
+        MinHeight="550"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{DynamicResource AppBackgroundBrush}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <mi:MaterialIcon Kind="LedOn" Width="28" Height="28"
+                                 Foreground="{DynamicResource AccentBrush}"/>
+                <TextBlock Text="{Binding WindowTitle}" FontSize="20" FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+                <Border Background="{DynamicResource AccentBrush}"
+                        CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding LedLabel}" FontSize="12" Foreground="White"/>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="20">
+
+                <!-- SimHub Property Selection -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{DynamicResource JJDB01_Action_Property}"
+                               FontWeight="SemiBold" FontSize="14"/>
+                    <ComboBox ItemsSource="{Binding SimHubProperties}"
+                              SelectedItem="{Binding SelectedProperty}"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Background="{DynamicResource AccentBrush}"
+                                            CornerRadius="3" Padding="6,2" MinWidth="60">
+                                        <TextBlock Text="{Binding Category}"
+                                                   FontSize="10" Foreground="White"
+                                                   HorizontalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <!-- Current SimHub Value Display -->
+                    <Border Background="{DynamicResource CardBrush}"
+                            CornerRadius="6" Padding="12,8"
+                            IsVisible="{Binding HasCurrentValue}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <mi:MaterialIcon Kind="BroadcastOff" Width="18" Height="18"
+                                                 Foreground="{DynamicResource AccentBrush}"
+                                                 IsVisible="{Binding !HasCurrentValue}"/>
+                                <mi:MaterialIcon Kind="Broadcast" Width="18" Height="18"
+                                                 Foreground="{DynamicResource AccentBrush}"
+                                                 IsVisible="{Binding HasCurrentValue}"/>
+                                <TextBlock Text="{Binding CurrentValueLabel}"
+                                           Opacity="0.7" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding CurrentPropertyValueDisplay}"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentBrush}"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- Activation Condition -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{DynamicResource JJDB01_Action_Condition}"
+                               FontWeight="SemiBold" FontSize="14"/>
+                    <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                    <Grid ColumnDefinitions="*,Auto,*" Margin="0,4,0,0">
+                        <TextBlock Grid.Column="0" Text="{DynamicResource JJDB01_Action_WhenValue}"
+                                   VerticalAlignment="Center" Opacity="0.7"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Comparatives}"
+                                  SelectedItem="{Binding SelectedComparative}"
+                                  Width="120" Margin="8,0"/>
+                        <!-- Use ComboBox when suggested values exist, TextBox otherwise -->
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <ComboBox ItemsSource="{Binding SuggestedValues}"
+                                      SelectedItem="{Binding SelectedSuggestedValue}"
+                                      IsVisible="{Binding HasSuggestedValues}"
+                                      HorizontalAlignment="Stretch"/>
+                            <TextBox Text="{Binding CustomValue}"
+                                     Watermark="{DynamicResource JJDB01_Action_CustomValueHint}"
+                                     IsVisible="{Binding IsCustomValueMode}"/>
+                            <TextBox Text="{Binding ActivationValue}"
+                                     Watermark="true"
+                                     IsVisible="{Binding !HasSuggestedValues}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- LED Color -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{DynamicResource JJDB01_Action_Color}"
+                               FontWeight="SemiBold" FontSize="14"/>
+                    <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                    <!-- Color Preview -->
+                    <Border Height="50" CornerRadius="8" Margin="0,4,0,0">
+                        <Border.Background>
+                            <SolidColorBrush Color="{Binding SelectedColor}"/>
+                        </Border.Background>
+                        <TextBlock Text="{Binding HexColor}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontWeight="Bold"
+                                   FontSize="16">
+                            <TextBlock.Foreground>
+                                <SolidColorBrush Color="White"/>
+                            </TextBlock.Foreground>
+                        </TextBlock>
+                    </Border>
+
+                    <!-- RGB Sliders -->
+                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" Margin="0,8,0,0">
+                        <!-- Red -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="R" Foreground="#FF4444"
+                                   FontWeight="Bold" VerticalAlignment="Center" Width="20"/>
+                        <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="255"
+                                Value="{Binding ColorR}" Margin="8,0"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding ColorR}"
+                                   Width="35" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+
+                        <!-- Green -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="G" Foreground="#44FF44"
+                                   FontWeight="Bold" VerticalAlignment="Center" Width="20"/>
+                        <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255"
+                                Value="{Binding ColorG}" Margin="8,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding ColorG}"
+                                   Width="35" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+
+                        <!-- Blue -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="B" Foreground="#4444FF"
+                                   FontWeight="Bold" VerticalAlignment="Center" Width="20"/>
+                        <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255"
+                                Value="{Binding ColorB}" Margin="8,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding ColorB}"
+                                   Width="35" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <!-- Preset Colors -->
+                    <TextBlock Text="{DynamicResource JJDB01_Action_PresetColors}"
+                               Opacity="0.7" FontSize="12" Margin="0,8,0,4"/>
+                    <WrapPanel HorizontalAlignment="Center">
+                        <Button Command="{Binding SetPresetColorCommand}" CommandParameter="#FF0000"
+                                Width="36" Height="36" Margin="2" Padding="0" CornerRadius="4">
+                            <Button.Background>
+                                <SolidColorBrush Color="#FF0000"/>
+                            </Button.Background>
+                        </Button>
+                        <Button Command="{Binding SetPresetColorCommand}" CommandParameter="#FF6600"
+                                Width="36" Height="36" Margin="2" Padding="0" CornerRadius="4">
+                            <Button.Background>
+                                <SolidColorBrush Color="#FF6600"/>
+                            </Button.Background>
+                        </Button>
+                        <Button Command="{Binding SetPresetColorCommand}" CommandParameter="#FFFF00"
+                                Width="36" Height="36" Margin="2" Padding="0" CornerRadius="4">
+                            <Button.Background>
+                                <SolidColorBrush Color="#FFFF00"/>
+                            </Button.Background>
+                        </Button>
+                        <Button Command="{Binding SetPresetColorCommand}" CommandParameter="#00FF00"
+                                Width="36" Height="36" Margin="2" Padding="0" CornerRadius="4">
+                            <Button.Background>
+                                <SolidColorBrush Color="#00FF00"/>
+                            </Button.Background>
+                        </Button>
+                        <Button Command="{Binding SetPresetColorCommand}" CommandParameter="#00FFFF"
+                                Width="36" Height="36" Margin="2" Padding="0" CornerRadius="4">
+                            <Button.Background>
+                                <SolidColorBrush Color="#00FFFF"/>
+                            </Button.Background>
+                        </Button>
+                        <Button Command="{Binding SetPresetColorCommand}" CommandParameter="#0066FF"
+                                Width="36" Height="36" Margin="2" Padding="0" CornerRadius="4">
+                            <Button.Background>
+                                <SolidColorBrush Color="#0066FF"/>
+                            </Button.Background>
+                        </Button>
+                        <Button Command="{Binding SetPresetColorCommand}" CommandParameter="#FF00FF"
+                                Width="36" Height="36" Margin="2" Padding="0" CornerRadius="4">
+                            <Button.Background>
+                                <SolidColorBrush Color="#FF00FF"/>
+                            </Button.Background>
+                        </Button>
+                        <Button Command="{Binding SetPresetColorCommand}" CommandParameter="#FFFFFF"
+                                Width="36" Height="36" Margin="2" Padding="0" CornerRadius="4">
+                            <Button.Background>
+                                <SolidColorBrush Color="#FFFFFF"/>
+                            </Button.Background>
+                        </Button>
+                    </WrapPanel>
+
+                    <!-- Hex Color Input -->
+                    <Grid ColumnDefinitions="Auto,*" Margin="0,8,0,0">
+                        <TextBlock Grid.Column="0" Text="HEX:"
+                                   VerticalAlignment="Center" Opacity="0.7" Margin="0,0,12,0"/>
+                        <TextBox Grid.Column="1" Text="{Binding HexColor}"
+                                 Watermark="#RRGGBB" MaxLength="7"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- LED Mode -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{DynamicResource JJDB01_Action_Behavior}"
+                               FontWeight="SemiBold" FontSize="14"/>
+                    <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                    <StackPanel Spacing="4" Margin="0,4,0,0">
+                        <TextBlock Text="{DynamicResource JJDB01_Action_LedMode}" Opacity="0.7"/>
+                        <ComboBox ItemsSource="{Binding LedModes}"
+                                  SelectedItem="{Binding SelectedLedMode}"
+                                  HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="12" Margin="0,20,0,0">
+            <Button Command="{Binding CancelCommand}"
+                    Width="100"
+                    HorizontalContentAlignment="Center">
+                <TextBlock Text="{DynamicResource Dialog_Cancel}"/>
+            </Button>
+            <Button Command="{Binding SaveCommand}"
+                    Classes="accent"
+                    Width="120"
+                    HorizontalContentAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <mi:MaterialIcon Kind="ContentSave" Width="18" Height="18"/>
+                    <TextBlock Text="{DynamicResource Dialog_Save}"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>

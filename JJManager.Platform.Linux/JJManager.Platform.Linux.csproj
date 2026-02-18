@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Assembly Info -->
+    <AssemblyName>JJManager.Platform.Linux</AssemblyName>
+    <RootNamespace>JJManager.Platform.Linux</RootNamespace>
+    <Version>2.0.0</Version>
+    <Authors>JohnJohn 3D</Authors>
+    <Company>JohnJohn 3D</Company>
+    <Description>Linux-specific implementations for JJManager (PulseAudio/PipeWire)</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JJManager.Core\JJManager.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Note: PulseAudio integration will use P/Invoke to libpulse -->
+  <!-- Runtime dependency: libpulse0 (apt install libpulse0) -->
+
+</Project>

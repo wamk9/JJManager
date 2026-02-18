@@ -1,0 +1,487 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:JJManager.Desktop.ViewModels.Devices"
+        xmlns:mi="using:Material.Icons.Avalonia"
+        x:Class="JJManager.Desktop.Views.Devices.JJDB01Window"
+        x:DataType="vm:JJDB01ViewModel"
+        Title="{DynamicResource JJDB01_Title}"
+        Width="950"
+        Height="700"
+        MinWidth="800"
+        MinHeight="600"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackgroundBrush}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <mi:MaterialIcon Kind="ViewDashboard" Width="32" Height="32"
+                                 Foreground="{DynamicResource AccentBrush}"/>
+                <TextBlock Text="{DynamicResource JJDB01_Title}" FontSize="24" FontWeight="Bold"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Text="{DynamicResource JJDB01_Subtitle}"
+                       Opacity="0.7" Margin="44,4,0,0"/>
+        </StackPanel>
+
+        <!-- Main Content - TabControl -->
+        <TabControl Grid.Row="1">
+
+            <!-- Tab: Ações dos LEDs -->
+            <TabItem Header="{DynamicResource JJDB01_Tab_LedActions}">
+                <Grid ColumnDefinitions="*,320" Margin="0,16,0,0">
+
+                    <!-- Left: LED Grid Visual -->
+                    <Border Grid.Column="0"
+                            Background="{DynamicResource CardBackgroundBrush}"
+                            CornerRadius="12"
+                            Padding="16"
+                            Margin="0,0,16,0">
+                        <Grid RowDefinitions="Auto,*,Auto">
+
+                            <!-- Title -->
+                            <TextBlock Grid.Row="0"
+                                       Text="{DynamicResource JJDB01_LedGrid}"
+                                       FontWeight="SemiBold" FontSize="14"
+                                       Margin="0,0,0,12"/>
+
+                            <!-- LED Grid Visual -->
+                            <Border Grid.Row="1"
+                                    Background="{DynamicResource OverlayBrush}"
+                                    CornerRadius="8"
+                                    ClipToBounds="True"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+
+                                <!-- 16 LEDs in a 4x4 grid layout -->
+                                <Canvas Name="LedCanvas"
+                                        Width="400" Height="400"
+                                        Margin="20"/>
+                            </Border>
+
+                            <!-- LED Selection Info (fixed height to prevent layout shift) -->
+                            <Border Grid.Row="2" Height="24" Margin="0,12,0,0">
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="8"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            IsVisible="{Binding HasSelectedLed}">
+                                    <TextBlock Text="{DynamicResource JJDB01_SelectedLed}"
+                                               VerticalAlignment="Center" Opacity="0.7"/>
+                                    <TextBlock Text="{Binding SelectedLedLabel}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource AccentBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Right: LED Actions Panel -->
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource CardBackgroundBrush}"
+                            CornerRadius="12"
+                            Padding="16">
+                        <ScrollViewer>
+                            <StackPanel Spacing="20">
+
+                                <!-- Connection Status -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="{DynamicResource JJDB01_Status}"
+                                               FontWeight="SemiBold" FontSize="14"/>
+                                    <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                                    <!-- Device Connection -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8"
+                                                ToolTip.Tip="{Binding ConnectionTooltip}">
+                                        <Ellipse Width="10" Height="10">
+                                            <Ellipse.Fill>
+                                                <SolidColorBrush Color="{Binding IsConnected, Converter={x:Static vm:JJDB01ViewModel.BoolToColorConverter}}"/>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding ConnectionStatus}" Opacity="0.7"/>
+                                    </StackPanel>
+
+                                    <!-- SimHub Connection -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8"
+                                                ToolTip.Tip="{Binding SimHubTooltip}">
+                                        <Ellipse Width="10" Height="10">
+                                            <Ellipse.Fill>
+                                                <SolidColorBrush Color="{Binding SimHubStatusColor}"/>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding SimHubConnectionStatus}" Opacity="0.7"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Duplicate Mode Banner -->
+                                <Border Background="{DynamicResource AccentBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        IsVisible="{Binding IsSelectingDuplicateTarget}">
+                                    <StackPanel Spacing="8">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <mi:MaterialIcon Kind="ContentCopy" Width="18" Height="18" Foreground="White"/>
+                                            <TextBlock Text="{DynamicResource JJDB01_DuplicateMode_Title}"
+                                                       FontWeight="SemiBold" Foreground="White"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{DynamicResource JJDB01_DuplicateMode_Hint}"
+                                                   Foreground="White" Opacity="0.9" TextWrapping="Wrap" FontSize="12"/>
+                                        <Button Command="{Binding CancelDuplicateActionCommand}"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                Background="White" Foreground="{DynamicResource AccentBrush}">
+                                            <TextBlock Text="{DynamicResource Dialog_Cancel}"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- LED Actions for Selected LED -->
+                                <StackPanel Spacing="8" IsVisible="{Binding HasSelectedLed}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{DynamicResource JJDB01_LedActions}"
+                                                   FontWeight="SemiBold" FontSize="14"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SelectedLedLabel}"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccentBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                                    <!-- Add Action Button -->
+                                    <Button Command="{Binding AddLedActionCommand}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Center"
+                                            IsEnabled="{Binding CanEditConfiguration}"
+                                            Classes="accent"
+                                            Margin="0,4,0,8">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <mi:MaterialIcon Kind="Plus" Width="18" Height="18"/>
+                                            <TextBlock Text="{DynamicResource JJDB01_AddAction}"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Actions List (below Add button) -->
+                                    <ItemsControl ItemsSource="{Binding LedActions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{DynamicResource CardBackgroundAltBrush}"
+                                                        CornerRadius="6"
+                                                        Padding="12,8"
+                                                        Margin="0,4">
+                                                    <Grid ColumnDefinitions="Auto,*">
+                                                        <!-- Move Up/Down Buttons -->
+                                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                            <Button Command="{Binding $parent[ItemsControl].((vm:JJDB01ViewModel)DataContext).MoveActionUpCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="{DynamicResource JJDB01_Tip_MoveUp}"
+                                                                    Padding="4" Width="24" Height="24">
+                                                                <mi:MaterialIcon Kind="ChevronUp" Width="16" Height="16"/>
+                                                            </Button>
+                                                            <Button Command="{Binding $parent[ItemsControl].((vm:JJDB01ViewModel)DataContext).MoveActionDownCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="{DynamicResource JJDB01_Tip_MoveDown}"
+                                                                    Padding="4" Width="24" Height="24">
+                                                                <mi:MaterialIcon Kind="ChevronDown" Width="16" Height="16"/>
+                                                            </Button>
+                                                        </StackPanel>
+
+                                                        <!-- Action Content -->
+                                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto">
+                                                            <!-- Action Info Row -->
+                                                            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                                                                <Border Width="16" Height="16" CornerRadius="3"
+                                                                        Background="{DynamicResource AccentBrush}"/>
+                                                                <TextBlock Text="{Binding PropertyName}"
+                                                                           VerticalAlignment="Center"
+                                                                           FontWeight="SemiBold"/>
+                                                            </StackPanel>
+
+                                                            <!-- Action Buttons Row -->
+                                                            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4" Margin="0,8,0,0">
+                                                                <Button Command="{Binding $parent[ItemsControl].((vm:JJDB01ViewModel)DataContext).EditLedActionCommand}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip.Tip="{DynamicResource JJDB01_Tip_EditAction}"
+                                                                        Padding="8,4">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                        <mi:MaterialIcon Kind="Pencil" Width="14" Height="14"/>
+                                                                        <TextBlock Text="{DynamicResource JJDB01_Btn_Edit}" FontSize="11"/>
+                                                                    </StackPanel>
+                                                                </Button>
+                                                                <Button Command="{Binding $parent[ItemsControl].((vm:JJDB01ViewModel)DataContext).DuplicateLedActionCommand}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip.Tip="{DynamicResource JJDB01_Tip_DuplicateAction}"
+                                                                        Padding="8,4">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                        <mi:MaterialIcon Kind="ContentCopy" Width="14" Height="14"/>
+                                                                        <TextBlock Text="{DynamicResource JJDB01_Btn_Duplicate}" FontSize="11"/>
+                                                                    </StackPanel>
+                                                                </Button>
+                                                                <Button Command="{Binding $parent[ItemsControl].((vm:JJDB01ViewModel)DataContext).DeleteLedActionCommand}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip.Tip="{DynamicResource JJDB01_Tip_DeleteAction}"
+                                                                        Padding="8,4">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                        <mi:MaterialIcon Kind="Delete" Width="14" Height="14"/>
+                                                                        <TextBlock Text="{DynamicResource JJDB01_Btn_Delete}" FontSize="11"/>
+                                                                    </StackPanel>
+                                                                </Button>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Empty Actions State -->
+                                    <Border Background="{DynamicResource CardBackgroundAltBrush}"
+                                            CornerRadius="6"
+                                            Padding="16"
+                                            IsVisible="{Binding !LedActions.Count}">
+                                        <TextBlock Text="{DynamicResource JJDB01_NoActions}"
+                                                   Opacity="0.5"
+                                                   TextAlignment="Center"
+                                                   FontSize="12"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Empty State for LED Selection -->
+                                <StackPanel IsVisible="{Binding !HasSelectedLed}"
+                                            HorizontalAlignment="Center"
+                                            Spacing="8"
+                                            Margin="0,20">
+                                    <mi:MaterialIcon Kind="GestureTap"
+                                                     Width="48" Height="48"
+                                                     Opacity="0.3"
+                                                     HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource JJDB01_SelectLedHint}"
+                                               Opacity="0.5"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab: Configurações -->
+            <TabItem Header="{DynamicResource JJDB01_Tab_Settings}">
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        CornerRadius="12"
+                        Padding="24"
+                        Margin="0,16,0,0">
+                    <StackPanel Spacing="24" MaxWidth="500" HorizontalAlignment="Center">
+
+                        <!-- Brightness Section -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{DynamicResource JJDB01_Brightness}" FontWeight="SemiBold" FontSize="16"/>
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                            <TextBlock Text="{DynamicResource JJDB01_Brightness_Desc}"
+                                       TextWrapping="Wrap" Opacity="0.7"/>
+
+                            <Slider Minimum="0" Maximum="255"
+                                    Value="{Binding Brightness}"
+                                    IsEnabled="{Binding CanEditConfiguration}"/>
+
+                            <TextBlock Text="{Binding BrightnessDisplayText}"
+                                       HorizontalAlignment="Center"
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <!-- LED Test Section -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{DynamicResource JJDB01_LedTest}" FontWeight="SemiBold" FontSize="16"/>
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                            <TextBlock Text="{DynamicResource JJDB01_LedTest_Desc}"
+                                       TextWrapping="Wrap" Opacity="0.7"/>
+
+                            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                                <Button Command="{Binding TestAllLedsOnCommand}"
+                                        IsEnabled="{Binding IsConnected}"
+                                        Width="140"
+                                        HorizontalContentAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <mi:MaterialIcon Kind="LightbulbOn" Width="18" Height="18"/>
+                                        <TextBlock Text="{DynamicResource JJDB01_Btn_AllOn}"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding TestAllLedsOffCommand}"
+                                        IsEnabled="{Binding IsConnected}"
+                                        Width="140"
+                                        HorizontalContentAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <mi:MaterialIcon Kind="LightbulbOff" Width="18" Height="18"/>
+                                        <TextBlock Text="{DynamicResource JJDB01_Btn_AllOff}"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Device Info Section -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{DynamicResource JJDB01_DeviceInfo}" FontWeight="SemiBold" FontSize="16"/>
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" Margin="0,8,0,0">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource JJDB01_LedCount}" Opacity="0.7" Margin="0,0,16,8"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="16 LEDs RGB" FontWeight="SemiBold"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource JJDB01_Firmware}" Opacity="0.7" Margin="0,0,16,8"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FirmwareVersion}" FontWeight="SemiBold"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource JJDB01_ConnectionType}" Opacity="0.7" Margin="0,0,16,0"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="USB HID" FontWeight="SemiBold"/>
+                            </Grid>
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <!-- Tab: Perfis -->
+            <TabItem Header="{DynamicResource JJDB01_Tab_Profiles}">
+                <Border Background="{DynamicResource CardBackgroundBrush}"
+                        CornerRadius="12"
+                        Padding="24"
+                        Margin="0,16,0,0">
+                    <Grid ColumnDefinitions="*,Auto,*">
+
+                        <!-- Left: Profile List -->
+                        <StackPanel Grid.Column="0" Spacing="16">
+                            <TextBlock Text="{DynamicResource JJDB01_AvailableProfiles}" FontWeight="SemiBold" FontSize="16"/>
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                            <ListBox ItemsSource="{Binding Profiles}"
+                                     SelectedItem="{Binding SelectedProfile}"
+                                     MinHeight="200"
+                                     MaxHeight="300">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="8,4">
+                                            <mi:MaterialIcon Kind="FileDocument" Width="18" Height="18"
+                                                             Foreground="{DynamicResource AccentBrush}"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <!-- Profile Actions -->
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center"
+                                        IsVisible="{Binding !IsDuplicatingProfile}">
+                                <Button Command="{Binding StartDuplicateProfileCommand}"
+                                        ToolTip.Tip="{DynamicResource JJDB01_Tip_DuplicateProfile}"
+                                        Width="40" Height="40"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center">
+                                    <mi:MaterialIcon Kind="ContentCopy" Width="20" Height="20"/>
+                                </Button>
+                                <Button Command="{Binding DeleteProfileCommand}"
+                                        IsEnabled="{Binding CanDeleteProfile}"
+                                        ToolTip.Tip="{DynamicResource JJDB01_Tip_DeleteProfile}"
+                                        Width="40" Height="40"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center">
+                                    <mi:MaterialIcon Kind="Delete" Width="20" Height="20"/>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Duplicate Profile Input -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsDuplicatingProfile}"
+                                        HorizontalAlignment="Stretch">
+                                <TextBlock Text="{DynamicResource JJDB01_DuplicateProfile_Title}"
+                                           FontWeight="SemiBold" FontSize="14" HorizontalAlignment="Center"/>
+                                <TextBox Text="{Binding DuplicateProfileName}"
+                                         Watermark="{DynamicResource JJDB01_ProfileName_Placeholder}"
+                                         MaxLength="50"
+                                         HorizontalAlignment="Stretch"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                    <Button Command="{Binding ConfirmDuplicateProfileCommand}"
+                                            Classes="accent"
+                                            MinWidth="90"
+                                            HorizontalContentAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <mi:MaterialIcon Kind="Check" Width="16" Height="16"/>
+                                            <TextBlock Text="{DynamicResource Common_Confirm}"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Command="{Binding CancelDuplicateProfileCommand}"
+                                            MinWidth="90"
+                                            HorizontalContentAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <mi:MaterialIcon Kind="Close" Width="16" Height="16"/>
+                                            <TextBlock Text="{DynamicResource Common_Cancel}"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Divider -->
+                        <Border Grid.Column="1" Width="1" Background="{DynamicResource BorderAltBrush}"
+                                Margin="24,0"/>
+
+                        <!-- Right: Create Profile -->
+                        <StackPanel Grid.Column="2" Spacing="16">
+                            <TextBlock Text="{DynamicResource JJDB01_CreateNewProfile}" FontWeight="SemiBold" FontSize="16"/>
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}"/>
+
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{DynamicResource JJDB01_ProfileName}" Opacity="0.7"/>
+                                <TextBox Text="{Binding NewProfileName}"
+                                         Watermark="{DynamicResource JJDB01_ProfileName_Placeholder}"
+                                         MaxLength="50"/>
+
+                                <Button Command="{Binding CreateProfileCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Center"
+                                        Classes="accent">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <mi:MaterialIcon Kind="Plus" Width="20" Height="20"/>
+                                        <TextBlock Text="{DynamicResource JJDB01_Btn_CreateProfile}"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <Border Height="1" Background="{DynamicResource BorderAltBrush}" Margin="0,16,0,0"/>
+
+                            <!-- Profile Info -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{DynamicResource JJDB01_ProfileInfo_Title}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{DynamicResource JJDB01_ProfileInfo_Desc1}"
+                                           TextWrapping="Wrap" LineHeight="22" Opacity="0.7" FontSize="12"/>
+                                <TextBlock Text="{DynamicResource JJDB01_ProfileInfo_Desc2}"
+                                           TextWrapping="Wrap" LineHeight="22" Opacity="0.7" FontSize="12"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
+
+        <!-- Footer Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="12" Margin="0,16,0,0">
+            <Button Command="{Binding ToggleConnectionCommand}"
+                    Width="180"
+                    HorizontalContentAlignment="Center">
+                <TextBlock Text="{Binding ConnectionButtonText}"/>
+            </Button>
+            <Button Command="{Binding CloseCommand}"
+                    Classes="accent"
+                    Width="100"
+                    HorizontalContentAlignment="Center">
+                <TextBlock Text="{DynamicResource Dialog_Close}"/>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>

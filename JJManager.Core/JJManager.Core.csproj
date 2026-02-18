@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Assembly Info -->
+    <AssemblyName>JJManager.Core</AssemblyName>
+    <RootNamespace>JJManager.Core</RootNamespace>
+    <Version>2.0.0</Version>
+    <Authors>JohnJohn 3D</Authors>
+    <Company>JohnJohn 3D</Company>
+    <Product>JJManager</Product>
+    <Description>Core library for JJManager - Cross-platform device management</Description>
+    <Copyright>Copyright (c) JohnJohn 3D 2024-2026</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Embedded Resources -->
+    <EmbeddedResource Include="Connections\SimHub\SimHubProperties.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- HID Communication -->
+    <PackageReference Include="HidSharp" Version="2.1.0" />
+
+    <!-- JSON Serialization -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+
+    <!-- Serial Communication -->
+    <PackageReference Include="System.IO.Ports" Version="9.0.0" />
+
+    <!-- Reactive Extensions -->
+    <PackageReference Include="System.Reactive" Version="6.0.1" />
+  </ItemGroup>
+
+</Project>

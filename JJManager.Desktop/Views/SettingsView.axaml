@@ -1,0 +1,381 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:JJManager.Desktop.ViewModels"
+             xmlns:mi="using:Material.Icons.Avalonia"
+             xmlns:services="using:JJManager.Desktop.Services"
+             x:Class="JJManager.Desktop.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <ScrollViewer>
+        <StackPanel Margin="24" Spacing="16">
+            <!-- Header -->
+            <StackPanel Margin="0,0,0,8">
+                <TextBlock Text="{DynamicResource Settings_Title}" FontSize="28" FontWeight="Bold"/>
+                <TextBlock Text="{DynamicResource Settings_Subtitle}"
+                           Opacity="0.7"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <!-- Appearance Section -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    CornerRadius="8"
+                    Padding="20">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <mi:MaterialIcon Kind="Palette" Width="24" Height="24"
+                                         Foreground="{DynamicResource AccentBrush}"/>
+                        <TextBlock Text="{DynamicResource Settings_Section_Appearance}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Theme Selection -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Settings_Theme}" FontWeight="Medium"/>
+                            <TextBlock Text="{DynamicResource Settings_Theme_Desc}"
+                                       Opacity="0.7"
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding AvailableThemes}"
+                                  SelectedItem="{Binding SelectedTheme}"
+                                  Width="150">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="services:ThemeModeInfo">
+                                    <TextBlock Text="{Binding DefaultName}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+
+                    <!-- Accent Color Selection -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Settings_AccentColor}" FontWeight="Medium"/>
+                            <TextBlock Text="{DynamicResource Settings_AccentColor_Desc}"
+                                       Opacity="0.7"
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding AvailableAccentColors}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="services:AccentColorInfo">
+                                    <Button Width="32" Height="32"
+                                            CornerRadius="16"
+                                            Padding="0"
+                                            Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).SelectAccentColorCommand}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Styles>
+                                            <Style Selector="Button">
+                                                <Setter Property="Background" Value="{Binding LightHex}"/>
+                                            </Style>
+                                            <Style Selector="Button:pointerover /template/ ContentPresenter">
+                                                <Setter Property="Background" Value="{Binding DarkHex}"/>
+                                            </Style>
+                                        </Button.Styles>
+                                        <Panel>
+                                            <Ellipse Width="28" Height="28" StrokeThickness="2">
+                                                <Ellipse.Fill>
+                                                    <SolidColorBrush Color="{Binding LightHex}"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                        </Panel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+
+                    <!-- Language Selection -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Settings_Language}" FontWeight="Medium"/>
+                            <TextBlock Text="{DynamicResource Settings_Language_Desc}"
+                                       Opacity="0.7"
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding AvailableLanguages}"
+                                  SelectedItem="{Binding SelectedLanguage}"
+                                  Width="180">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="services:LanguageInfo">
+                                    <TextBlock Text="{Binding NativeName}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Behavior Section -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    CornerRadius="8"
+                    Padding="20">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <mi:MaterialIcon Kind="Cog" Width="24" Height="24"
+                                         Foreground="{DynamicResource AccentBrush}"/>
+                        <TextBlock Text="{DynamicResource Settings_Section_Behavior}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Settings_StartWithSystem}" FontWeight="Medium"/>
+                            <TextBlock Text="{DynamicResource Settings_StartWithSystem_Desc}"
+                                       Opacity="0.7"
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      IsChecked="{Binding StartWithWindows}"
+                                      OnContent="" OffContent=""/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Settings_MinimizeToTray}" FontWeight="Medium"/>
+                            <TextBlock Text="{DynamicResource Settings_MinimizeToTray_Desc}"
+                                       Opacity="0.7"
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      IsChecked="{Binding MinimizeToTray}"
+                                      OnContent="" OffContent=""/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Settings_AutoConnect}" FontWeight="Medium"/>
+                            <TextBlock Text="{DynamicResource Settings_AutoConnect_Desc}"
+                                       Opacity="0.7"
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      IsChecked="{Binding AutoConnectDevices}"
+                                      OnContent="" OffContent=""/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Data Section -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    CornerRadius="8"
+                    Padding="20">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <mi:MaterialIcon Kind="Database" Width="24" Height="24"
+                                         Foreground="{DynamicResource AccentBrush}"/>
+                        <TextBlock Text="{DynamicResource Settings_Section_Data}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Settings_DatabasePath}" FontWeight="Medium"/>
+                            <TextBlock Text="{Binding DatabasePath}"
+                                       Opacity="0.7"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Command="{Binding OpenDatabaseFolderCommand}"
+                                Padding="12,8">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <mi:MaterialIcon Kind="FolderOpen" Width="16" Height="16"/>
+                                <TextBlock Text="{DynamicResource Settings_Btn_Open}"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Logs Section -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    CornerRadius="8"
+                    Padding="20">
+                <StackPanel Spacing="16">
+                    <!-- Header with actions -->
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <mi:MaterialIcon Kind="FileDocument" Width="24" Height="24"
+                                             Foreground="{DynamicResource AccentBrush}"/>
+                            <TextBlock Text="{DynamicResource Settings_Section_Logs}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                            <Button Command="{Binding RefreshLogFilesCommand}"
+                                    Padding="8,6"
+                                    ToolTip.Tip="{DynamicResource Settings_Logs_Btn_Refresh}">
+                                <mi:MaterialIcon Kind="Refresh" Width="16" Height="16"/>
+                            </Button>
+                            <Button Command="{Binding OpenLogFolderCommand}"
+                                    Padding="8,6"
+                                    ToolTip.Tip="{DynamicResource Settings_Logs_Btn_OpenFolder}">
+                                <mi:MaterialIcon Kind="FolderOpen" Width="16" Height="16"/>
+                            </Button>
+                            <Button Command="{Binding DeleteAllLogFilesCommand}"
+                                    Padding="8,6"
+                                    IsEnabled="{Binding HasLogFiles}"
+                                    ToolTip.Tip="{DynamicResource Settings_Logs_Btn_DeleteAll}">
+                                <mi:MaterialIcon Kind="DeleteSweep" Width="16" Height="16"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Enable logs toggle -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Settings_Logs_Enable}" FontWeight="Medium"/>
+                            <TextBlock Text="{DynamicResource Settings_Logs_Enable_Desc}"
+                                       Opacity="0.7"
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      IsChecked="{Binding LogsEnabled}"
+                                      OnContent="" OffContent=""/>
+                    </Grid>
+
+                    <!-- Log files list -->
+                    <Border Background="{DynamicResource CardBackgroundAltBrush}"
+                            CornerRadius="4"
+                            Padding="0"
+                            IsVisible="{Binding HasLogFiles}">
+                        <Grid RowDefinitions="Auto,*">
+                            <!-- Header -->
+                            <Border Grid.Row="0"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    Padding="12,8">
+                                <Grid ColumnDefinitions="*,80,120,80">
+                                    <TextBlock Grid.Column="0" Text="{DynamicResource Settings_Logs_Col_Name}"
+                                               FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource Settings_Logs_Col_Size}"
+                                               FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                                    <TextBlock Grid.Column="2" Text="{DynamicResource Settings_Logs_Col_Modified}"
+                                               FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                                    <TextBlock Grid.Column="3" Text="{DynamicResource Settings_Logs_Col_Actions}"
+                                               FontWeight="SemiBold" FontSize="12" Opacity="0.8" HorizontalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Log files -->
+                            <ScrollViewer Grid.Row="1" MaxHeight="200">
+                                <ItemsControl ItemsSource="{Binding LogFiles}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:LogFileInfo">
+                                            <Border Padding="12,8"
+                                                    BorderBrush="{DynamicResource BorderAltBrush}"
+                                                    BorderThickness="0,0,0,1">
+                                                <Grid ColumnDefinitions="*,80,120,80">
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding FileName}"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="12"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding Size}"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="12"
+                                                               Opacity="0.7"/>
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding LastModified}"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="12"
+                                                               Opacity="0.7"/>
+                                                    <StackPanel Grid.Column="3"
+                                                                Orientation="Horizontal"
+                                                                Spacing="4"
+                                                                HorizontalAlignment="Center">
+                                                        <Button Padding="4"
+                                                                Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).OpenLogFileCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip.Tip="{DynamicResource Settings_Logs_Btn_OpenFile}">
+                                                            <mi:MaterialIcon Kind="FileFind" Width="14" Height="14"/>
+                                                        </Button>
+                                                        <Button Padding="4"
+                                                                Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).DeleteLogFileCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip.Tip="{DynamicResource Settings_Logs_Btn_Delete}">
+                                                            <mi:MaterialIcon Kind="Delete" Width="14" Height="14"/>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                    <!-- Empty state -->
+                    <StackPanel IsVisible="{Binding !HasLogFiles}"
+                                HorizontalAlignment="Center"
+                                Spacing="8"
+                                Margin="0,16">
+                        <mi:MaterialIcon Kind="FileDocumentOutline" Width="32" Height="32"
+                                         Opacity="0.5"
+                                         HorizontalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource Settings_Logs_Empty}"
+                                   Opacity="0.7"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Reset Section -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    CornerRadius="8"
+                    Padding="20">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{DynamicResource Settings_Section_Reset}" FontWeight="Medium"/>
+                        <TextBlock Text="{DynamicResource Settings_Reset_Desc}"
+                                   Opacity="0.7"
+                                   FontSize="12"/>
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Command="{Binding ResetSettingsCommand}"
+                            Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <mi:MaterialIcon Kind="Restore" Width="16" Height="16"/>
+                            <TextBlock Text="{DynamicResource Settings_Btn_Reset}"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- About Section -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    CornerRadius="8"
+                    Padding="20">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <mi:MaterialIcon Kind="InformationOutline" Width="24" Height="24"
+                                         Foreground="{DynamicResource AccentBrush}"/>
+                        <TextBlock Text="{DynamicResource Settings_Section_About}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="4">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{DynamicResource App_Title}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{DynamicResource App_Version}" Opacity="0.7"/>
+                        </StackPanel>
+                        <TextBlock Text="{DynamicResource Settings_About_Description}"
+                                   Opacity="0.7"
+                                   FontSize="12"/>
+                        <TextBlock Text="{DynamicResource Settings_About_Copyright}"
+                                   Opacity="0.7"
+                                   FontSize="12"/>
+                        <TextBlock Text="{DynamicResource Settings_About_Website}"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

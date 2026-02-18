@@ -1,0 +1,48 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Custom Button Styles -->
+    <Style Selector="Button.accent">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style Selector="Button.accent:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+    </Style>
+
+    <Style Selector="Button.accent:pressed">
+        <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}"/>
+    </Style>
+
+    <!-- Card Style -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- ToggleSwitch Styling -->
+    <Style Selector="ToggleSwitch">
+        <Setter Property="OffContent" Value=""/>
+        <Setter Property="OnContent" Value=""/>
+    </Style>
+
+    <!-- ScrollViewer Styling -->
+    <Style Selector="ScrollViewer">
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+    </Style>
+
+    <!-- ProgressBar Styling -->
+    <Style Selector="ProgressBar">
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+
+    <!-- ComboBox Styling -->
+    <Style Selector="ComboBox">
+        <Setter Property="MinWidth" Value="120"/>
+    </Style>
+</Styles>

@@ -1,0 +1,130 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:JJManager.Desktop.ViewModels"
+        xmlns:views="using:JJManager.Desktop.Views"
+        xmlns:mi="using:Material.Icons.Avalonia"
+        x:Class="JJManager.Desktop.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="JJManager"
+        Width="1200"
+        Height="750"
+        MinWidth="900"
+        MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource AppBackgroundBrush}">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource HeaderBackground}"
+                Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Logo and Title -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                    <mi:MaterialIcon Kind="Gamepad" Width="32" Height="32"
+                                     Foreground="White"/>
+                    <TextBlock Text="{DynamicResource App_Title}"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource App_Version}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <!-- Connection Status -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Border Background="{DynamicResource SuccessBrush}" CornerRadius="12" Padding="12,6"
+                            IsVisible="{Binding HasConnectedDevices}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <mi:MaterialIcon Kind="Usb" Width="16" Height="16" Foreground="White"/>
+                            <TextBlock Text="{Binding ConnectedDeviceCount, StringFormat='{}{0} dispositivo(s)'}"
+                                       Foreground="White" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="{DynamicResource NeutralBrush}" CornerRadius="12" Padding="12,6"
+                            IsVisible="{Binding !HasConnectedDevices}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <mi:MaterialIcon Kind="PowerPlugOff" Width="16" Height="16" Foreground="White"/>
+                            <TextBlock Text="Nenhum dispositivo" Foreground="White" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content with TabControl -->
+        <TabControl Grid.Row="1"
+                    TabStripPlacement="Left"
+                    Padding="0"
+                    SelectedIndex="{Binding SelectedTabIndex}">
+
+            <!-- Devices Tab -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="8">
+                        <mi:MaterialIcon Kind="Devices" Width="24" Height="24"/>
+                        <TextBlock Text="{DynamicResource Nav_Devices}" VerticalAlignment="Center" FontSize="14"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <views:DevicesView DataContext="{Binding DevicesViewModel}"/>
+            </TabItem>
+
+            <!-- Updates Tab -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="8">
+                        <mi:MaterialIcon Kind="Update" Width="24" Height="24"/>
+                        <TextBlock Text="{DynamicResource Nav_Updates}" VerticalAlignment="Center" FontSize="14"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <views:UpdatesView DataContext="{Binding UpdatesViewModel}"/>
+            </TabItem>
+
+            <!-- Settings Tab -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="8">
+                        <mi:MaterialIcon Kind="Cog" Width="24" Height="24"/>
+                        <TextBlock Text="{DynamicResource Nav_Settings}" VerticalAlignment="Center" FontSize="14"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <views:SettingsView DataContext="{Binding SettingsViewModel}"/>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource AppBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderAltBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding StatusMessage}"
+                           Opacity="0.7"
+                           FontSize="12"
+                           VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="JohnJohn 3D"
+                               Opacity="0.5"
+                               FontSize="11"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="© 2024-2026"
+                               Opacity="0.5"
+                               FontSize="11"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
